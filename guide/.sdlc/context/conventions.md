@@ -122,7 +122,7 @@ function cn(...inputs: (string | boolean | undefined)[]) {
 <div className="flex flex-col sm:flex-row gap-2">
   <input className="w-full sm:w-auto flex-1" />
   <button className="w-full sm:w-auto">Generate</button>
-</div>;
+</div>
 ```
 
 ---

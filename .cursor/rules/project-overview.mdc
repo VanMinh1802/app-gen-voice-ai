@@ -1,0 +1,97 @@
+---
+description: TTS App project overview and tech stack
+alwaysApply: true
+---
+
+# TTS App - Project Overview
+
+## Project Type
+
+**Text-to-Speech Web Application** - Browser-based TTS for Vietnamese, running entirely client-side.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router) |
+| UI | React + Tailwind CSS |
+| State | Zustand / React Context |
+| TTS Engine | Piper TTS (ONNX) |
+| Runtime | ONNX Runtime Web (WASM) |
+| Storage | Cloudflare R2 (models), IndexedDB (history) |
+| Deployment | Cloudflare Pages + Pages Functions |
+| Auth | Genation SDK (simple login) |
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+├── components/             # Shared UI components
+│   └── ui/                 # Reusable components
+├── features/               # Vertical slices (domain-driven)
+│   └── {feature}/
+│       ├── components/     # Feature-specific components
+│       ├── hooks/          # Feature-specific hooks
+│       ├── services/       # Feature-specific services
+│       ├── types.ts        # Feature types
+│       └── index.ts        # Barrel export
+├── lib/                    # Utilities
+│   ├── piper/              # TTS engine wrapper
+│   └── text-processing/    # Vietnamese text processing
+└── workers/               # Web Workers
+```
+
+## Key Characteristics
+
+- **Client-side first**: All TTS processing happens in the browser
+- **Privacy-focused**: User text is NOT sent to any server
+- **No server inference**: Uses ONNX Runtime Web (WASM) for local inference
+- **Model storage**: TTS models stored in Cloudflare R2, loaded lazily
+
+## Reference Documentation
+
+| Context | Location |
+|---------|----------|
+| Architecture | `guide/.sdlc/context/architecture.md` |
+| Conventions | `guide/.sdlc/context/conventions.md` |
+| Security | `guide/.sdlc/context/security.md` |
+| Agent Guidelines | `guide/.sdlc/AGENTS.md` |
+| Feature Template | `guide/.sdlc/templates/feature-spec.md` |
+
+## Quick Start
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run test
+```
+
+## Git Conventions
+
+### Commit Message Format
+
+```
+<type>(<scope>): <description>
+```
+
+### Types
+
+| Type | Use For |
+|------|---------|
+| feat | New feature |
+| fix | Bug fix |
+| docs | Documentation changes |
+| style | Code formatting, no logic change |
+| refactor | Code refactoring |
+| test | Adding/updating tests |
+| chore | Dependency updates, config changes |
+
+### Branch Naming
+
+```
+main: production branch
+staging: staging branch
+devs/xxx-feature-name: feature branch
+```

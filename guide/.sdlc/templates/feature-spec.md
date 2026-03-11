@@ -161,6 +161,7 @@ interface TtsResponse {
 ```
 
 ---
+
 ### Time complexity
 
 [Time complexity of the feature]
@@ -178,6 +179,7 @@ interface TtsResponse {
 ```
 [Error] → [Catch] → [User Feedback] → [Log]
 ```
+
 ---
 
 ## ⚠️ Edge Cases

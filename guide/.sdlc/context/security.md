@@ -14,15 +14,15 @@ Unlike server-side apps, TTS runs entirely in the browser. This changes our secu
 
 ### Simple Login (Genation SDK)
 
-| Aspect | Implementation |
-|--------|---------------|
+| Aspect      | Implementation                          |
+| ----------- | --------------------------------------- |
 | **Purpose** | Prevent DDoS, not strict access control |
-| **Method** | Genation SDK authentication |
-| **Scope** | User identification only in MVP |
+| **Method**  | Genation SDK authentication             |
+| **Scope**   | User identification only in MVP         |
 
 ```tsx
 // Example: Simple auth check
-import { useAuth } from '@features/auth/hooks/useAuth';
+import { useAuth } from "@features/auth/hooks/useAuth";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -51,19 +51,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // Always validate user input before TTS processing
 function sanitizeText(text: string): string {
   return text
-    .slice(0, MAX_TEXT_LENGTH)      // Limit length
-    .replace(/[\u0000-\u001F]/g, '') // Remove control chars
+    .slice(0, MAX_TEXT_LENGTH) // Limit length
+    .replace(/[\u0000-\u001F]/g, "") // Remove control chars
     .trim();
 }
 ```
 
 ### Model Loading Security
 
-| Risk | Mitigation |
-|------|------------|
-| Malicious model | Verify model signature (future) |
-| Model injection | Only load from trusted R2 bucket |
-| Memory exhaustion | Limit concurrent model loads |
+| Risk              | Mitigation                       |
+| ----------------- | -------------------------------- |
+| Malicious model   | Verify model signature (future)  |
+| Model injection   | Only load from trusted R2 bucket |
+| Memory exhaustion | Limit concurrent model loads     |
 
 ### Audio Processing
 
@@ -72,8 +72,9 @@ function sanitizeText(text: string): string {
 function validateAudio(audio: ArrayBuffer): ArrayBuffer {
   const view = new DataView(audio);
   // Verify WAV header
-  if (view.getUint32(0) !== 0x46464952) { // 'RIFF'
-    throw new Error('Invalid audio format');
+  if (view.getUint32(0) !== 0x46464952) {
+    // 'RIFF'
+    throw new Error("Invalid audio format");
   }
   return audio;
 }
@@ -85,20 +86,20 @@ function validateAudio(audio: ArrayBuffer): ArrayBuffer {
 
 ### API Calls
 
-| Best Practice | Implementation |
-|---------------|----------------|
-| **HTTPS only** | Enforced by Cloudflare |
-| **Rate limiting** | Genation SDK handles |
-| **CORS** | Configure in Pages Functions |
+| Best Practice     | Implementation               |
+| ----------------- | ---------------------------- |
+| **HTTPS only**    | Enforced by Cloudflare       |
+| **Rate limiting** | Genation SDK handles         |
+| **CORS**          | Configure in Pages Functions |
 
 ### R2 Access
 
 ```ts
 // Only expose necessary paths via API
-const ALLOWED_PREFIXES = ['piper/vi/', 'piper/en/'];
+const ALLOWED_PREFIXES = ["piper/vi/", "piper/en/"];
 
 function validatePath(path: string): boolean {
-  return ALLOWED_PREFIXES.some(prefix => path.startsWith(prefix));
+  return ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 ```
 
@@ -108,12 +109,12 @@ function validatePath(path: string): boolean {
 
 ### Data Storage (Client-Side)
 
-| Data | Storage | Retention |
-|------|---------|-----------|
-| Generated audio | IndexedDB | User-managed |
-| Text history | IndexedDB | User-managed |
-| Settings | localStorage | Permanent |
-| Session | memory | Until close |
+| Data            | Storage      | Retention    |
+| --------------- | ------------ | ------------ |
+| Generated audio | IndexedDB    | User-managed |
+| Text history    | IndexedDB    | User-managed |
+| Settings        | localStorage | Permanent    |
+| Session         | memory       | Until close  |
 
 ### What's NOT Stored on Server (MVP)
 
@@ -147,11 +148,11 @@ when using generated audio.
 
 ### Focus Areas
 
-| Area | Test Method |
-|------|-------------|
-| Input validation | Fuzz testing |
-| Memory limits | Load testing |
-| IndexedDB | Storage quota testing |
+| Area                 | Test Method           |
+| -------------------- | --------------------- |
+| Input validation     | Fuzz testing          |
+| Memory limits        | Load testing          |
+| IndexedDB            | Storage quota testing |
 | Worker communication | Message serialization |
 
 ---
@@ -170,11 +171,11 @@ Before deploying:
 
 ## 🔗 Quick Reference
 
-| Need | Location |
-|------|----------|
-| Auth | `src/features/auth/` |
+| Need       | Location              |
+| ---------- | --------------------- |
+| Auth       | `src/features/auth/`  |
 | Validation | `src/lib/validation/` |
-| Config | `src/config.ts` |
+| Config     | `src/config.ts`       |
 
 ---
 
