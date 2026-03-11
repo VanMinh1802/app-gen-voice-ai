@@ -31,6 +31,7 @@ export interface TtsSettings {
   voice: VoiceId;
   speed: number;
   volume: number;
+  normalizeText: boolean;
 }
 
 export type TtsStatus = "idle" | "loading" | "generating" | "playing" | "error";

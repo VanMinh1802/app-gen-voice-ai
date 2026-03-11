@@ -6,11 +6,25 @@
 | ------------------ | ---------------- |
 | **Feature ID**     | REQ-001          |
 | **Feature Name**   | Piper TTS Engine |
-| **Status**         | Completed        |
+| **Status**         | Extended         |
 | **Priority**       | P1 (High)        |
 | **Owner**          | Development Team |
 | **Created**        | 2026-03-10       |
-| **Target Release** | v1.0.0           |
+| **Last Updated**   | 2026-03-11       |
+| **Target Release** | v1.1.0           |
+
+### Gap Analysis (vs. NGHI-TTS Reference)
+
+| Tính năng                    | Hiện tại        | Mục tiêu bổ sung                                      |
+| ---------------------------- | --------------- | ------------------------------------------------------ |
+| Multi-language               | Chỉ Vietnamese  | Vietnamese, English, Indonesian (pages /, /en, /id)  |
+| Vietnamese Text Processing   | Chưa có         | Số, ngày, giờ, tiền tệ, SĐT, số La Mã → chữ           |
+| Dark Mode                    | Chưa có         | Theme toggle (class-based)                             |
+| History Storage              | localStorage    | IndexedDB (phù hợp audio binary, quota lớn hơn)        |
+| Share Button                 | Chưa có         | Copy URL hiện tại vào clipboard                        |
+| Audio Streaming              | Batch           | Giữ batch; real-time chunks (P2, sau)                 |
+| Model Dynamic Load           | CDN (HuggingFace) | Giữ CDN; bổ sung tùy chọn Cloudflare R2 (P2)         |
+| ASR + SRT Export             | Chưa có         | Scope tách: REQ-002 (ASR)                              |
 
 ---
 
@@ -43,7 +57,7 @@ flowchart TB
 
     subgraph Storage["Storage Layer"]
         LS_Settings["localStorage\n(tts-settings)"]
-        LS_History["localStorage\n(tts-history)"]
+        IDB_History["IndexedDB\n(tts-history, audio blobs)"]
     end
 
     subgraph CDN["External CDN"]
@@ -86,8 +100,8 @@ flowchart TB
     %% Audio Playback
     UI -->|play| WebAudio
 
-    %% History Storage
-    Hook -.->|persist history| LS_History
+    %% History Storage (IndexedDB for audio blobs)
+    Hook -.->|persist history + audio| IDB_History
 
     %% Settings Persistence
     Hook -.->|persist settings| LS_Settings
@@ -106,7 +120,7 @@ flowchart TB
 ## 1. Overview
 
 **Feature Name:** Piper TTS Engine  
-**One-paragraph summary:** Client-side text-to-speech engine using Piper neural TTS with WebAssembly, enabling browser-based Vietnamese and English speech synthesis without server dependencies.
+**One-paragraph summary:** Client-side text-to-speech engine using Piper neural TTS with WebAssembly, enabling browser-based multi-language (Vietnamese, English, Indonesian) speech synthesis with Vietnamese text normalization, dark mode, IndexedDB history, and share—without server dependencies.
 
 ### Problem Statement
 
@@ -121,7 +135,12 @@ Users need to convert Vietnamese text to speech directly in the browser for:
 
 - Ensure all TTS processing runs **client-side** (no server API calls)
 - Integrate Piper TTS engine (via `@mintplex-labs/piper-tts-web`) for client-side speech synthesis
-- Support multiple voices (Vietnamese + English) with on-demand downloading
+- Support **multi-language**: Vietnamese (default), English, Indonesian with locale-aware UI and model selection
+- **Vietnamese text processing**: normalize numbers, dates, times, currency, phone numbers, Roman numerals to spoken form before synthesis
+- **Dark mode**: theme toggle (light/dark/system) persisted in localStorage
+- **History in IndexedDB**: store last N items with audio blobs; better quota and binary support than localStorage
+- **Share**: copy current page URL (with optional query params) to clipboard
+- Support multiple voices per language with on-demand downloading
 - Provide progress feedback during model loading and synthesis
 - Cache downloaded voice models for faster subsequent loads
 - Convert WAV output for Web Audio API playback
@@ -129,10 +148,10 @@ Users need to convert Vietnamese text to speech directly in the browser for:
 ### Non-Goals
 
 - Server-side TTS processing
-- Real-time streaming synthesis (batch processing only)
+- Real-time streaming synthesis in v1.1 (batch only; real-time chunks P2)
 - Custom voice training or fine-tuning
 - Multi-speaker voice synthesis
-- ASR (speech-to-text) in this feature
+- ASR (speech-to-text) and SRT export — see REQ-002 (ASR)
 - Server-side storage or database (all data stays client-side)
 
 ### Success Criteria
@@ -192,7 +211,7 @@ Users need to convert Vietnamese text to speech directly in the browser for:
 - [ ] Each entry displays: text preview (truncated), voice name, timestamp
 - [ ] Click on history item replays that audio
 - [ ] "Refill" button loads history text back into textarea
-- [ ] History persists across browser sessions (localStorage)
+- [ ] History persists across browser sessions (IndexedDB)
 
 **Priority:** P1 (High)
 
@@ -225,6 +244,80 @@ Users need to convert Vietnamese text to speech directly in the browser for:
 - [ ] Settings stored in localStorage key: `tts-settings`
 
 **Priority:** P1 (High)
+
+---
+
+### Story 6: Multi-Language (Vietnamese, English, Indonesian)
+
+**As a** user **I want** to switch language/locale and use voices for Vietnamese, English, and Indonesian **So that** I can generate speech in the language I need.
+
+**Acceptance Criteria:**
+
+- [ ] App supports routes/locale: Vietnamese (default `/`), English (`/en`), Indonesian (`/id`) — or single page with locale selector
+- [ ] Voice list filtered or labeled by language; at least one voice per supported language
+- [ ] UI labels (buttons, placeholders) respect selected locale where applicable
+- [ ] Selected language persists in settings (localStorage)
+
+**Priority:** P1 (High)
+
+---
+
+### Story 7: Vietnamese Text Processing (Normalization)
+
+**As a** Vietnamese user **I want** numbers, dates, times, currency, and phone numbers in my text to be spoken correctly **So that** TTS output sounds natural (e.g. "1.500.000" → "một triệu năm trăm nghìn").
+
+**Acceptance Criteria:**
+
+- [ ] Pre-processing step before sending text to TTS: numbers (integer, decimal), currency (VND, USD), dates (dd/mm/yyyy), times (HH:mm), phone numbers, Roman numerals
+- [ ] Normalization implemented in `src/lib/text-processing/` (e.g. `vietnameseNormalizer.ts`); unit tests for each pattern
+- [ ] Optional UI toggle "Chuẩn hóa văn bản" (default on for Vietnamese) to enable/disable normalization
+- [ ] No regression for plain text; performance impact minimal (< 50ms for typical input)
+
+**Priority:** P1 (High)
+
+---
+
+### Story 8: Dark Mode
+
+**As a** user **I want** to switch between light and dark theme **So that** I can use the app comfortably in low light.
+
+**Acceptance Criteria:**
+
+- [ ] Theme toggle in header or settings: Light / Dark / System
+- [ ] Theme applied via `class` on `html` or `body` (e.g. `dark`) with Tailwind `dark:` variants
+- [ ] Preference persisted in localStorage (e.g. `app-theme`)
+- [ ] System preference respected when "System" is selected (prefers-color-scheme)
+
+**Priority:** P1 (High)
+
+---
+
+### Story 9: History in IndexedDB
+
+**As a** user **I want** my generation history stored in IndexedDB **So that** audio blobs and larger history are supported without localStorage limits.
+
+**Acceptance Criteria:**
+
+- [ ] History (metadata + audio blob URLs or blobs) stored in IndexedDB; DB name e.g. `tts-app`, object store `history`
+- [ ] Cap history at configurable N items (e.g. 50); evict oldest on overflow
+- [ ] Existing HistoryPanel reads from IndexedDB; replay/refill/delete unchanged
+- [ ] Migration path: on first load after upgrade, migrate existing localStorage history to IndexedDB if present, then clear localStorage history key
+
+**Priority:** P1 (High)
+
+---
+
+### Story 10: Share Button
+
+**As a** user **I want** to copy the current page URL (e.g. with locale or state) to clipboard **So that** I can share the app link with others.
+
+**Acceptance Criteria:**
+
+- [ ] "Share" or "Copy link" button in UI (e.g. header or near history)
+- [ ] On click: copy `window.location.href` (or canonical URL) to clipboard via Clipboard API
+- [ ] Toast or brief message: "Link copied" on success; show error if clipboard fails (e.g. not secure context)
+
+**Priority:** P2 (Medium)
 
 ---
 
@@ -293,10 +386,16 @@ interface TtsHistoryItem {
   model: string;
   voice: string;
   speed: number;
-  audioUrl: string;
+  audioUrl: string;  // blob URL or IndexedDB key
   duration: number;
   createdAt: number;
 }
+
+// Theme (dark mode)
+type Theme = "light" | "dark" | "system";
+
+// Locale for multi-language
+type AppLocale = "vi" | "en" | "id";
 ```
 
 ### 3.3 Module Structure
@@ -304,24 +403,34 @@ interface TtsHistoryItem {
 ```
 src/
 ├── lib/piper/
-│   └── piperTts.ts           # Piper wrapper class
+│   └── piperTts.ts              # Piper wrapper class
+├── lib/text-processing/
+│   ├── textProcessor.ts         # Validation (existing)
+│   └── vietnameseNormalizer.ts  # Number/date/currency/phone → spoken form
+├── lib/storage/
+│   ├── history.ts               # History API (IndexedDB-backed)
+│   └── idb.ts                   # IndexedDB open/helpers (optional)
 ├── workers/
-│   └── tts-worker.ts          # Web Worker for TTS
+│   └── tts-worker.ts            # Web Worker for TTS
 ├── features/tts/
 │   ├── components/
-│   │   ├── TtsGenerator.tsx  # Main UI
-│   │   ├── AudioPlayer.tsx   # Playback controls
-│   │   └── HistoryPanel.tsx  # History list
+│   │   ├── TtsGenerator.tsx     # Main UI
+│   │   ├── AudioPlayer.tsx      # Playback controls
+│   │   ├── HistoryPanel.tsx     # History list
+│   │   ├── VoiceSettings.tsx   # Settings panel
+│   │   └── ShareButton.tsx      # Copy link (optional component)
 │   ├── hooks/
-│   │   └── useTtsGenerate.ts # Generation hook
-│   ├── types.ts              # TypeScript types
-│   ├── store.ts              # Zustand store
-│   └── index.ts              # Barrel export
-├── lib/storage/
-│   └── history.ts            # History operations
-├── config.ts                 # App configuration
+│   │   └── useTtsGenerate.ts   # Generation hook
+│   ├── types.ts                 # TypeScript types
+│   ├── store.ts                 # Zustand store
+│   └── index.ts                 # Barrel export
+├── features/theme/              # Or components/ui/ThemeProvider
+│   ├── ThemeToggle.tsx          # Light/Dark/System switcher
+│   └── useTheme.ts              # Theme state + persist
+├── config.ts                    # App configuration (locales, maxHistory)
 └── app/
-    └── page.tsx              # Home page
+    ├── layout.tsx               # Theme script/class on html
+    └── page.tsx                 # Home page (locale-aware)
 ```
 
 ### 3.4 API Surface
@@ -373,6 +482,41 @@ interface TtsState {
 }
 ```
 
+#### Vietnamese Normalizer API
+
+```typescript
+// src/lib/text-processing/vietnameseNormalizer.ts
+
+export function normalizeVietnamese(text: string): string;
+// Applies: numbers, currency (VND/USD), dates (dd/mm/yyyy), times (HH:mm),
+// phone numbers, Roman numerals → spoken Vietnamese form.
+```
+
+#### Theme API
+
+```typescript
+// features/theme/useTheme.ts (or equivalent)
+
+export function useTheme(): {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+};
+// Persists to localStorage key "app-theme"; applies class "dark" on documentElement.
+```
+
+#### IndexedDB History API
+
+```typescript
+// src/lib/storage/history.ts
+
+export async function initHistoryDb(): Promise<IDBDatabase>;
+export async function addHistoryItem(item: TtsHistoryItem, audioBlob: Blob): Promise<void>;
+export async function getHistoryItems(limit: number): Promise<TtsHistoryItem[]>;
+export async function getHistoryAudio(id: string): Promise<Blob | null>;
+export async function removeHistoryItem(id: string): Promise<void>;
+export async function migrateFromLocalStorage(): Promise<{ migrated: number }>;
+```
+
 ### 3.5 Business Logic
 
 #### Text Validation Flow
@@ -384,19 +528,43 @@ interface TtsState {
 4. If valid: enable Generate button
 ```
 
+#### Vietnamese Normalization Flow (Story 7)
+
+```
+1. Before sending text to worker: if locale is "vi" and "Chuẩn hóa văn bản" is on, call normalizeVietnamese(text)
+2. normalizeVietnamese() applies: numbers → words, currency (VND/USD), dates (dd/mm/yyyy), times (HH:mm), phone digits, Roman numerals
+3. Resulting string is sent to TTS; original text kept for display/history
+```
+
 #### Generation Flow
 
 ```
 1. User clicks "Generate"
-2. Set status to "generating", reset progress to 0
-3. Post message to worker with { type: "generate", payload: {...} }
-4. Worker calls piperTtsEngine.synthesize()
-5. Progress updates via onProgress callback (0-100%)
-6. On completion: worker returns Float32Array audio
-7. Convert to Blob with type "audio/wav"
-8. Save to history via addHistoryItem()
-9. Set currentAudio in store, auto-play
-10. Set status to "playing"
+2. Optional: normalize text (Vietnamese) per settings
+3. Set status to "generating", reset progress to 0
+4. Post message to worker with { type: "generate", payload: {...} }
+5. Worker calls piperTtsEngine.synthesize()
+6. Progress updates via onProgress callback (0-100%)
+7. On completion: worker returns Float32Array audio
+8. Convert to Blob with type "audio/wav"
+9. Save to history via IndexedDB (addHistoryItem); store blob or blob URL
+10. Set currentAudio in store, auto-play
+11. Set status to "playing"
+```
+
+#### Theme Flow (Story 8)
+
+```
+1. On load: read theme from localStorage ("app-theme"); apply class to document.documentElement
+2. If "system": use matchMedia("prefers-color-scheme: dark").matches to set class
+3. On toggle: update localStorage, apply class, re-render
+```
+
+#### Share Flow (Story 10)
+
+```
+1. User clicks Share → navigator.clipboard.writeText(window.location.href)
+2. On success: show toast "Link copied"; on failure: show "Copy failed" (e.g. non-HTTPS)
 ```
 
 #### Error Handling
@@ -424,6 +592,10 @@ function toFriendlyErrorMessage(raw: string): string {
 | Audio playback fails          | Offer download as WAV fallback                                       | `PLAYBACK_FAILED`    |
 | IndexedDB quota exceeded      | Warning toast, suggest clearing history                              | `STORAGE_FULL`       |
 | Worker initialization fails   | Show error, disable generation                                       | `WORKER_INIT_FAILED` |
+| Clipboard API unavailable     | Show "Copy link not available" (e.g. non-secure context)              | `SHARE_UNAVAILABLE`  |
+| Theme preference not applied  | Fallback to light; log warning                                       | N/A                  |
+| Normalization throws          | Fall back to raw text; log error                                     | `NORMALIZE_ERROR`    |
+| IndexedDB migration fails     | Keep localStorage history; toast "Could not migrate history"        | `IDB_MIGRATE_FAILED` |
 
 ---
 
@@ -433,8 +605,10 @@ function toFriendlyErrorMessage(raw: string): string {
 | ---------------- | ----------------------------------------------------------------------------------- |
 | Input validation | Text length limited to 5000 chars, no special character restrictions needed for TTS |
 | CDN trust        | Only load from jsDelivr (trusted CDN), voices from Piper project                    |
-| Data exposure    | Audio processed in-memory only, history stored in user's localStorage               |
+| Data exposure    | Audio processed in-memory only; history in user's IndexedDB (client-side only)     |
 | XSS via text     | Text passed directly to TTS engine (not rendered as HTML)                           |
+| Share / clipboard| Only copy URL; no user content in clipboard                                        |
+| Normalization    | No eval or remote code; regex/string only for number/date/currency rules          |
 
 ---
 
@@ -475,6 +649,9 @@ function toFriendlyErrorMessage(raw: string): string {
 | Progress indicator shows during generation | `src/features/tts/components/TtsGenerator.tsx` |
 | Error state displays correctly             | `src/features/tts/components/TtsGenerator.tsx` |
 | History panel shows items                  | `src/features/tts/components/HistoryPanel.tsx` |
+| Theme toggle applies dark/light class      | `ThemeToggle.tsx` or layout                     |
+| Share button copies URL                    | `ShareButton.tsx` or integration test           |
+| Vietnamese normalizer (numbers, dates)     | `src/lib/text-processing/vietnameseNormalizer.ts` |
 
 ### Integration Tests
 
@@ -483,7 +660,9 @@ function toFriendlyErrorMessage(raw: string): string {
 | Full flow   | Enter text → Generate → Audio plays                  |
 | Persistence | Change voice → Reload page → Voice selected          |
 | Offline     | Download voice → Disconnect network → Generate works |
-| History     | Generate 2x → Check history shows 2 items            |
+| History     | Generate 2x → Check history shows 2 items (IndexedDB)|
+| Theme       | Toggle dark → Reload → Theme persisted               |
+| Share       | Click Share → Clipboard contains current URL          |
 
 ---
 
@@ -533,6 +712,20 @@ function toFriendlyErrorMessage(raw: string): string {
 | 5.3  | Error handling polish    | All components       | Phase 3    | ✅ Done |
 | 5.4  | Performance optimization | Worker, hooks        | Phase 1-2  | ✅ Done |
 
+### Phase 6: Extended Features (v1.1 — Est. 12–16 hours)
+
+| Step | Task                                   | Files / Scope                                      | Dependency | Status   |
+| ---- | -------------------------------------- | -------------------------------------------------- | ---------- | -------- |
+| 6.1  | Vietnamese text normalizer             | `src/lib/text-processing/vietnameseNormalizer.ts`  | -          | Pending  |
+| 6.2  | Integrate normalizer in TTS flow       | `useTtsGenerate`, config toggle                    | 6.1        | Pending  |
+| 6.3  | IndexedDB history service              | `src/lib/storage/history.ts` (IDB backend)         | -          | Pending  |
+| 6.4  | Migrate localStorage history → IDB     | Migration on first load, clear LS key              | 6.3        | Pending  |
+| 6.5  | Theme store + ThemeToggle component   | `features/theme` or `useTheme` + toggle in layout   | -          | Pending  |
+| 6.6  | Apply theme class (dark) in layout     | `app/layout.tsx`, Tailwind `dark:`                 | 6.5        | Pending  |
+| 6.7  | Multi-language: locale + voice filter | Config locales (vi/en/id), voice list by locale   | -          | Pending  |
+| 6.8  | Share button (copy URL)                | `ShareButton.tsx`, Clipboard API                   | -          | Pending  |
+| 6.9  | Unit tests for normalizer + IDB       | `vietnameseNormalizer.test.ts`, history.test.ts    | 6.1, 6.3   | Pending  |
+
 ### Suggested PRs
 
 | PR        | Scope                | Files                                                                          | Est. Size |
@@ -542,6 +735,9 @@ function toFriendlyErrorMessage(raw: string): string {
 | **PR #3** | UI Components        | `TtsGenerator.tsx`, `AudioPlayer.tsx`, `HistoryPanel.tsx`, `VoiceSettings.tsx` | Large     |
 | **PR #4** | Integration + Utils  | `page.tsx`, `textProcessor.ts`, `history.ts`, `config.ts`                      | Medium    |
 | **PR #5** | Tests + Polish       | Test files, error handling                                                     | Medium    |
+| **PR #6** | Vietnamese + IDB     | vietnameseNormalizer, history IndexedDB, migration                              | Medium    |
+| **PR #7** | Theme + Share        | ThemeToggle, useTheme, ShareButton, layout                                      | Small     |
+| **PR #8** | Multi-language       | Locale config, voice filter, UI labels                                          | Medium    |
 
 ### ⏱️ Implementation Timeline (Updated)
 
@@ -551,6 +747,7 @@ function toFriendlyErrorMessage(raw: string): string {
 | Week 2 | Phase 3   | UI components                          |
 | Week 3 | Phase 4   | Integration + utilities                |
 | Week 4 | Phase 5   | Testing + polish + release             |
+| Week 5 | Phase 6   | Extended: normalizer, IDB, theme, share, multi-language |
 
 ---
 
@@ -561,6 +758,9 @@ function toFriendlyErrorMessage(raw: string): string {
 3. **Text Preprocessing:** Do we need SSML-like tag support for pronunciation hints?
 4. **Analytics:** Should we add anonymous usage analytics to track popular voices/languages?
 5. **Mobile Optimization:** Is the current UI optimized for touch devices?
+6. **Multi-language routing:** Use path-based locales (`/en`, `/id`) or single page with dropdown?
+7. **Real-time streaming:** Prioritize real-time audio chunks (like NGHI-TTS) in v1.2?
+8. **Model source:** Add Cloudflare R2 as optional model source alongside current CDN?
 
 ---
 
@@ -576,12 +776,13 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Internal
 
-| Module                  | Dependency Reason        |
-| ----------------------- | ------------------------ |
-| features/tts/store      | Zustand state management |
-| features/tts/components | UI rendering             |
-| lib/text-processing     | Text validation          |
-| lib/storage/history     | History operations       |
+| Module                   | Dependency Reason                    |
+| ------------------------ | ------------------------------------ |
+| features/tts/store       | Zustand state management             |
+| features/tts/components  | UI rendering                         |
+| lib/text-processing      | Text validation, Vietnamese normalizer |
+| lib/storage/history      | History operations (IndexedDB)       |
+| features/theme (or hook) | Dark mode state and persistence      |
 
 ---
 

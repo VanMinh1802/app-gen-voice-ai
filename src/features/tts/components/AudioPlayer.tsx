@@ -8,7 +8,9 @@ export function AudioPlayer() {
   const { currentAudioUrl, status, settings, setStatus } = useTtsStore();
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(settings.volume);
+  const [volume, setVolume] = useState(() =>
+    typeof settings?.volume === "number" ? settings.volume : 1
+  );
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -43,6 +45,12 @@ export function AudioPlayer() {
       audioRef.current.volume = volume;
     }
   }, [volume]);
+
+  useEffect(() => {
+    if (currentAudioUrl && status === "playing" && audioRef.current) {
+      audioRef.current.play().catch(() => setStatus("idle"));
+    }
+  }, [currentAudioUrl, status, setStatus]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -159,7 +167,7 @@ export function AudioPlayer() {
             min="0"
             max={duration || 0}
             step="0.1"
-            value={currentTime}
+            value={Number.isFinite(currentTime) ? currentTime : 0}
             onChange={handleSeek}
             className="w-full accent-primary"
             aria-label="Seek"
@@ -191,7 +199,7 @@ export function AudioPlayer() {
             min="0"
             max="1"
             step="0.1"
-            value={volume}
+            value={Number.isFinite(volume) ? volume : 1}
             onChange={handleVolumeChange}
             className="w-20 accent-primary"
             aria-label="Volume"

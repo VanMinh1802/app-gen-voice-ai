@@ -1,9 +1,11 @@
 import { useCallback, useRef, useEffect, useState } from "react";
 import { useTtsStore } from "../store";
+import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 import type { TtsWorkerOutgoingMessage, TtsHistoryItem } from "../types";
 
 export function useTtsGenerate() {
   const workerRef = useRef<Worker | null>(null);
+  const currentTextRef = useRef<string>("");
   const [isWorkerReady, setIsWorkerReady] = useState(false);
 
   const {
@@ -20,6 +22,7 @@ export function useTtsGenerate() {
     addToHistory,
     setError,
     reset,
+    loadHistory,
   } = useTtsStore();
 
   const handleAudioCompleteRef = useRef<((audioArrayBuffer: ArrayBuffer, duration: number) => void) | null>(null);
@@ -33,7 +36,7 @@ export function useTtsGenerate() {
 
       const historyItem: TtsHistoryItem = {
         id: crypto.randomUUID(),
-        text: "",
+        text: currentTextRef.current,
         model: settings.model,
         voice: settings.voice,
         speed: settings.speed,
@@ -42,7 +45,7 @@ export function useTtsGenerate() {
         createdAt: Date.now(),
       };
 
-      addToHistory(historyItem);
+      addToHistory(historyItem, audioBlob);
       setStatus("playing");
       setProgress(100);
     },
@@ -50,6 +53,10 @@ export function useTtsGenerate() {
   );
 
   handleAudioCompleteRef.current = handleAudioComplete;
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   useEffect(() => {
     const initWorker = async () => {
@@ -119,10 +126,16 @@ export function useTtsGenerate() {
       setStatus("generating");
       setProgress(0);
 
+      const textToGenerate = settings.normalizeText
+        ? normalizeVietnamese(text)
+        : text;
+
+      currentTextRef.current = text;
+
       workerRef.current.postMessage({
         type: "generate",
         payload: {
-          text,
+          text: textToGenerate,
           model: settings.model,
           voice: settings.voice,
           speed: settings.speed,

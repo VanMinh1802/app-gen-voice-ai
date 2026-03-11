@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useTtsStore } from "../store";
-import { config } from "@/config";
+import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 
 interface HistoryPanelProps {
   onRefill: (text: string) => void;
@@ -44,6 +44,11 @@ export function HistoryPanel({ onRefill }: HistoryPanelProps) {
   };
 
   const getVoiceName = (voiceId: string) => {
+    if (voiceId.startsWith(CUSTOM_MODEL_PREFIX)) {
+      const id = voiceId.slice(CUSTOM_MODEL_PREFIX.length);
+      const custom = config.customModels.find((m) => m.id === id);
+      return custom?.name ?? voiceId;
+    }
     const voice = config.voices.find((v) => v.id === voiceId);
     return voice?.name || voiceId;
   };

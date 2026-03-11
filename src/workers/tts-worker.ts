@@ -4,6 +4,9 @@ import type {
   TtsWorkerOutgoingMessage,
   TtsRequest,
 } from "@/features/tts/types";
+import { CUSTOM_MODEL_PREFIX, config } from "@/config";
+import type { PiperCustomSession } from "@/lib/piper/piperCustom";
+import { loadCustomPiper } from "@/lib/piper/piperCustom";
 
 /** Prefer same-origin /onnx/ so .mjs is served with correct MIME (avoids blob fetch issues in worker). */
 const ONNX_WASM_BASE =
@@ -19,6 +22,16 @@ const WASM_PATHS = {
 };
 
 let ttsSession: TtsSession | null = null;
+let customSession: PiperCustomSession | null = null;
+let customSessionVoiceId: string | null = null;
+
+function isCustomVoice(voiceId: string): boolean {
+  return voiceId.startsWith(CUSTOM_MODEL_PREFIX);
+}
+
+function getCustomModelName(voiceId: string): string {
+  return voiceId.slice(CUSTOM_MODEL_PREFIX.length);
+}
 
 async function initSession(voiceId: string): Promise<TtsSession> {
   if (ttsSession && ttsSession.voiceId === voiceId && ttsSession.ready) {
@@ -37,14 +50,32 @@ async function initSession(voiceId: string): Promise<TtsSession> {
   return ttsSession;
 }
 
+async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
+  if (customSession && customSessionVoiceId === voiceId) {
+    return customSession;
+  }
+  const modelName = getCustomModelName(voiceId);
+  const baseUrl =
+    typeof location !== "undefined"
+      ? `${location.origin}${config.tts.customModelBaseUrl}`
+      : config.tts.customModelBaseUrl;
+  const piperPhonemizePaths = {
+    piperWasm: WASM_PATHS.piperWasm,
+    piperData: WASM_PATHS.piperData,
+  };
+  customSession = await loadCustomPiper(baseUrl, modelName, ONNX_WASM_BASE, piperPhonemizePaths);
+  customSessionVoiceId = voiceId;
+  return customSession;
+}
+
 function sendProgress(progress: number) {
   const message: TtsWorkerOutgoingMessage = { type: "progress", progress };
   self.postMessage(message);
 }
 
-function sendComplete(audio: Float32Array) {
-  const wavBuffer = float32ToWav(audio, 24000);
-  const duration = audio.length / 24000;
+function sendComplete(audio: Float32Array, sampleRate: number = 24000) {
+  const wavBuffer = float32ToWav(audio, sampleRate);
+  const duration = audio.length / sampleRate;
 
   const message: TtsWorkerOutgoingMessage = {
     type: "complete",
@@ -117,6 +148,7 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         }
 
         const { text, voice, speed = 1.0 } = payload as TtsRequest;
+        const effectiveVoice = voice || "vi_VN-vais1000-medium";
 
         if (!text) {
           sendError("No text provided");
@@ -125,16 +157,21 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
 
         sendProgress(10);
 
-        const session = await initSession(voice || "vi_VN-vais1000-medium");
-
-        sendProgress(40);
-
-        const audioBlob = await session.predict(text);
-
-        sendProgress(95);
-
-        const float32Audio = await blobToFloat32Array(audioBlob);
-        sendComplete(float32Audio);
+        if (isCustomVoice(effectiveVoice)) {
+          const custom = await initCustomSession(effectiveVoice);
+          sendProgress(40);
+          const lengthScale = 1 / speed;
+          const float32Audio = await custom.predict(text, { lengthScale });
+          sendProgress(95);
+          sendComplete(float32Audio, custom.sampleRate);
+        } else {
+          const session = await initSession(effectiveVoice);
+          sendProgress(40);
+          const audioBlob = await session.predict(text);
+          sendProgress(95);
+          const float32Audio = await blobToFloat32Array(audioBlob);
+          sendComplete(float32Audio, 24000);
+        }
 
         break;
       }
@@ -146,10 +183,15 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         }
 
         const { voice } = payload as TtsRequest;
+        const effectiveVoice = voice || "vi_VN-vais1000-medium";
 
         sendProgress(10);
 
-        await initSession(voice || "vi_VN-vais1000-medium");
+        if (isCustomVoice(effectiveVoice)) {
+          await initCustomSession(effectiveVoice);
+        } else {
+          await initSession(effectiveVoice);
+        }
 
         sendProgress(100);
 
@@ -165,6 +207,8 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
 
       case "terminate": {
         ttsSession = null;
+        customSession = null;
+        customSessionVoiceId = null;
         break;
       }
 

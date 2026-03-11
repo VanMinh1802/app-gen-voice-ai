@@ -36,3 +36,6 @@ coverage/
 
 # Misc
 *.log
+
+#references
+references/

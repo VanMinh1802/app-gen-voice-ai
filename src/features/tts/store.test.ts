@@ -105,6 +105,7 @@ describe("ttsStore", () => {
   });
 
   describe("history management", () => {
+    const mockAudioBlob = new Blob(["mock"], { type: "audio/wav" });
     const mockHistoryItem: TtsHistoryItem = {
       id: "test-1",
       text: "Hello world",
@@ -117,7 +118,7 @@ describe("ttsStore", () => {
     };
 
     it("adds item to history", () => {
-      useTtsStore.getState().addToHistory(mockHistoryItem);
+      useTtsStore.getState().addToHistory(mockHistoryItem, mockAudioBlob);
       expect(useTtsStore.getState().history).toHaveLength(1);
       expect(useTtsStore.getState().history[0].id).toBe("test-1");
     });
@@ -125,31 +126,30 @@ describe("ttsStore", () => {
     it("prepends new items to history", () => {
       const item1 = { ...mockHistoryItem, id: "1", createdAt: 1000 };
       const item2 = { ...mockHistoryItem, id: "2", createdAt: 2000 };
-      useTtsStore.getState().addToHistory(item1);
-      useTtsStore.getState().addToHistory(item2);
+      useTtsStore.getState().addToHistory(item1, mockAudioBlob);
+      useTtsStore.getState().addToHistory(item2, mockAudioBlob);
       const { history } = useTtsStore.getState();
       expect(history[0].id).toBe("2");
     });
 
     it("limits history to 50 items", () => {
       for (let i = 0; i < 60; i++) {
-        useTtsStore.getState().addToHistory({
-          ...mockHistoryItem,
-          id: String(i),
-          createdAt: i,
-        });
+        useTtsStore.getState().addToHistory(
+          { ...mockHistoryItem, id: String(i), createdAt: i },
+          mockAudioBlob
+        );
       }
       expect(useTtsStore.getState().history).toHaveLength(50);
     });
 
     it("removes item from history", () => {
-      useTtsStore.getState().addToHistory(mockHistoryItem);
+      useTtsStore.getState().addToHistory(mockHistoryItem, mockAudioBlob);
       useTtsStore.getState().removeFromHistory("test-1");
       expect(useTtsStore.getState().history).toHaveLength(0);
     });
 
     it("clears all history", () => {
-      useTtsStore.getState().addToHistory(mockHistoryItem);
+      useTtsStore.getState().addToHistory(mockHistoryItem, mockAudioBlob);
       useTtsStore.getState().clearHistory();
       expect(useTtsStore.getState().history).toHaveLength(0);
     });

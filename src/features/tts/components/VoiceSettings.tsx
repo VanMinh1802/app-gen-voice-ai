@@ -97,7 +97,7 @@ export function VoiceSettings() {
             min="0.5"
             max="2.0"
             step="0.1"
-            value={settings.speed}
+            value={typeof settings?.speed === "number" ? settings.speed : 1}
             onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
             className="w-full accent-primary"
           />
@@ -113,14 +113,14 @@ export function VoiceSettings() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Output Volume</span>
-            <span className="font-medium">{Math.round(settings.volume * 100)}%</span>
+            <span className="font-medium">{Math.round((typeof settings?.volume === "number" ? settings.volume : 1) * 100)}%</span>
           </div>
           <input
             type="range"
             min="0"
             max="1"
             step="0.1"
-            value={settings.volume}
+            value={typeof settings?.volume === "number" ? settings.volume : 1}
             onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
             className="w-full accent-primary"
           />
