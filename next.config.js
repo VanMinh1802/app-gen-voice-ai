@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
+    if (dev) {
+      // Avoid ENOENT on .next/cache/webpack/.../1.pack.gz (PackFileCacheStrategy race/missing file)
+      config.cache = false;
+    }
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,

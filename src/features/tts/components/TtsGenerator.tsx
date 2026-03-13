@@ -46,14 +46,13 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
   }, [currentAudio]);
 
   const allVoices = useMemo(() => {
-    const builtIn = config.voices;
     const custom = config.customModels.map((m) => ({
       id: `${CUSTOM_MODEL_PREFIX}${m.id}` as const,
       name: m.name,
       language: "vi" as const,
       gender: "female" as const,
     }));
-    return [...builtIn, ...custom];
+    return custom;
   }, []);
 
   useEffect(() => {
@@ -112,10 +111,10 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
 
   const handleVoiceChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const voice = e.target.value as (typeof config.voices)[number]["id"];
+      const voice = e.target.value as typeof settings.voice;
       setSettings({ voice, model: voice });
     },
-    [setSettings]
+    [setSettings, settings]
   );
 
   const handleSpeedChange = useCallback(

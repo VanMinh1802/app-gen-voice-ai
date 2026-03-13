@@ -19,6 +19,7 @@ interface TtsState {
   progress: number;
   currentAudio: Blob | null;
   currentAudioUrl: string | null;
+  nowPlaying: TtsHistoryItem | null;
   history: TtsHistoryItem[];
   error: string | null;
   isHistoryLoaded: boolean;
@@ -27,6 +28,7 @@ interface TtsState {
   setStatus: (status: TtsStatus) => void;
   setProgress: (progress: number) => void;
   setCurrentAudio: (audio: Blob | null, url: string | null) => void;
+  setNowPlaying: (item: TtsHistoryItem | null) => void;
   addToHistory: (item: TtsHistoryItem, audioBlob: Blob) => void;
   removeFromHistory: (id: string) => void;
   clearHistory: () => void;
@@ -40,6 +42,7 @@ const defaultSettings: TtsSettings = {
   voice: config.tts.defaultVoice as TtsSettings["voice"],
   speed: config.tts.defaultSpeed,
   volume: config.tts.defaultVolume,
+  pitch: 0,
   normalizeText: true,
 };
 
@@ -49,6 +52,7 @@ const initialState = {
   progress: 0,
   currentAudio: null,
   currentAudioUrl: null,
+  nowPlaying: null as TtsHistoryItem | null,
   history: [] as TtsHistoryItem[],
   error: null,
   isHistoryLoaded: false,
@@ -103,6 +107,8 @@ export const useTtsStore = create<TtsState>()(
           currentAudioUrl: url,
         }),
 
+      setNowPlaying: (item) => set({ nowPlaying: item }),
+
       addToHistory: async (item, audioBlob) => {
         const state = get();
         const newHistory = [item, ...state.history].slice(0, config.tts.historyLimit);
@@ -120,6 +126,7 @@ export const useTtsStore = create<TtsState>()(
       removeFromHistory: async (id) => {
         set((state) => ({
           history: state.history.filter((item) => item.id !== id),
+          nowPlaying: state.nowPlaying?.id === id ? null : state.nowPlaying,
         }));
 
         if (isIndexedDBAvailable()) {
@@ -132,7 +139,7 @@ export const useTtsStore = create<TtsState>()(
       },
 
       clearHistory: async () => {
-        set({ history: [] });
+        set({ history: [], nowPlaying: null });
 
         if (isIndexedDBAvailable()) {
           try {
@@ -151,6 +158,7 @@ export const useTtsStore = create<TtsState>()(
           progress: 0,
           currentAudio: null,
           currentAudioUrl: null,
+          nowPlaying: null,
           error: null,
         }),
 

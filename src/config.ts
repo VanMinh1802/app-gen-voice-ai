@@ -5,8 +5,9 @@ export const CUSTOM_MODEL_PREFIX = "custom:";
 export const config = {
   tts: {
     maxTextLength: 5000,
-    defaultModel: "vi_VN-vais1000-medium",
-    defaultVoice: "vi_VN-vais1000-medium",
+    // Custom-only mode: default to first custom voice
+    defaultModel: "custom:ngochuyen",
+    defaultVoice: "custom:ngochuyen",
     defaultSpeed: 1.0,
     defaultVolume: 1.0,
     historyLimit: 50,
@@ -17,6 +18,8 @@ export const config = {
     settingsKey: "tts-settings",
     historyKey: "tts-history",
   },
+  /** IDs of voices that are currently available (have .onnx model in tts-model/vi/). Others show "Coming soon". */
+  activeVoiceIds: ["anhkhoi", "lacphi", "minhquang", "ngochuyen"] as string[],
   /** Custom models: add .onnx + .onnx.json to public/tts-model/vi/ and list id (filename without extension) here */
   customModels: [
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
@@ -29,39 +32,10 @@ export const config = {
     { id: "minhkhang", name: "Minh Khang (custom)" },
     { id: "chieuthanh", name: "Chiếu Thành (custom)" },
     { id: "mytam2794", name: "Mỹ Tâm (custom)" },
+    { id: "anhkhoi", name: "Anh Khôi (custom)" }
   ],
-  voices: [
-    {
-      id: "vi_VN-vais1000-medium",
-      name: "Vietnamese (Vais1000 - Medium)",
-      language: "vi",
-      gender: "female",
-    },
-    {
-      id: "vi_VN-25hours_single-low",
-      name: "Vietnamese (25hours - Low)",
-      language: "vi",
-      gender: "female",
-    },
-    {
-      id: "vi_VN-vivos-x_low",
-      name: "Vietnamese (Vivos - X Low)",
-      language: "vi",
-      gender: "female",
-    },
-    {
-      id: "en_US-lessac-medium",
-      name: "English (Lessac Medium)",
-      language: "en",
-      gender: "female",
-    },
-    {
-      id: "en_US-lessac-low",
-      name: "English (Lessac Low)",
-      language: "en",
-      gender: "male",
-    },
-  ],
+  // Built-in voices removed (custom-only)
+  voices: [],
 } as const;
 
 export type VoiceId =

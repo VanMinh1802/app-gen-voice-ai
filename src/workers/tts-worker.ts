@@ -298,4 +298,7 @@ function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
   return float32Array;
 }
 
+// Báo cho main thread biết worker đã sẵn sàng nhận lệnh (script đã chạy xong)
+self.postMessage({ type: "workerReady" } as TtsWorkerOutgoingMessage);
+
 export {};

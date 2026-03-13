@@ -58,10 +58,18 @@ export async function loadCustomPiper(
   if (!modelRes.ok) throw new Error(`Failed to load model: ${modelRes.status} ${modelUrl}`);
   if (!configRes.ok) throw new Error(`Failed to load config: ${configRes.status} ${configUrl}`);
 
-  const [modelBuffer, voiceConfig] = await Promise.all([
-    modelRes.arrayBuffer(),
-    configRes.json() as Promise<PiperVoiceConfig>,
-  ]);
+  const configText = await configRes.text();
+  if (/^\s*Entry not found\s*$/i.test(configText) || /^\s*<!DOCTYPE/i.test(configText)) {
+    throw new Error("Voice or model config not found. The selected voice may be unavailable.");
+  }
+  let voiceConfig: PiperVoiceConfig;
+  try {
+    voiceConfig = JSON.parse(configText) as PiperVoiceConfig;
+  } catch {
+    throw new Error("Invalid voice config format. The selected voice may be unavailable.");
+  }
+
+  const modelBuffer = await modelRes.arrayBuffer();
 
   const session = await ort.InferenceSession.create(new Uint8Array(modelBuffer), {
     executionProviders: ["wasm"],

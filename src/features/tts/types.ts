@@ -31,10 +31,11 @@ export interface TtsSettings {
   voice: VoiceId;
   speed: number;
   volume: number;
+  pitch: number;
   normalizeText: boolean;
 }
 
-export type TtsStatus = "idle" | "loading" | "generating" | "playing" | "error";
+export type TtsStatus = "idle" | "loading" | "generating" | "previewing" | "playing" | "error";
 
 export interface TtsHistoryItem {
   id: string;
@@ -68,7 +69,12 @@ export interface TtsWorkerError {
   error: string;
 }
 
+export interface TtsWorkerReady {
+  type: "workerReady";
+}
+
 export type TtsWorkerOutgoingMessage =
   | TtsWorkerProgress
   | TtsWorkerComplete
-  | TtsWorkerError;
+  | TtsWorkerError
+  | TtsWorkerReady;

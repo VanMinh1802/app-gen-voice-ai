@@ -2,11 +2,17 @@ import { useCallback, useRef, useEffect, useState } from "react";
 import { useTtsStore } from "../store";
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 import type { TtsWorkerOutgoingMessage, TtsHistoryItem } from "../types";
+import { CUSTOM_MODEL_PREFIX } from "@/config";
+
+/** Mẫu văn bản ngắn dùng cho preview giọng (không lưu lịch sử). */
+const PREVIEW_SAMPLE_TEXT = "Xin chào, đây là giọng đọc mẫu.";
 
 export function useTtsGenerate() {
   const workerRef = useRef<Worker | null>(null);
+  const fallbackTimeoutRef = useRef<number | null>(null);
   const currentTextRef = useRef<string>("");
   const [isWorkerReady, setIsWorkerReady] = useState(false);
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
 
   const {
     settings,
@@ -16,9 +22,11 @@ export function useTtsGenerate() {
     currentAudioUrl,
     history,
     error,
+    nowPlaying,
     setStatus,
     setProgress,
     setCurrentAudio,
+    setNowPlaying,
     addToHistory,
     setError,
     reset,
@@ -26,13 +34,34 @@ export function useTtsGenerate() {
   } = useTtsStore();
 
   const handleAudioCompleteRef = useRef<((audioArrayBuffer: ArrayBuffer, duration: number) => void) | null>(null);
+  const isPreviewRef = useRef(false);
+  const previewVoiceIdRef = useRef<string>("");
 
   const handleAudioComplete = useCallback(
     (audioArrayBuffer: ArrayBuffer, duration: number) => {
       const audioBlob = new Blob([audioArrayBuffer], { type: "audio/wav" });
       const audioUrl = URL.createObjectURL(audioBlob);
-
       setCurrentAudio(audioBlob, audioUrl);
+
+      if (isPreviewRef.current) {
+        isPreviewRef.current = false;
+        setPreviewingVoiceId(null);
+        const voiceId = previewVoiceIdRef.current;
+        const previewItem: TtsHistoryItem = {
+          id: crypto.randomUUID(),
+          text: PREVIEW_SAMPLE_TEXT,
+          model: voiceId,
+          voice: voiceId,
+          speed: settings.speed,
+          audioUrl,
+          duration,
+          createdAt: Date.now(),
+        };
+        setNowPlaying(previewItem);
+        setStatus("playing");
+        setProgress(100);
+        return;
+      }
 
       const historyItem: TtsHistoryItem = {
         id: crypto.randomUUID(),
@@ -44,12 +73,12 @@ export function useTtsGenerate() {
         duration,
         createdAt: Date.now(),
       };
-
       addToHistory(historyItem, audioBlob);
+      setNowPlaying(historyItem);
       setStatus("playing");
       setProgress(100);
     },
-    [settings, setCurrentAudio, addToHistory, setStatus, setProgress]
+    [settings, setCurrentAudio, addToHistory, setNowPlaying, setStatus, setProgress]
   );
 
   handleAudioCompleteRef.current = handleAudioComplete;
@@ -72,37 +101,66 @@ export function useTtsGenerate() {
           const message = event.data;
 
           switch (message.type) {
+            case "workerReady":
+              if (fallbackTimeoutRef.current) {
+                clearTimeout(fallbackTimeoutRef.current);
+                fallbackTimeoutRef.current = null;
+              }
+              setIsWorkerReady(true);
+              setStatus("idle");
+              // Preload default voice model (chạy nền, không chặn UI)
+              workerRef.current?.postMessage({
+                type: "loadModel",
+                payload: { voice: "custom:ngochuyen" },
+              });
+              break;
             case "progress":
               setProgress(message.progress);
               break;
             case "complete":
-              handleAudioCompleteRef.current?.(message.audio, message.duration);
+              // loadModel gửi complete với audio rỗng, duration 0 — bỏ qua
+              if (message.audio.byteLength > 0 && message.duration > 0) {
+                handleAudioCompleteRef.current?.(message.audio, message.duration);
+              }
               break;
             case "error":
+              setPreviewingVoiceId(null);
               setError(toFriendlyErrorMessage(message.error));
               setStatus("error");
               break;
           }
         };
 
-        workerRef.current.onerror = (error) => {
-          console.error("Worker error:", error);
-          setError("Failed to initialize TTS worker");
+        workerRef.current.onerror = () => {
+          setError("Không tải được công cụ TTS. Vui lòng tải lại trang.");
           setStatus("error");
+          setIsWorkerReady(true); // Hiện form + lỗi, không kẹt spinner
         };
 
-        setIsWorkerReady(true);
-        setStatus("idle");
+        // Nếu sau 12s vẫn chưa có workerReady (lỗi script/network), bỏ spinner
+        fallbackTimeoutRef.current = window.setTimeout(() => {
+          setIsWorkerReady((ready) => {
+            if (ready) return ready;
+            setError("Khởi tạo quá lâu. Vui lòng tải lại trang.");
+            setStatus("error");
+            return true;
+          });
+        }, 12000);
       } catch (err) {
         console.error("Failed to create worker:", err);
-        setError("Failed to initialize TTS worker");
+        setError("Không tải được công cụ TTS. Vui lòng tải lại trang.");
         setStatus("error");
+        setIsWorkerReady(true);
       }
     };
 
     initWorker();
 
     return () => {
+      if (fallbackTimeoutRef.current) {
+        clearTimeout(fallbackTimeoutRef.current);
+        fallbackTimeoutRef.current = null;
+      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
@@ -146,13 +204,61 @@ export function useTtsGenerate() {
   );
 
   const stop = useCallback(() => {
+    // Just reset state, keep worker alive for reuse (model stays cached)
+    if (workerRef.current) {
+      workerRef.current.postMessage({ type: "terminate" });
+    }
+    reset();
+  }, [reset]);
+
+  const terminateWorker = useCallback(() => {
+    // Force terminate worker and clear cached model - use only when needed
     if (workerRef.current) {
       workerRef.current.terminate();
       workerRef.current = null;
       setIsWorkerReady(false);
     }
-    reset();
-  }, [reset]);
+  }, []);
+
+  const preloadModel = useCallback((voiceId?: string) => {
+    // Preload a specific voice model (useful on app start)
+    if (!workerRef.current || !isWorkerReady) {
+      console.warn("Worker not ready for preload");
+      return;
+    }
+    const targetVoice = voiceId || settings.voice;
+    workerRef.current.postMessage({
+      type: "loadModel",
+      payload: { voice: targetVoice },
+    });
+  }, [isWorkerReady, settings.voice]);
+
+  const previewVoice = useCallback(
+    (voiceId: string, sampleText: string = PREVIEW_SAMPLE_TEXT) => {
+      if (!workerRef.current || !isWorkerReady) {
+        setError("TTS chưa sẵn sàng. Vui lòng thử lại sau.");
+        return;
+      }
+      const normalizedId = voiceId.startsWith(CUSTOM_MODEL_PREFIX) ? voiceId : `${CUSTOM_MODEL_PREFIX}${voiceId}`;
+      const textToGenerate = settings.normalizeText ? normalizeVietnamese(sampleText) : sampleText;
+      isPreviewRef.current = true;
+      previewVoiceIdRef.current = normalizedId;
+      setPreviewingVoiceId(normalizedId);
+      reset();
+      setStatus("previewing");
+      setProgress(0);
+      workerRef.current.postMessage({
+        type: "generate",
+        payload: {
+          text: textToGenerate,
+          model: normalizedId,
+          voice: normalizedId,
+          speed: settings.speed,
+        },
+      });
+    },
+    [isWorkerReady, settings, setError, reset, setStatus, setProgress]
+  );
 
   return {
     settings,
@@ -164,13 +270,18 @@ export function useTtsGenerate() {
     history,
     generate,
     stop,
+    terminateWorker,
+    preloadModel,
+    previewVoice,
+    previewingVoiceId,
     isReady: isWorkerReady,
+    nowPlaying,
   };
 }
 
 function toFriendlyErrorMessage(raw: string): string {
-  if (/Entry not found|not valid JSON/i.test(raw)) {
-    return "Voice or model data could not be loaded. The selected voice may be unavailable or the CDN returned an error.";
+  if (/Entry not found|not valid JSON|Unexpected token/i.test(raw)) {
+    return "Không tải được giọng hoặc model. Vui lòng chọn giọng khác hoặc kiểm tra kết nối mạng.";
   }
   if (/network|fetch|Connection/i.test(raw)) {
     return "Unable to download voice model. Check your internet connection.";
