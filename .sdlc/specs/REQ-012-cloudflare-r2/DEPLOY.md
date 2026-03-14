@@ -103,7 +103,7 @@ Bấm **Save**.
 
 1. **URL**: Dạng `https://<project-name>.<account>.pages.dev`.
 2. Mở app → chọn giọng → Generate. Lần đầu sẽ tải model từ R2 (qua `/api/models/...`), lần sau dùng cache IndexedDB.
-3. Nếu lỗi 404 khi tải model: kiểm tra lại R2 binding (tên biến `VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object trong R2: `vi/<voiceId>/model.onnx`, `vi/<voiceId>/model.onnx.json`.
+3. Nếu lỗi 404 khi tải model: kiểm tra R2 binding (`VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
 
 ---
 
@@ -113,6 +113,22 @@ Bấm **Save**.
 - [ ] Đã tạo project Pages, connect Git, cấu hình build (command + output directory).
 - [ ] Đã thêm R2 bucket binding: variable `VIETVOICE_MODELS`, bucket `genvoice-models`.
 - [ ] Deploy thành công và test generate giọng trên URL Pages.
+
+---
+
+## Local dev (test với R2 public)
+
+Để chạy `npm run dev` và tải model từ R2 (bucket bật public access), tạo file **`.env.local`** trong thư mục gốc project với:
+
+```bash
+# Bắt buộc cho API route (proxy R2) - Edge runtime cần biến server-only
+R2_PUBLIC_URL=https://pub-86489e33a3f448f4b7dfcc0ec9dd3a49.r2.dev
+
+# Tùy chọn: để worker gọi trực tiếp R2, giảm tải qua API
+NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-86489e33a3f448f4b7dfcc0ec9dd3a49.r2.dev
+```
+
+Thay URL bằng **Public URL** thực tế của bucket (R2 → genvoice-models → Settings → Public access). Lưu file `.env.local` với encoding **UTF-8**. Sau đó **restart** `npm run dev`.
 
 ---
 

@@ -3,6 +3,8 @@ import { useTtsStore } from "../store";
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 import type { TtsWorkerOutgoingMessage, TtsHistoryItem } from "../types";
 import { CUSTOM_MODEL_PREFIX } from "@/config";
+import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
+import { getVoiceSampleUrl } from "@/lib/piper/piperR2";
 
 /** Mẫu văn bản ngắn dùng cho preview giọng (không lưu lịch sử). */
 const PREVIEW_SAMPLE_TEXT = "Xin chào, đây là giọng đọc mẫu.";
@@ -108,6 +110,13 @@ export function useTtsGenerate() {
               }
               setIsWorkerReady(true);
               setStatus("idle");
+              // Gửi R2 public URL cho worker (main thread có env, worker bundle có thể không)
+              if (R2_PUBLIC_URL) {
+                workerRef.current?.postMessage({
+                  type: "setR2PublicUrl",
+                  payload: R2_PUBLIC_URL,
+                });
+              }
               // Preload default voice model (chạy nền, không chặn UI)
               workerRef.current?.postMessage({
                 type: "loadModel",
@@ -233,13 +242,54 @@ export function useTtsGenerate() {
     });
   }, [isWorkerReady, settings.voice]);
 
+  /** Preview voice: plays sample.wav from R2 when available, else generates TTS with sample text. */
   const previewVoice = useCallback(
-    (voiceId: string, sampleText: string = PREVIEW_SAMPLE_TEXT) => {
+    async (voiceId: string, sampleText: string = PREVIEW_SAMPLE_TEXT) => {
+      const normalizedId = voiceId.startsWith(CUSTOM_MODEL_PREFIX) ? voiceId : `${CUSTOM_MODEL_PREFIX}${voiceId}`;
+      const modelName = normalizedId.startsWith(CUSTOM_MODEL_PREFIX) ? normalizedId.slice(CUSTOM_MODEL_PREFIX.length) : normalizedId;
+
+      // Ưu tiên phát sample.wav từ R2 cho custom voice (nhanh, không cần generate)
+      const sampleUrl = getVoiceSampleUrl(modelName);
+      try {
+        const res = await fetch(sampleUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          let duration = 0;
+          try {
+            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const buf = await ctx.decodeAudioData(arrayBuffer.slice(0));
+            duration = buf.duration;
+          } catch {
+            duration = 3;
+          }
+          const audioUrl = URL.createObjectURL(blob);
+          setCurrentAudio(blob, audioUrl);
+          setPreviewingVoiceId(null);
+          const previewItem: TtsHistoryItem = {
+            id: crypto.randomUUID(),
+            text: PREVIEW_SAMPLE_TEXT,
+            model: normalizedId,
+            voice: normalizedId,
+            speed: settings.speed,
+            audioUrl,
+            duration,
+            createdAt: Date.now(),
+          };
+          setError(null);
+          setNowPlaying(previewItem);
+          setStatus("playing");
+          setProgress(100);
+          return;
+        }
+      } catch {
+        // Fallback: generate TTS bằng worker
+      }
+
       if (!workerRef.current || !isWorkerReady) {
         setError("TTS chưa sẵn sàng. Vui lòng thử lại sau.");
         return;
       }
-      const normalizedId = voiceId.startsWith(CUSTOM_MODEL_PREFIX) ? voiceId : `${CUSTOM_MODEL_PREFIX}${voiceId}`;
       const textToGenerate = settings.normalizeText ? normalizeVietnamese(sampleText) : sampleText;
       isPreviewRef.current = true;
       previewVoiceIdRef.current = normalizedId;
@@ -257,7 +307,7 @@ export function useTtsGenerate() {
         },
       });
     },
-    [isWorkerReady, settings, setError, reset, setStatus, setProgress]
+    [isWorkerReady, settings, setError, reset, setStatus, setProgress, setCurrentAudio, setNowPlaying]
   );
 
   return {

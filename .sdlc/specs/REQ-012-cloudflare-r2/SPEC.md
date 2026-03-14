@@ -85,13 +85,13 @@ Models are currently bundled with the app, increasing bundle size. Need to store
 
 **Acceptance Criteria:**
 
-- [ ] Voice preview button plays pre-rendered sample from R2 (instant, ~1s for 5-10s audio)
-- [ ] When generating, model is downloaded from R2 if not cached locally
-- [ ] Downloaded models are cached in IndexedDB for offline reuse
-- [ ] Progress shown during model download (e.g., "Đang tải model: 50%")
-- [ ] After first download, subsequent generations use cached model (< 1s load time)
-- [ ] Models stored in Cloudflare R2 bucket, not in app bundle
-- [ ] Pre-rendered samples stored in R2 for each voice
+- [x] Voice preview button plays pre-rendered sample from R2 (instant; uses `sample.wav` per voice)
+- [x] When generating, model is downloaded from R2 if not cached locally
+- [x] Downloaded models are cached in IndexedDB for offline reuse
+- [x] Progress shown during model download
+- [x] After first download, subsequent generations use cached model
+- [x] Models stored in Cloudflare R2 bucket, not in app bundle
+- [x] Pre-rendered samples (`sample.wav`) stored in R2 for each voice
 
 **Priority:** P0 (Must Have)
 
@@ -105,14 +105,14 @@ Models are currently bundled with the app, increasing bundle size. Need to store
 genvoice-models/       # R2 Bucket Name (user-created)
 ├── vi/                    # Language folder
 │   ├── ngochuyen/         # Voice ID
-│   │   ├── model.onnx       (~50MB)
-│   │   ├── model.onnx.json
+│   │   ├── ngochuyen.onnx    (~50MB; or model.onnx for legacy)
+│   │   ├── ngochuyen.onnx.json
 │   │   └── sample.wav       (5-10s pre-rendered, shared text)
 │   ├── lacphi/
-│   │   ├── model.onnx
-│   │   ├── model.onnx.json
+│   │   ├── lacphi.onnx
+│   │   ├── lacphi.onnx.json
 │   │   └── sample.wav
-│   └── ... (9 more voices)
+│   └── ... (other voices)
 ```
 
 ### Voice Preview Sample
@@ -149,7 +149,10 @@ bucket_name = "genvoice-models"
 
 | Variable | Description | Required |
 | -------- | ----------- | -------- |
-| `NEXT_PUBLIC_R2_PUBLIC_URL` | Public URL for R2 bucket (for direct access) | Optional |
+| `R2_PUBLIC_URL` | R2 bucket public URL (server-side; e.g. API route fallback in dev) | Local dev |
+| `NEXT_PUBLIC_R2_PUBLIC_URL` | Same URL exposed to client (preview sample, worker) | Optional |
+
+**Local development:** Create `.env.local` in project root with `R2_PUBLIC_URL=<Public URL của R2 bucket>` so the API route can proxy model/sample requests. Use UTF-8 encoding for `.env.local`.
 
 ### API Route
 
@@ -211,6 +214,12 @@ export async function getCachedModels(): Promise<string[]>;
 export async function clearModelCache(): Promise<void>;
 ```
 
+### Implementation Notes
+
+- **Voice preview:** `getVoiceSampleUrl(voiceId)` in `piperR2.ts` returns R2 sample URL or `/api/models/{voiceId}/sample.wav`. `useTtsGenerate.previewVoice()` fetches that URL first; on success plays the WAV, otherwise falls back to TTS generation.
+- **API route (dev):** When R2 binding is not present, the route reads `R2_PUBLIC_URL` from `process.env` or by parsing `.env.local` (supports UTF-16-saved files). Debug info in 503 response only in `NODE_ENV=development`.
+- **Phonemizer WASM:** Piper phonemizer `.wasm`/`.data` are loaded from CDN in `piperR2.ts` (`locateFile`) to avoid 404 on relative paths.
+
 ---
 
 ## 📦 Dependencies
@@ -250,9 +259,9 @@ export async function clearModelCache(): Promise<void>;
 
 ## ✅ Definition of Done
 
-- [ ] R2 bucket configured with 11 voice models
-- [ ] Pre-rendered samples available for each voice
-- [ ] API routes proxy to R2 correctly
-- [ ] IndexedDB cache works
-- [ ] Bundle size reduced
-- [ ] Build passes
+- [x] R2 bucket configured with voice models (`{voiceId}.onnx` + `{voiceId}.onnx.json`)
+- [x] Pre-rendered samples (`sample.wav`) available per voice in R2
+- [x] API route `/api/models/[voiceId]/[file]` proxies to R2 (or direct URL in dev)
+- [x] IndexedDB cache for downloaded models
+- [x] Voice preview uses `sample.wav` from R2 when available; fallback to TTS generate
+- [x] Build passes

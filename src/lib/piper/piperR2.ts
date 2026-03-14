@@ -3,6 +3,10 @@
  * Loads models from R2 with IndexedDB caching for offline reuse.
  */
 
+/** CDN base cho Piper phonemizer WASM (.wasm / .data) — tránh request relative → localhost 404 */
+const PIPER_PHONEMIZE_CDN =
+  "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
+
 import { loadCustomPiper, type PiperCustomSession, type PiperVoiceConfig } from "./piperCustom";
 import {
   saveModelToCache,
@@ -10,6 +14,7 @@ import {
   isModelCached,
   isIndexedDBAvailable,
 } from "@/lib/storage/modelCache";
+import { getR2PublicUrl } from "@/lib/config/r2Config";
 
 export interface LoadModelOptions {
   voiceId: string;
@@ -47,9 +52,9 @@ export async function loadPiperWithCache(
   console.log(`[piperR2] ${voiceId} not in cache, downloading from R2...`);
   onProgress?.(10);
 
-  // Step 2: Download from R2
-  const modelUrl = `${baseUrl}/${voiceId}/model.onnx`;
-  const configUrl = `${baseUrl}/${voiceId}/model.onnx.json`;
+  // Step 2: Download from R2 (file names in R2: {voiceId}.onnx, {voiceId}.onnx.json)
+  const modelUrl = `${baseUrl}/${voiceId}/${voiceId}.onnx`;
+  const configUrl = `${baseUrl}/${voiceId}/${voiceId}.onnx.json`;
 
   onProgress?.(20);
 
@@ -163,6 +168,8 @@ async function loadFromArrayBuffer(
           // ignore
         },
         locateFile(url: string) {
+          if (url.endsWith(".wasm")) return `${PIPER_PHONEMIZE_CDN}.wasm`;
+          if (url.endsWith(".data")) return `${PIPER_PHONEMIZE_CDN}.data`;
           return url;
         },
       })) as { callMain: (args: string[]) => void };
@@ -288,12 +295,13 @@ export async function isVoiceCached(voiceId: string): Promise<boolean> {
 }
 
 /**
- * Get sample audio URL for voice preview.
+ * Returns the URL for the pre-rendered voice sample (sample.wav) for preview.
+ * Uses R2 public URL when configured; otherwise the API proxy.
  */
 export function getVoiceSampleUrl(voiceId: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "";
-  if (baseUrl) {
-    return `${baseUrl}/vi/${voiceId}/sample.wav`;
+  const baseUrl = getR2PublicUrl() || "";
+  if (baseUrl.startsWith("http")) {
+    return `${baseUrl.replace(/\/$/, "")}/vi/${voiceId}/sample.wav`;
   }
   return `/api/models/${voiceId}/sample.wav`;
 }

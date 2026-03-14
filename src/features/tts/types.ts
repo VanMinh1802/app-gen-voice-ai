@@ -49,8 +49,8 @@ export interface TtsHistoryItem {
 }
 
 export interface TtsWorkerMessage {
-  type: "generate" | "loadModel" | "terminate";
-  payload?: TtsRequest;
+  type: "generate" | "loadModel" | "terminate" | "setR2PublicUrl";
+  payload?: TtsRequest | string;
 }
 
 export interface TtsWorkerProgress {

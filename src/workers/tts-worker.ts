@@ -5,6 +5,7 @@ import type {
   TtsRequest,
 } from "@/features/tts/types";
 import { CUSTOM_MODEL_PREFIX, config } from "@/config";
+import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
 import type { PiperCustomSession } from "@/lib/piper/piperCustom";
 import { loadPiperWithCache } from "@/lib/piper/piperR2";
 
@@ -24,6 +25,8 @@ const WASM_PATHS = {
 let ttsSession: TtsSession | null = null;
 let customSession: PiperCustomSession | null = null;
 let customSessionVoiceId: string | null = null;
+/** R2 public URL từ main thread (worker bundle có thể không có NEXT_PUBLIC_*) */
+let r2PublicUrlFromMain: string = "";
 
 function isCustomVoice(voiceId: string): boolean {
   return voiceId.startsWith(CUSTOM_MODEL_PREFIX);
@@ -55,16 +58,22 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
     return customSession;
   }
   const modelName = getCustomModelName(voiceId);
-  const baseUrl =
-    typeof location !== "undefined"
-      ? `${location.origin}${config.tts.customModelBaseUrl}`
-      : config.tts.customModelBaseUrl;
+
+  // Determine base URL for model fetching
+  // - R2_PUBLIC_URL (inlined trong worker) hoặc r2PublicUrlFromMain (main thread gửi sau workerReady)
+  // - Nếu có: fetch trực tiếp R2, không qua API
+  // - Nếu không: dùng /api/models (Cloudflare Pages với R2 binding)
+  const directUrl = R2_PUBLIC_URL || r2PublicUrlFromMain;
+  const baseUrl = directUrl
+    ? `${directUrl.replace(/\/$/, "")}/vi`
+    : (typeof location !== "undefined"
+        ? `${location.origin}/api/models`
+        : "/api/models");
 
   const { session, fromCache } = await loadPiperWithCache({
     voiceId: modelName,
     baseUrl,
     onProgress: (progress) => {
-      // Map progress: 0-20 (download) -> 10-30 (overall)
       const mappedProgress = 10 + (progress * 20) / 100;
       sendProgress(mappedProgress);
     },
@@ -72,7 +81,7 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
 
   customSession = session;
   customSessionVoiceId = voiceId;
-  console.log(`[worker] Loaded custom model ${modelName} from ${fromCache ? "cache" : "R2"}`);
+  console.log(`[worker] Loaded custom model ${modelName} from ${fromCache ? "cache" : "R2"} (baseUrl: ${baseUrl})`);
   return customSession;
 }
 
@@ -210,6 +219,13 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         };
         self.postMessage(message);
 
+        break;
+      }
+
+      case "setR2PublicUrl": {
+        if (typeof payload === "string" && payload.startsWith("http")) {
+          r2PublicUrlFromMain = payload;
+        }
         break;
       }
 
