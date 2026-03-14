@@ -54,16 +54,7 @@ export const voiceMetadata: VoiceMetadata[] = [
     description: "Giọng đọc truyền cảm, mang âm hưởng miền Trung đặc trưng.",
     avatarColor: "#3b82f6"
   },
-  { 
-    id: "duyoryx3175", 
-    name: "Duy Oryx", 
-    region: "Miền Nam", 
-    gender: "Nam", 
-    style: "Công nghệ", 
-    description: "Năng động và trẻ trung, phù hợp cho video review công nghệ.",
-    avatarColor: "#3b82f6"
-  },
-  { 
+  {
     id: "maiphuong", 
     name: "Mai Phương", 
     region: "Miền Bắc", 
@@ -99,14 +90,14 @@ export const voiceMetadata: VoiceMetadata[] = [
     description: "Giọng ông lão miền Tây chân chất, kể chuyện đồng quê.",
     avatarColor: "#3b82f6"
   },
-  { 
-    id: "mytam2794", 
-    name: "Mỹ Tâm", 
-    region: "Miền Nam", 
-    gender: "Nữ", 
-    style: "Ca hát", 
+  {
+    id: "mytam2",
+    name: "Mỹ Tâm",
+    region: "Miền Nam",
+    gender: "Nữ",
+    style: "Ca hát",
     description: "Giọng hát trong sáng, phù hợp cho nhạc và giải trí.",
-    avatarColor: "#ec4899"
+    avatarColor: "#ec4899",
   },
   { 
     id: "anhkhoi", 

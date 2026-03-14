@@ -6,7 +6,7 @@ import type {
 } from "@/features/tts/types";
 import { CUSTOM_MODEL_PREFIX, config } from "@/config";
 import type { PiperCustomSession } from "@/lib/piper/piperCustom";
-import { loadCustomPiper } from "@/lib/piper/piperCustom";
+import { loadPiperWithCache } from "@/lib/piper/piperR2";
 
 /** Prefer same-origin /onnx/ so .mjs is served with correct MIME (avoids blob fetch issues in worker). */
 const ONNX_WASM_BASE =
@@ -59,12 +59,20 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
     typeof location !== "undefined"
       ? `${location.origin}${config.tts.customModelBaseUrl}`
       : config.tts.customModelBaseUrl;
-  const piperPhonemizePaths = {
-    piperWasm: WASM_PATHS.piperWasm,
-    piperData: WASM_PATHS.piperData,
-  };
-  customSession = await loadCustomPiper(baseUrl, modelName, ONNX_WASM_BASE, piperPhonemizePaths);
+
+  const { session, fromCache } = await loadPiperWithCache({
+    voiceId: modelName,
+    baseUrl,
+    onProgress: (progress) => {
+      // Map progress: 0-20 (download) -> 10-30 (overall)
+      const mappedProgress = 10 + (progress * 20) / 100;
+      sendProgress(mappedProgress);
+    },
+  });
+
+  customSession = session;
   customSessionVoiceId = voiceId;
+  console.log(`[worker] Loaded custom model ${modelName} from ${fromCache ? "cache" : "R2"}`);
   return customSession;
 }
 

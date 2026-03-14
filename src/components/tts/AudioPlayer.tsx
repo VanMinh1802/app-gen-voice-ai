@@ -161,9 +161,18 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     setSettings({ speed });
   }, [setSettings]);
 
-  const handleDownload = useCallback(() => {
-    if (!currentAudio) return;
-    const url = URL.createObjectURL(currentAudio);
+  const handleDownload = useCallback(async () => {
+    let blob: Blob | null = currentAudio;
+    if (!blob && currentAudioUrl?.startsWith("blob:")) {
+      try {
+        const res = await fetch(currentAudioUrl);
+        blob = await res.blob();
+      } catch {
+        return;
+      }
+    }
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = `vietvoice-${Date.now()}.wav`;
@@ -171,7 +180,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [currentAudio]);
+  }, [currentAudio, currentAudioUrl]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);

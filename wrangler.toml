@@ -1,0 +1,9 @@
+name = "vietvoice-ai"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = ".next"
+
+# R2 bucket binding for TTS models
+# VIETVOICE_MODELS will be mapped to the R2 bucket
+[[r2_buckets]]
+binding = "VIETVOICE_MODELS"
+bucket_name = "genvoice-models"

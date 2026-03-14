@@ -11,28 +11,38 @@ export const config = {
     defaultSpeed: 1.0,
     defaultVolume: 1.0,
     historyLimit: 50,
-    /** Base URL for custom Piper models (no trailing slash). Place .onnx + .onnx.json in public/tts-model/vi/ */
-    customModelBaseUrl: "/tts-model/vi",
+    /** Base URL for custom Piper models - use R2 API proxy */
+    customModelBaseUrl: "/api/models",
   },
   storage: {
     settingsKey: "tts-settings",
     historyKey: "tts-history",
   },
   /** IDs of voices that are currently available (have .onnx model in tts-model/vi/). Others show "Coming soon". */
-  activeVoiceIds: ["anhkhoi", "lacphi", "minhquang", "ngochuyen"] as string[],
+  activeVoiceIds: [
+    "anhkhoi",
+    "banmai",
+    "chieuthanh",
+    "lacphi",
+    "manhdung",
+    "maiphuong",
+    "minhkhang",
+    "minhquang",
+    "mytam2",
+    "ngochuyen",
+  ] as string[],
   /** Custom models: add .onnx + .onnx.json to public/tts-model/vi/ and list id (filename without extension) here */
   customModels: [
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
     { id: "banmai", name: "Ban Mai (custom)" },
     { id: "manhdung", name: "Mạnh Dũng (custom)" },
     { id: "minhquang", name: "Minh Quang (custom)" },
-    { id: "duyoryx3175", name: "Duy Oryx (custom)" },
     { id: "maiphuong", name: "Mai Phương (custom)" },
     { id: "lacphi", name: "Lạc Phi (custom)" },
     { id: "minhkhang", name: "Minh Khang (custom)" },
     { id: "chieuthanh", name: "Chiếu Thành (custom)" },
-    { id: "mytam2794", name: "Mỹ Tâm (custom)" },
-    { id: "anhkhoi", name: "Anh Khôi (custom)" }
+    { id: "mytam2", name: "Mỹ Tâm (custom)" },
+    { id: "anhkhoi", name: "Anh Khôi (custom)" },
   ],
   // Built-in voices removed (custom-only)
   voices: [],

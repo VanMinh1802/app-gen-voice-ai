@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { History, Ban, Plus } from "lucide-react";
+import { History, Ban, Plus, Download } from "lucide-react";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 import type { TtsHistoryItem } from "../types";
@@ -36,6 +36,24 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
     },
     [removeFromHistory]
   );
+
+  const handleDownload = useCallback(async (item: TtsHistoryItem) => {
+    if (!item.audioUrl?.startsWith("blob:")) return;
+    try {
+      const res = await fetch(item.audioUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `vietvoice-${item.id}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Download failed:", e);
+    }
+  }, []);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -145,6 +163,15 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
                   >
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
+                </button>
+
+                <button
+                  onClick={() => handleDownload(item)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full border border-primary/20 text-foreground hover:bg-primary/10 transition-colors"
+                  aria-label="Tải xuống"
+                  title="Tải xuống"
+                >
+                  <Download className="w-5 h-5" />
                 </button>
 
                 {item.text && (
