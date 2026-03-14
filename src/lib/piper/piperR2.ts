@@ -12,9 +12,11 @@ import {
   saveModelToCache,
   loadModelFromCache,
   isModelCached,
+  getCachedVersion,
   isIndexedDBAvailable,
 } from "@/lib/storage/modelCache";
 import { getR2PublicUrl } from "@/lib/config/r2Config";
+import { getR2FolderForVoice } from "@/config";
 
 export interface LoadModelOptions {
   voiceId: string;
@@ -24,11 +26,47 @@ export interface LoadModelOptions {
 
 const DEFAULT_BASE_URL = "/api/models";
 
+/** Version file URL - stored in public folder */
+const VERSIONS_URL = "/tts-model/vi/versions.json";
+
+/**
+ * Compare two semantic versions. Returns true if cloudVersion > localVersion.
+ */
+function isNewerVersion(cloudVersion: string, localVersion: string): boolean {
+  const cloudParts = cloudVersion.split(".").map(Number);
+  const localParts = localVersion.split(".").map(Number);
+
+  for (let i = 0; i < Math.max(cloudParts.length, localParts.length); i++) {
+    const cloud = cloudParts[i] ?? 0;
+    const local = localParts[i] ?? 0;
+    if (cloud > local) return true;
+    if (cloud < local) return false;
+  }
+  return false;
+}
+
+/**
+ * Fetch versions.json from server.
+ */
+async function fetchVersions(): Promise<Record<string, string>> {
+  try {
+    const res = await fetch(VERSIONS_URL + "?t=" + Date.now());
+    if (!res.ok) {
+      console.warn("[piperR2] Failed to fetch versions.json, assuming all cached");
+      return {};
+    }
+    return await res.json();
+  } catch (error) {
+    console.warn("[piperR2] Error fetching versions.json:", error);
+    return {};
+  }
+}
+
 /**
  * Load Piper model with R2 + IndexedDB caching.
- * 1. Check IndexedDB cache first
- * 2. If not cached, download from R2 via API
- * 3. Cache the model in IndexedDB
+ * 1. Fetch versions.json to check for updates
+ * 2. Check IndexedDB cache (if not cached or version mismatch, download from R2)
+ * 3. Cache the model in IndexedDB with version
  * 4. Load the model
  */
 export async function loadPiperWithCache(
@@ -38,14 +76,29 @@ export async function loadPiperWithCache(
 
   onProgress?.(0);
 
-  // Step 1: Try to load from IndexedDB cache
+  // Step 1: Fetch versions.json to check if cache is outdated
+  let cloudVersions: Record<string, string> = {};
+  if (isIndexedDBAvailable()) {
+    cloudVersions = await fetchVersions();
+  }
+
+  // Step 2: Try to load from IndexedDB cache
   if (isIndexedDBAvailable()) {
     const cached = await loadModelFromCache(voiceId);
     if (cached) {
-      console.log(`[piperR2] Loading ${voiceId} from IndexedDB cache`);
-      const session = await loadFromArrayBuffer(voiceId, cached.model, cached.config);
-      onProgress?.(100);
-      return { session, fromCache: true };
+      const cloudVersion = cloudVersions[voiceId];
+
+      // Check if cloud has newer version
+      if (cloudVersion && isNewerVersion(cloudVersion, cached.version)) {
+        console.log(`[piperR2] ${voiceId} cache outdated (local: ${cached.version}, cloud: ${cloudVersion}), re-downloading...`);
+        const { deleteModelFromCache } = await import("@/lib/storage/modelCache");
+        await deleteModelFromCache(voiceId);
+      } else {
+        console.log(`[piperR2] Loading ${voiceId} (v${cached.version}) from IndexedDB cache`);
+        const session = await loadFromArrayBuffer(voiceId, cached.model, cached.config);
+        onProgress?.(100);
+        return { session, fromCache: true };
+      }
     }
   }
 
@@ -92,8 +145,9 @@ export async function loadPiperWithCache(
   // Step 3: Cache in IndexedDB
   if (isIndexedDBAvailable()) {
     try {
-      await saveModelToCache(voiceId, modelBuffer, voiceConfig);
-      console.log(`[piperR2] Cached ${voiceId} in IndexedDB`);
+      const version = cloudVersions[voiceId] || "1.0.0";
+      await saveModelToCache(voiceId, modelBuffer, voiceConfig, version);
+      console.log(`[piperR2] Cached ${voiceId} (v${version}) in IndexedDB`);
     } catch (error) {
       console.warn(`[piperR2] Failed to cache ${voiceId}:`, error);
     }
@@ -297,11 +351,13 @@ export async function isVoiceCached(voiceId: string): Promise<boolean> {
 /**
  * Returns the URL for the pre-rendered voice sample (sample.wav) for preview.
  * Uses R2 public URL when configured; otherwise the API proxy.
+ * Uses getR2FolderForVoice so voiceId mytam2 → path vi/mytam/ on R2.
  */
 export function getVoiceSampleUrl(voiceId: string): string {
   const baseUrl = getR2PublicUrl() || "";
+  const r2Folder = getR2FolderForVoice(voiceId);
   if (baseUrl.startsWith("http")) {
-    return `${baseUrl.replace(/\/$/, "")}/vi/${voiceId}/sample.wav`;
+    return `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/sample.wav`;
   }
   return `/api/models/${voiceId}/sample.wav`;
 }

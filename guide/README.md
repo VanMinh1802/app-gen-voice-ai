@@ -39,8 +39,15 @@
 ```bash
 git clone git@github.com:Laristo-LTD/app-gen-voice-ai.git
 cd app-gen-voice-ai
-# Setup dự án
+npm install
 ```
+
+**Chạy local cần cấu hình R2 (tránh lỗi 503):**
+
+- File `.env.local` **không** nằm trong repo (gitignore). Người clone cần tự tạo.
+- Copy `.env.example` thành `.env.local`, sửa `R2_PUBLIC_URL` thành Public URL thật của bucket R2 (Cloudflare Dashboard → R2 → genvoice-models → Settings → Public access).
+- **Lưu `.env.local` bằng encoding UTF-8** (trên Windows: Notepad → Save As → Encoding: UTF-8). Nếu lưu UTF-16 có thể gây 503 do parse lỗi.
+- Sau đó chạy `npm run dev`.
 
 ### 2. Hiểu cách hoạt động
 

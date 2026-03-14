@@ -118,6 +118,8 @@ Bấm **Save**.
 
 ## Local dev (test với R2 public)
 
+**Lưu ý cho người clone repo:** File `.env.local` không được commit (nằm trong `.gitignore`). Nếu không tạo file này, API `/api/models/...` sẽ trả **503** (R2 public URL not configured). Cần tự tạo `.env.local` theo hướng dẫn dưới đây.
+
 Để chạy `npm run dev` và tải model từ R2 (bucket bật public access), tạo file **`.env.local`** trong thư mục gốc project với:
 
 ```bash
@@ -128,7 +130,7 @@ R2_PUBLIC_URL=https://pub-86489e33a3f448f4b7dfcc0ec9dd3a49.r2.dev
 NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-86489e33a3f448f4b7dfcc0ec9dd3a49.r2.dev
 ```
 
-Thay URL bằng **Public URL** thực tế của bucket (R2 → genvoice-models → Settings → Public access). Lưu file `.env.local` với encoding **UTF-8**. Sau đó **restart** `npm run dev`.
+Thay URL bằng **Public URL** thực tế của bucket (R2 → genvoice-models → Settings → Public access). **Lưu file với encoding UTF-8** (trên Windows: Notepad dễ lưu thành UTF-16/Unicode, gây lỗi parse → 503; nên dùng VS Code / Cursor và chọn UTF-8 khi Save). Sau đó **restart** `npm run dev`.
 
 ---
 

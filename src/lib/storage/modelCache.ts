@@ -11,6 +11,7 @@ const STORE_NAME = "models";
 
 export interface CachedModel {
   voiceId: string;
+  version: string;
   model: ArrayBuffer;
   config: PiperVoiceConfig;
   downloadedAt: number;
@@ -51,11 +52,13 @@ async function openDB(): Promise<IDBDatabase> {
 export async function saveModelToCache(
   voiceId: string,
   modelData: ArrayBuffer,
-  config: PiperVoiceConfig
+  config: PiperVoiceConfig,
+  version: string
 ): Promise<void> {
   const database = await openDB();
   const record: CachedModel = {
     voiceId,
+    version,
     model: modelData,
     config,
     downloadedAt: Date.now(),
@@ -78,7 +81,7 @@ export async function saveModelToCache(
  */
 export async function loadModelFromCache(
   voiceId: string
-): Promise<{ model: ArrayBuffer; config: PiperVoiceConfig } | null> {
+): Promise<{ model: ArrayBuffer; config: PiperVoiceConfig; version: string } | null> {
   const database = await openDB();
 
   return new Promise((resolve, reject) => {
@@ -89,7 +92,7 @@ export async function loadModelFromCache(
     request.onsuccess = () => {
       const record = request.result as CachedModel | undefined;
       if (record) {
-        resolve({ model: record.model, config: record.config });
+        resolve({ model: record.model, config: record.config, version: record.version });
       } else {
         resolve(null);
       }
@@ -131,6 +134,26 @@ export async function isModelCached(voiceId: string): Promise<boolean> {
 
     request.onsuccess = () => {
       resolve(!!request.result);
+    };
+
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Get cached version for a voice. Returns null if not cached.
+ */
+export async function getCachedVersion(voiceId: string): Promise<string | null> {
+  const database = await openDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([STORE_NAME], "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(voiceId);
+
+    request.onsuccess = () => {
+      const record = request.result as CachedModel | undefined;
+      resolve(record?.version ?? null);
     };
 
     request.onerror = () => reject(request.error);

@@ -1,6 +1,15 @@
 /** Prefix for custom model voice IDs (pre-trained .onnx from public/tts-model/vi/) */
 export const CUSTOM_MODEL_PREFIX = "custom:";
 
+/** Map voiceId (app) → tên thư mục R2 khi khác nhau (vd: mytam2 → mytam) */
+export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
+  mytam2: "mytam",
+};
+
+export function getR2FolderForVoice(voiceId: string): string {
+  return VOICE_ID_TO_R2_FOLDER[voiceId] ?? voiceId;
+}
+
 /** Voice IDs must match PATH_MAP in @mintplex-labs/piper-tts-web (HuggingFace diffusionstudio/piper-voices) */
 export const config = {
   tts: {

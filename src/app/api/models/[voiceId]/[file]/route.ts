@@ -10,6 +10,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { NextResponse } from "next/server";
+import { getR2FolderForVoice } from "@/config";
 
 const R2_KEYS = ["R2_PUBLIC_URL", "NEXT_PUBLIC_R2_PUBLIC_URL"] as const;
 
@@ -115,6 +116,7 @@ const ALLOWED_VOICE_IDS = [
   "minhkhang",
   "minhquang",
   "mytam",
+  "mytam2",
   "ngochuyen",
 ] as const;
 
@@ -162,7 +164,8 @@ export async function GET(
     return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
   }
 
-  const objectKey = `vi/${voiceId}/${file}`;
+  const r2Folder = getR2FolderForVoice(voiceId);
+  const objectKey = `vi/${r2Folder}/${file}`;
 
   // Try R2 binding first (Cloudflare Pages)
   const r2Bucket = getR2Bucket();
@@ -202,7 +205,7 @@ export async function GET(
     return NextResponse.json(body, { status: 503 });
   }
 
-  const url = `${baseUrl.replace(/\/$/, "")}/vi/${voiceId}/${file}`;
+  const url = `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}`;
 
   try {
     const response = await fetch(url, {
