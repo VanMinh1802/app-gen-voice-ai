@@ -49,8 +49,8 @@ module.exports = {
         success: "hsl(var(--success))",
       },
       backgroundImage: {
-        "gradient-primary": "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
-        "gradient-hover": "linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)",
+        "gradient-primary": "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 100%)",
+        "gradient-hover": "linear-gradient(135deg, hsl(var(--primary-light)) 0%, hsl(var(--primary)) 100%)",
         "gradient-radial": "radial-gradient(ellipse at center, var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
@@ -60,10 +60,10 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(124, 58, 237, 0.3)',
-        'glow-lg': '0 0 30px rgba(124, 58, 237, 0.5), 0 0 60px rgba(124, 58, 237, 0.2)',
-        'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.3)',
-        'inner-glow': 'inset 0 0 20px rgba(124, 58, 237, 0.1)',
+        'glow': '0 4px 14px hsl(var(--primary) / 0.2)',
+        'glow-lg': '0 8px 30px hsl(var(--primary) / 0.25)',
+        'glow-cyan': '0 4px 14px hsl(var(--accent-cyan) / 0.2)',
+        'inner-glow': 'inset 0 1px 0 hsl(var(--primary-light) / 0.2)',
       },
       keyframes: {
         "accordion-down": {

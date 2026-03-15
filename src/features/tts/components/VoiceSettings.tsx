@@ -208,24 +208,24 @@ export function VoiceSettings() {
                     <span className="text-foreground font-medium">75,000 / 100,000</span>
                   </div>
                   <div className="w-full bg-background rounded-full h-2 overflow-hidden border border-primary/10">
-                    <div className="bg-gradient-to-r from-[#7c3aed] to-purple-500 h-full rounded-full" style={{ width: "75%" }} />
+                    <div className="bg-primary h-full rounded-full" style={{ width: "75%" }} />
                   </div>
                   <p className="text-[11px] text-muted-foreground italic text-right">* Tự động làm mới vào ngày 15 hàng tháng</p>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#1a1a2e] to-primary/10 border border-primary/10 rounded-xl p-6 flex flex-col justify-between">
+            <div className="bg-card/95 border border-primary/15 rounded-xl p-6 flex flex-col justify-between shadow-sm">
               <div>
                 <h3 className="text-lg font-bold text-foreground mb-2">Nâng cấp Business</h3>
-                <p className="text-muted-foreground text-xs leading-relaxed">
+                <p className="text-foreground/85 text-sm leading-relaxed">
                   Mở khóa giọng nói độc quyền, cộng tác nhóm và API không giới hạn.
                 </p>
                 <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-2 text-sm text-foreground/90">
                     <Check className="w-4 h-4 text-primary shrink-0" />
                     500,000 ký tự/tháng
                   </li>
-                  <li className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-2 text-sm text-foreground/90">
                     <Check className="w-4 h-4 text-primary shrink-0" />
                     Clone giọng nói siêu thực
                   </li>
@@ -233,7 +233,7 @@ export function VoiceSettings() {
               </div>
               <button
                 type="button"
-                className="mt-6 w-full py-3 bg-muted text-foreground text-sm font-black rounded-lg hover:bg-muted/80 transition-all uppercase tracking-wide"
+                className="mt-6 w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide"
               >
                 Xem các gói
               </button>
@@ -369,7 +369,7 @@ export function VoiceSettings() {
                     step="0.1"
                     value={speedValue}
                     onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-                    className="w-full accent-[#7c3aed] h-1.5 bg-muted rounded-lg"
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2"><Waves className="w-4 h-4" /> Cao độ</span>
@@ -382,7 +382,7 @@ export function VoiceSettings() {
                     step="1"
                     value={pitchValue}
                     onChange={(e) => handlePitchChange(parseInt(e.target.value))}
-                    className="w-full accent-[#7c3aed] h-1.5 bg-muted rounded-lg"
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-2"><Volume2 className="w-4 h-4" /> Âm lượng</span>
@@ -395,7 +395,7 @@ export function VoiceSettings() {
                     step="0.1"
                     value={volumeValue}
                     onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                    className="w-full accent-[#7c3aed] h-1.5 bg-muted rounded-lg"
+                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
                 </div>
                 <label className="flex items-center justify-between mt-4 p-3 rounded-lg bg-background/50 border border-primary/5">
@@ -467,7 +467,7 @@ export function VoiceSettings() {
           <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Ứng dụng sử dụng <span className="text-[#7c3aed] font-medium">Piper TTS</span> để chuyển văn bản thành giọng nói.
+              Ứng dụng sử dụng <span className="text-primary font-medium">Piper TTS</span> để chuyển văn bản thành giọng nói.
               Tất cả xử lý diễn ra trực tiếp trên trình duyệt — không có âm thanh nào được gửi đến máy chủ.
             </p>
             <p className="text-[10px] text-muted-foreground mt-2">Phiên bản 1.0.0 • Text-to-Speech cho tiếng Việt</p>

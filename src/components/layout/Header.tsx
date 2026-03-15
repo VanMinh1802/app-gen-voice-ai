@@ -8,9 +8,12 @@ import {
   User,
   CreditCard,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface HeaderProps {
   title?: string;
@@ -33,6 +36,7 @@ export function Header({
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const notifications = [
     { id: 1, title: "Model mới đã sẵn sàng", desc: "Giọng Linh Lan đã được cập nhật", time: "2 phút trước", unread: true },
@@ -43,12 +47,25 @@ export function Header({
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30">
+    <header className="h-16 border-b border-border glass-card flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30">
       <div className="flex items-center gap-4 flex-1">
         <h1 className="text-lg font-bold text-foreground">{title}</h1>
       </div>
       
       <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
+          aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+        >
+          {theme === "dark" ? (
+            <Sun className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          ) : (
+            <Moon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          )}
+        </button>
+
         {/* Notifications */}
         <div className="relative">
           <button 
@@ -56,18 +73,18 @@ export function Header({
               setShowNotifications(!showNotifications);
               setShowUserMenu(false);
             }}
-            className="p-2.5 hover:bg-foreground/5 rounded-xl transition-all relative group"
+            className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
             aria-label="Thông báo"
           >
             <Bell className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-card" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
             )}
           </button>
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
+            <div className="absolute right-0 top-full mt-2 w-80 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-bold text-foreground">Thông báo</h3>
                 {unreadCount > 0 && (
@@ -81,21 +98,21 @@ export function Header({
                   <div 
                     key={notif.id}
                     className={cn(
-                      "p-4 border-b border-border/50 hover:bg-foreground/5 transition-colors cursor-pointer",
+                      "p-4 border-b border-border/50 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer",
                       notif.unread && "bg-primary/5"
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        notif.unread ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        notif.unread ? "bg-primary text-primary-foreground" : "bg-black/10 dark:bg-white/10 text-muted-foreground"
                       )}>
                         <Sparkles className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{notif.title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{notif.desc}</p>
-                        <p className="text-[10px] text-muted-foreground/80 mt-1">{notif.time}</p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-1">{notif.time}</p>
                       </div>
                       {notif.unread && (
                         <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1.5" />
@@ -120,15 +137,15 @@ export function Header({
               setShowUserMenu(!showUserMenu);
               setShowNotifications(false);
             }}
-            className="flex items-center gap-2 p-1.5 pr-3 hover:bg-foreground/5 rounded-xl transition-all"
+            className="flex items-center gap-2 p-1.5 pr-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-primary-foreground font-bold shadow-lg">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/25">
               {userName.charAt(0)}
             </div>
             <div className="hidden sm:block text-left">
               <p className="text-xs font-bold text-foreground">{userName}</p>
               {isPro && (
-                <p className="text-[10px] text-amber-400 font-medium">PRO</p>
+                <p className="text-[10px] text-amber-500 font-medium">PRO</p>
               )}
             </div>
             <ChevronDown className={cn(
@@ -139,22 +156,22 @@ export function Header({
 
           {/* User Menu Dropdown */}
           {showUserMenu && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
+            <div className="absolute right-0 top-full mt-2 w-56 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
               <div className="p-3 border-b border-border">
                 <p className="text-sm font-bold text-foreground">{userName}</p>
                 <p className="text-xs text-muted-foreground">quangminh@email.com</p>
               </div>
               <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/5 transition-colors text-muted-foreground hover:text-foreground text-left">
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
                   <User className="w-4 h-4" />
                   <span className="text-sm">Hồ sơ</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/5 transition-colors text-muted-foreground hover:text-foreground text-left">
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
                   <CreditCard className="w-4 h-4" />
                   <span className="text-sm">Quản lý Credits</span>
                   <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">250</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/5 transition-colors text-muted-foreground hover:text-foreground text-left">
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
                   <Settings className="w-4 h-4" />
                   <span className="text-sm">Cài đặt</span>
                 </button>

@@ -14,14 +14,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning className="light">
+    <html lang="vi" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  var k = 'theme';
+  var stored = typeof localStorage !== 'undefined' && localStorage.getItem(k);
+  var prefersDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light');
+  document.documentElement.classList.remove('light', 'dark');
+  document.documentElement.classList.add(theme);
+})();
+            `.trim(),
+          }}
+        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
         />
       </head>
       <body className="min-h-screen bg-background antialiased font-sans">

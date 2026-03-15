@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { SlidersHorizontal, Play, Activity, SearchX, Search } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { SlidersHorizontal, SearchX, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 import { voiceMetadata, type VoiceMetadata } from "@/config/voiceData";
 import { useTtsStore } from "@/features/tts/store";
 import { useTts } from "@/features/tts/context/TtsContext";
+import { VoiceCardShared } from "./VoiceCardShared";
 
 type RegionFilter = "all" | "Miền Bắc" | "Miền Trung" | "Miền Nam";
 type GenderFilter = "all" | "Nam" | "Nữ";
@@ -21,8 +22,16 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
   const { previewVoice } = useTts();
   const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const [styleFilter, setStyleFilter] = useState<string>("all");
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const advancedFilterRef = useRef<HTMLDivElement>(null);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const styleOptions = useMemo(() => {
+    const set = new Set(voiceMetadata.map((v) => v.style));
+    return Array.from(set).sort();
+  }, []);
 
   // Clear preview loading state when playback starts or errors
   useEffect(() => {
@@ -40,23 +49,40 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         const matchName = voice.name.toLowerCase().includes(query);
         const matchRegion = voice.region.toLowerCase().includes(query);
         const matchGender = voice.gender.toLowerCase().includes(query);
-        if (!matchName && !matchRegion && !matchGender) return false;
+        const matchStyle = voice.style.toLowerCase().includes(query);
+        if (!matchName && !matchRegion && !matchGender && !matchStyle) return false;
       }
       // Region filter
       if (regionFilter !== "all" && voice.region !== regionFilter) return false;
       // Gender filter
       if (genderFilter !== "all" && voice.gender !== genderFilter) return false;
+      // Style filter (lọc nâng cao)
+      if (styleFilter !== "all" && voice.style !== styleFilter) return false;
       return true;
     });
-  }, [regionFilter, genderFilter, searchQuery]);
+  }, [regionFilter, genderFilter, styleFilter, searchQuery]);
 
-  const hasActiveFilters = regionFilter !== "all" || genderFilter !== "all" || searchQuery.trim().length > 0;
+  const hasActiveFilters = regionFilter !== "all" || genderFilter !== "all" || styleFilter !== "all" || searchQuery.trim().length > 0;
 
   const handleClearFilters = useCallback(() => {
     setRegionFilter("all");
     setGenderFilter("all");
+    setStyleFilter("all");
     setSearchQuery("");
+    setShowAdvancedFilter(false);
   }, []);
+
+  // Click outside to close advanced filter panel
+  useEffect(() => {
+    if (!showAdvancedFilter) return;
+    const handleClick = (e: MouseEvent) => {
+      if (advancedFilterRef.current && !advancedFilterRef.current.contains(e.target as Node)) {
+        setShowAdvancedFilter(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showAdvancedFilter]);
 
   const handleSelectVoice = useCallback((voice: VoiceMetadata) => {
     const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}` as any;
@@ -69,11 +95,6 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
     previewVoice(voice.id);
     onPreview?.(voice.id);
   }, [previewVoice, onPreview]);
-
-  // Get initials for avatar
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
-  };
 
   return (
     <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar pb-32">
@@ -139,10 +160,55 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
             <option value="Nữ">Nữ</option>
           </select>
 
-          <button className="flex items-center gap-2 bg-card border border-primary/10 text-muted-foreground text-xs rounded-lg px-4 py-2 hover:text-foreground transition-colors">
-            <SlidersHorizontal className="w-4 h-4" />
-            Lọc nâng cao
-          </button>
+          <div className="relative" ref={advancedFilterRef}>
+            <button
+              type="button"
+              onClick={() => setShowAdvancedFilter((v) => !v)}
+              className={cn(
+                "flex items-center gap-2 bg-card border text-xs rounded-lg px-4 py-2 transition-colors",
+                showAdvancedFilter
+                  ? "border-primary text-primary"
+                  : "border-primary/10 text-muted-foreground hover:text-foreground"
+              )}
+              aria-expanded={showAdvancedFilter}
+              aria-label="Lọc nâng cao"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Lọc nâng cao
+            </button>
+            {showAdvancedFilter && (
+              <div className="absolute right-0 top-full mt-2 z-50 min-w-[200px] bg-card border border-primary/10 rounded-xl shadow-xl p-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Phong cách</p>
+                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStyleFilter("all");
+                    }}
+                    className={cn(
+                      "text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                      styleFilter === "all" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    Tất cả
+                  </button>
+                  {styleOptions.map((style) => (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => setStyleFilter(style)}
+                      className={cn(
+                        "text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                        styleFilter === style ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      {style}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Clear Filters */}
@@ -157,7 +223,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         )}
       </div>
 
-      {/* Voice Grid */}
+      {/* Voice Grid - same card as "Chọn giọng đọc" (full variant) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredVoices.map((voice) => {
           const isActive = config.activeVoiceIds.includes(voice.id);
@@ -165,100 +231,17 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
           const isPreviewing = previewingVoice === voice.id;
 
           return (
-            <div
+            <VoiceCardShared
               key={voice.id}
-              className={cn(
-                "bg-card border rounded-xl p-5 transition-all group relative",
-                isSelected ? "border-primary bg-primary/10 ring-2 ring-primary/50" : "border-primary/10",
-                !isActive && "opacity-75 hover:border-primary/20"
-              )}
-            >
-              {!isActive && (
-                <div className="absolute top-3 right-3 z-10">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-full">
-                    Coming soon
-                  </span>
-                </div>
-              )}
-
-              {/* Top Row: Avatar + Preview Button */}
-              <div className="flex items-center justify-between mb-4">
-                <div className={cn(
-                  "size-14 rounded-full overflow-hidden border-2 border-border p-0.5 transition-colors",
-                  isSelected && "border-primary",
-                  isActive && "group-hover:border-primary"
-                )}>
-                  <div
-                    className="w-full h-full rounded-full flex items-center justify-center text-foreground font-bold text-lg"
-                    style={{ backgroundColor: voice.avatarColor }}
-                  >
-                    {getInitials(voice.name)}
-                  </div>
-                </div>
-                {isActive ? (
-                  <button
-                    onClick={() => handlePreview(voice)}
-                    disabled={isPreviewing}
-                    className={cn(
-                      "size-10 rounded-full flex items-center justify-center transition-all shadow-lg",
-                      isPreviewing
-                        ? "bg-primary text-primary-foreground animate-pulse"
-                        : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
-                    )}
-                    aria-label={isPreviewing ? "Đang phát" : "Nghe thử"}
-                    title="Nghe thử"
-                  >
-                    {isPreviewing ? <Activity className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                  </button>
-                ) : (
-                  <div className="size-10 rounded-full flex items-center justify-center bg-muted/50 text-muted-foreground cursor-not-allowed" title="Sắp ra mắt">
-                    <Play className="w-5 h-5" />
-                  </div>
-                )}
-              </div>
-
-              {/* Name */}
-              <h3 className="text-foreground font-bold text-lg mb-1">{voice.name}</h3>
-
-              {/* Tags */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
-                  {voice.region}
-                </span>
-                <span className={cn(
-                  "text-[10px] px-2 py-0.5 rounded-full font-medium",
-                  voice.gender === "Nữ"
-                    ? "bg-pink-500/10 text-pink-500"
-                    : "bg-blue-500/10 text-blue-500"
-                )}>
-                  {voice.gender}
-                </span>
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4 italic">
-                &ldquo;{voice.description}&rdquo;
-              </p>
-
-              {/* Select Button / Coming soon */}
-              {isActive ? (
-                <button
-                  onClick={() => handleSelectVoice(voice)}
-                  className={cn(
-                    "w-full border py-2 rounded-lg text-xs font-bold transition-colors",
-                    isSelected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-primary/20 text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {isSelected ? "Đang chọn" : "Chọn giọng này"}
-                </button>
-              ) : (
-                <div className="w-full border border-border py-2 rounded-lg text-xs font-bold text-muted-foreground text-center bg-muted/30 cursor-not-allowed">
-                  Coming soon
-                </div>
-              )}
-            </div>
+              voice={voice}
+              variant="full"
+              isSelected={!!isSelected}
+              isPreviewing={isPreviewing}
+              isActive={isActive}
+              showPopularBadge={false}
+              onSelect={() => handleSelectVoice(voice)}
+              onPreview={() => handlePreview(voice)}
+            />
           );
         })}
       </div>

@@ -57,6 +57,19 @@ export const config = {
   voices: [],
 } as const;
 
+/** Active voice IDs - exported separately for easier access */
+export const activeVoiceIds = config.activeVoiceIds;
+
+/** Popular voice IDs to show first */
+export const popularVoiceIds: string[] = [
+  "ngochuyen",
+  "banmai",
+  "manhdung",
+  "minhquang",
+  "maiphuong",
+];
+
+/** Voice ID type */
 export type VoiceId =
   | (typeof config.voices)[number]["id"]
   | `custom:${string}`;

@@ -34,6 +34,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     settings, 
     setStatus, 
     setSettings,
+    setCurrentAudio,
     currentAudio,
     nowPlaying,
     history,
@@ -151,6 +152,53 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     }
   }, [duration]);
 
+  /** Index of nowPlaying in history, or -1 */
+  const currentIndex = nowPlaying && history.length > 0
+    ? history.findIndex((h) => h.id === nowPlaying.id)
+    : -1;
+
+  const handlePreviousTrack = useCallback(() => {
+    if (history.length === 0) {
+      handleSkip(-10);
+      return;
+    }
+    if (currentIndex > 0) {
+      const prev = history[currentIndex - 1]!;
+      setNowPlaying(prev);
+      setCurrentAudio(null, prev.audioUrl);
+      setStatus("playing");
+      setCurrentTime(0);
+    } else {
+      handleSkip(-10);
+    }
+  }, [history, currentIndex, setNowPlaying, setCurrentAudio, setStatus, handleSkip]);
+
+  const handleNextTrack = useCallback(() => {
+    if (history.length === 0) {
+      handleSkip(30);
+      return;
+    }
+    if (currentIndex >= 0 && currentIndex < history.length - 1) {
+      const next = history[currentIndex + 1]!;
+      setNowPlaying(next);
+      setCurrentAudio(null, next.audioUrl);
+      setStatus("playing");
+      setCurrentTime(0);
+    } else {
+      handleSkip(30);
+    }
+  }, [history, currentIndex, setNowPlaying, setCurrentAudio, setStatus, handleSkip]);
+
+  const handleShuffle = useCallback(() => {
+    if (history.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * history.length);
+    const item = history[randomIndex]!;
+    setNowPlaying(item);
+    setCurrentAudio(null, item.audioUrl);
+    setStatus("playing");
+    setCurrentTime(0);
+  }, [history, setNowPlaying, setCurrentAudio, setStatus]);
+
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -175,7 +223,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `vietvoice-${Date.now()}.wav`;
+    link.download = `genvoice-${Date.now()}.wav`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -209,7 +257,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
       <div className="grid grid-cols-12 gap-3 items-center">
         {/* Left: Track Info */}
         <div className="col-span-12 sm:col-span-4 xl:col-span-3 flex items-center gap-3 min-w-0">
-          <div className="size-12 sm:size-14 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#2563eb] flex items-center justify-center text-primary-foreground shadow-lg shrink-0">
+          <div className="size-12 sm:size-14 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shrink-0">
             <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div className="min-w-0 flex-1">
@@ -230,19 +278,24 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
         {/* Center: Controls + Progress */}
         <div className="col-span-12 sm:col-span-5 xl:col-span-6 flex flex-col items-center gap-2">
           <div className="flex items-center justify-center gap-3 sm:gap-6">
-            <button className="hidden sm:inline-flex text-muted-foreground hover:text-primary transition-colors p-2" aria-label="Shuffle">
+            <button
+              onClick={handleShuffle}
+              className="hidden sm:inline-flex text-muted-foreground hover:text-primary transition-colors p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Phát ngẫu nhiên"
+              disabled={history.length === 0}
+            >
               <Shuffle className="w-4 h-4" />
             </button>
             <button
-              onClick={() => handleSkip(-10)}
+              onClick={handlePreviousTrack}
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
-              aria-label="Lùi 10s"
+              aria-label="Bài trước / Lùi 10s"
             >
               <SkipBack className="w-5 h-5" />
             </button>
             <button
               onClick={togglePlay}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#2563eb] text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50"
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40"
               aria-label={status === "playing" ? "Tạm dừng" : "Phát"}
             >
               {status === "playing" ? (
@@ -252,9 +305,9 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               )}
             </button>
             <button
-              onClick={() => handleSkip(30)}
+              onClick={handleNextTrack}
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
-              aria-label="Tiến 30s"
+              aria-label="Bài sau / Tiến 30s"
             >
               <SkipForward className="w-5 h-5" />
             </button>
@@ -276,11 +329,11 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </span>
             <div 
               ref={progressRef}
-              className="flex-1 h-2 bg-slate-800 rounded-full relative cursor-pointer group"
+              className="flex-1 h-2 bg-black/15 dark:bg-slate-800 rounded-full relative cursor-pointer group"
               onClick={handleProgressClick}
             >
               <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#7c3aed] to-[#2563eb] rounded-full transition-all group-hover:from-[#8b5cf6] group-hover:to-[#3b82f6]"
+                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all group-hover:brightness-110"
                 style={{ width: `${progressPercent}%` }}
               />
               {/* Thumb */}
@@ -318,7 +371,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <select
               value={settings.speed}
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-              className="bg-muted/80 border border-border/50 rounded-xl text-xs font-bold py-1.5 px-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer hover:bg-slate-700"
+              className="bg-muted/80 border border-border/50 rounded-xl text-xs font-bold py-1.5 px-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer hover:bg-muted"
               aria-label="Tốc độ phát"
             >
               {SPEED_OPTIONS.map((speed) => (
@@ -338,9 +391,9 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </button>
             {/* Volume Slider - visible on sm+ screens */}
             <div className="hidden sm:flex items-center gap-2 w-24">
-              <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden relative group">
+              <div className="flex-1 h-1.5 bg-black/15 dark:bg-slate-800 rounded-full overflow-hidden relative group">
                 <div
-                  className="bg-slate-400 h-full transition-all group-hover:bg-white"
+                  className="bg-muted-foreground/70 h-full transition-all group-hover:bg-foreground"
                   style={{ width: `${isMuted ? 0 : volume * 100}%` }}
                 />
                 <input

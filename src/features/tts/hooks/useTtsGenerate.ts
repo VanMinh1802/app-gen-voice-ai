@@ -206,6 +206,7 @@ export function useTtsGenerate() {
           model: settings.model,
           voice: settings.voice,
           speed: settings.speed,
+          pitch: settings.pitch,
         },
       });
     },
@@ -304,6 +305,7 @@ export function useTtsGenerate() {
           model: normalizedId,
           voice: normalizedId,
           speed: settings.speed,
+          pitch: settings.pitch,
         },
       });
     },

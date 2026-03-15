@@ -78,10 +78,11 @@ export async function saveModelToCache(
 /**
  * Load model and config from IndexedDB cache.
  * Returns null if not cached.
+ * version may be undefined for records cached before versioning was added.
  */
 export async function loadModelFromCache(
   voiceId: string
-): Promise<{ model: ArrayBuffer; config: PiperVoiceConfig; version: string } | null> {
+): Promise<{ model: ArrayBuffer; config: PiperVoiceConfig; version?: string } | null> {
   const database = await openDB();
 
   return new Promise((resolve, reject) => {
@@ -92,7 +93,11 @@ export async function loadModelFromCache(
     request.onsuccess = () => {
       const record = request.result as CachedModel | undefined;
       if (record) {
-        resolve({ model: record.model, config: record.config, version: record.version });
+        resolve({
+          model: record.model,
+          config: record.config,
+          version: record.version,
+        });
       } else {
         resolve(null);
       }

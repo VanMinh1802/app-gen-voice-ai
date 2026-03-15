@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { X, Sparkles, Headphones, SlidersHorizontal, Edit3, User, Settings, CheckCircle, Play, Pause, Hourglass, Activity, Clock, Check, RefreshCw, AlertCircle } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { X, Sparkles, Headphones, SlidersHorizontal, Edit3, User, Settings, CheckCircle, Play, Pause, Hourglass, Activity, Clock, Check, RefreshCw, AlertCircle, Search, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { config, CUSTOM_MODEL_PREFIX } from "@/config";
+import { config, CUSTOM_MODEL_PREFIX, popularVoiceIds } from "@/config";
+import { voiceMetadata, getVoiceMetadata } from "@/config/voiceData";
 import { useTts } from "@/features/tts/context/TtsContext";
+import { VoiceCardShared } from "./VoiceCardShared";
 import { useTtsStore } from "@/features/tts/store";
 import { isTextValid } from "@/lib/text-processing/textProcessor";
-import { VoiceCardSkeleton } from "./VoiceCard";
 import type { VoiceId } from "@/config";
 
 // Text Input Component
@@ -29,27 +30,27 @@ export function TextInput({
   const progress = Math.min((characterCount / maxLength) * 100, 100);
 
   return (
-    <div className="bg-card rounded-2xl p-6 border border-primary/10 shadow-lg hover:border-primary/20 transition-all group">
+    <div className="glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all group">
       <div className="flex items-center justify-between mb-4">
         <label className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </div>
           <span className="text-foreground">Văn bản cần chuyển đổi</span>
         </label>
         <div className="flex items-center gap-3">
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-[10px] bg-muted/80 text-muted-foreground rounded-lg border border-border">
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-[10px] bg-black/5 dark:bg-white/5 text-muted-foreground rounded-lg border border-border">
             <span className="text-xs">Ctrl</span>
-            <span className="text-muted-foreground">+</span>
+            <span className="opacity-70">+</span>
             <span>Enter</span>
           </kbd>
           <span className={`text-xs font-medium px-2 py-1 rounded-lg ${
             isOverLimit 
-              ? "bg-red-500/10 text-red-400" 
+              ? "bg-red-500/20 text-red-400" 
               : characterCount > maxLength * 0.8 
-                ? "bg-amber-500/10 text-amber-400"
+                ? "bg-amber-500/20 text-amber-500"
                 : "text-muted-foreground"
           }`}>
             {characterCount.toLocaleString()} / {maxLength.toLocaleString()}
@@ -58,14 +59,14 @@ export function TextInput({
       </div>
       
       {/* Progress bar underneath */}
-      <div className="w-full h-1 bg-muted rounded-full mb-4 overflow-hidden">
+      <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full mb-4 overflow-hidden">
         <div 
           className={`h-full rounded-full transition-all duration-300 ${
             isOverLimit 
               ? "bg-red-500" 
               : progress > 80 
                 ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                : "bg-gradient-to-r from-[#7c3aed] to-[#2563eb]"
+                : "bg-primary"
           }`}
           style={{ width: `${progress}%` }}
         />
@@ -77,7 +78,7 @@ export function TextInput({
         placeholder="Nhập văn bản tiếng Việt của bạn tại đây..."
         disabled={disabled}
         className={cn(
-          "w-full min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] bg-background/80 border border-primary/10 rounded-xl p-5",
+          "w-full min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] glass-input border border-border rounded-xl p-5",
           "text-foreground placeholder:text-muted-foreground resize-none font-medium leading-relaxed",
           "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
           "transition-all duration-200",
@@ -90,115 +91,11 @@ export function TextInput({
   );
 }
 
-// Helper function to detect gender from voice ID (fallback when not explicitly set)
-function detectGender(voiceId: string): "male" | "female" {
-  const maleKeywords = ["nam", "hung", "quang", "thanh", "khoi", "dung", "duy", "minh", "anh", "hoang", "phong", "son", "hieu"];
-  const id = voiceId.toLowerCase();
-  return maleKeywords.some(kw => id.includes(kw)) ? "male" : "female";
-}
-
 // Same-origin placeholder to avoid COEP blocking external avatars
 function getVoicePlaceholderUrl(name: string): string {
   const initial = name.trim().charAt(0).toUpperCase() || "?";
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#7c3aed"/><text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">${initial}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#2563eb"/><text x="20" y="26" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif">${initial}</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
-
-// Voice info type
-interface VoiceInfo {
-  id: string;
-  name: string;
-  gender: "male" | "female";
-  region: string;
-  style: string;
-  avatar: string;
-  isCustom?: boolean;
-}
-
-// Voice Card Component
-interface VoiceCardProps {
-  voice: VoiceInfo;
-  isSelected: boolean;
-  isPreviewing?: boolean;
-  onSelect: () => void;
-  onPreview?: () => void;
-  disabled?: boolean;
-}
-
-function VoiceCard({ voice, isSelected, isPreviewing = false, onSelect, onPreview, disabled }: VoiceCardProps) {
-  const initials = voice.name.split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
-  const avatarColor = voice.gender === "female" 
-    ? "linear-gradient(135deg, #ec4899, #f472b6)" 
-    : "linear-gradient(135deg, #3b82f6, #60a5fa)";
-
-  return (
-    <button
-      onClick={onSelect}
-      disabled={disabled}
-      className={`
-        w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200
-        ${isSelected 
-          ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/10" 
-          : "border-primary/10 hover:border-primary/30 bg-card hover:bg-card/80 hover:shadow-lg"
-        }
-        ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
-      `}
-    >
-      {/* Dấu tích đã chọn — bên trái, không đè nút nghe thử */}
-      {isSelected && (
-        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0" aria-hidden>
-          <svg className="w-3.5 h-3.5 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-      )}
-      <div 
-        className="w-12 h-12 rounded-xl flex items-center justify-center text-foreground font-bold text-sm shrink-0 shadow-lg"
-        style={{ background: avatarColor }}
-      >
-        {initials}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold truncate text-foreground">{voice.name}</p>
-        <p className={`text-[11px] mt-0.5 ${isSelected ? "text-primary font-medium" : "text-muted-foreground"}`}>
-          {voice.gender === "female" ? "👩 Giọng Nữ" : "👨 Giọng Nam"} • {voice.style}
-        </p>
-      </div>
-      {/* Luôn hiển thị nút nghe thử bên phải; khi đang preview hiện icon loading */}
-      {onPreview && (
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isPreviewing) onPreview();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isPreviewing) onPreview();
-            }
-          }}
-          className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
-            isPreviewing
-              ? "bg-primary text-primary-foreground animate-pulse cursor-wait"
-              : "bg-muted hover:bg-primary text-muted-foreground hover:text-primary-foreground cursor-pointer"
-          )}
-          aria-label={isPreviewing ? "Đang phát..." : "Nghe thử"}
-        >
-          {isPreviewing ? (
-            <Activity className="w-4 h-4" />
-          ) : (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </span>
-      )}
-    </button>
-  );
 }
 
 interface VoiceSelectionProps {
@@ -211,6 +108,9 @@ interface VoiceSelectionProps {
   onViewAllClick?: () => void;
 }
 
+type RegionFilter = "all" | "Miền Bắc" | "Miền Trung" | "Miền Nam";
+type GenderFilter = "all" | "Nam" | "Nữ";
+
 export function VoiceSelection({
   selectedVoice,
   onVoiceChange,
@@ -220,26 +120,60 @@ export function VoiceSelection({
   onPreview,
   onViewAllClick,
 }: VoiceSelectionProps) {
-  // Chỉ hiển thị giọng đang active (có model); tổng số để "Xem tất cả"
-  const voices: VoiceInfo[] = useMemo(() => {
-    return config.customModels
-      .filter((model) => config.activeVoiceIds.includes(model.id))
-      .map((model) => {
-        const gender = detectGender(model.id);
-        return {
-          id: `${CUSTOM_MODEL_PREFIX}${model.id}` as VoiceId,
-          name: model.name.replace(" (custom)", ""),
-          gender,
-          region: "Việt Nam",
-          style: gender === "male" ? "Nam" : "Nữ",
-          avatar: "",
-          isCustom: true,
-        };
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Cùng nguồn voiceMetadata với Thư viện giọng — chỉ lấy giọng active
+  const sortedVoices = useMemo(() => {
+    return voiceMetadata
+      .filter((v) => config.activeVoiceIds.includes(v.id))
+      .sort((a, b) => {
+        const aPopular = popularVoiceIds.includes(a.id) ? 0 : 1;
+        const bPopular = popularVoiceIds.includes(b.id) ? 0 : 1;
+        return aPopular - bPopular;
       });
   }, []);
 
-  const displayVoices = voices;
-  const totalCount = config.customModels.length;
+  // Filter theo search + region + gender
+  const filteredVoices = useMemo(() => {
+    return sortedVoices.filter((v) => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        if (!v.name.toLowerCase().includes(q) && !v.region.toLowerCase().includes(q) && !v.gender.toLowerCase().includes(q)) return false;
+      }
+      if (regionFilter !== "all" && v.region !== regionFilter) return false;
+      if (genderFilter !== "all" && v.gender !== genderFilter) return false;
+      return true;
+    });
+  }, [sortedVoices, searchQuery, regionFilter, genderFilter]);
+
+  const selectedVoiceId = selectedVoice.startsWith(CUSTOM_MODEL_PREFIX)
+    ? selectedVoice.slice(CUSTOM_MODEL_PREFIX.length)
+    : "";
+  const selectedVoiceMeta = selectedVoiceId ? getVoiceMetadata(selectedVoiceId) : undefined;
+
+  const handleSelectVoice = useCallback(
+    (voiceId: VoiceId) => {
+      onVoiceChange(voiceId);
+      setIsOpen(false);
+    },
+    [onVoiceChange]
+  );
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
 
   if (isLoading) {
     return (
@@ -247,7 +181,7 @@ export function VoiceSelection({
         <div className="mb-5">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <svg className="w-4 h-4 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
@@ -276,11 +210,17 @@ export function VoiceSelection({
   }
 
   return (
-    <div className="bg-card rounded-2xl p-6 border border-primary/10 shadow-lg hover:border-primary/20 transition-all">
-      <div className="mb-5">
+    <div
+      className={cn(
+        "glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all relative",
+        isOpen && "z-[100]"
+      )}
+      ref={dropdownRef}
+    >
+      <div className="mb-4">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <svg className="w-4 h-4 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
@@ -289,30 +229,128 @@ export function VoiceSelection({
         <p className="text-[11px] text-muted-foreground mt-1 ml-10">Chọn giọng phù hợp với nội dung của bạn</p>
       </div>
 
-      <div className="space-y-3">
-        {displayVoices.map((voice) => (
-          <VoiceCard
-            key={voice.id}
-            voice={voice}
-            isSelected={selectedVoice === voice.id}
-            isPreviewing={previewingVoiceId === voice.id}
-            onSelect={() => onVoiceChange(voice.id as VoiceId)}
-            onPreview={() => onPreview?.(voice.id)}
-            disabled={disabled}
-          />
-        ))}
-      </div>
+      {/* Trigger: dropdown hiển thị giọng đang chọn */}
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen((o) => !o)}
+        disabled={disabled}
+        className={cn(
+          "w-full flex items-center gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all",
+          isOpen ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-primary/50 bg-primary/5 hover:border-primary/70 hover:bg-primary/10",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-label={selectedVoiceMeta ? `Đang chọn ${selectedVoiceMeta.name}, nhấn để mở danh sách` : "Chọn giọng đọc"}
+      >
+        {selectedVoiceMeta ? (
+          <>
+            <div
+              className="size-10 shrink-0 rounded-xl flex items-center justify-center text-white font-bold text-sm ring-2 ring-primary/30"
+              style={{ backgroundColor: selectedVoiceMeta.avatarColor }}
+            >
+              {selectedVoiceMeta.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <Check className="w-3 h-3 shrink-0" />
+                Đang chọn
+              </span>
+              <p className="text-sm font-bold text-foreground truncate mt-1">{selectedVoiceMeta.name}</p>
+              <p className="text-[11px] text-muted-foreground">{selectedVoiceMeta.region} • {selectedVoiceMeta.gender}</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 py-1">
+            <p className="text-sm font-medium text-muted-foreground">Chọn giọng...</p>
+          </div>
+        )}
+        <ChevronDown className={cn("w-5 h-5 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+      </button>
 
-      {totalCount > 4 && onViewAllClick && (
-        <button 
-          onClick={onViewAllClick}
-          className="w-full mt-5 py-3 text-sm font-medium text-primary hover:text-primary/80 hover:bg-primary/5 rounded-xl transition-all flex items-center justify-center gap-2"
-        >
-          <span>Xem tất cả {totalCount} giọng đọc</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </button>
+      {/* Dropdown panel: search + filter + list */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
+          <div className="p-3 border-b border-border space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm giọng theo tên, vùng..."
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase mr-1">Vùng:</span>
+              {(["all", "Miền Bắc", "Miền Trung", "Miền Nam"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRegionFilter(r)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors",
+                    regionFilter === r ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {r === "all" ? "Tất cả" : r}
+                </button>
+              ))}
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase ml-2 mr-1">Giới tính:</span>
+              {(["all", "Nam", "Nữ"] as const).map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGenderFilter(g)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors",
+                    genderFilter === g ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {g === "all" ? "Tất cả" : g}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="max-h-[280px] overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
+            {filteredVoices.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Không có giọng phù hợp</p>
+            ) : (
+              filteredVoices.map((voice) => {
+                const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}` as VoiceId;
+                return (
+                  <VoiceCardShared
+                    key={voice.id}
+                    voice={voice}
+                    variant="compact"
+                    isSelected={selectedVoice === voiceId}
+                    isPreviewing={previewingVoiceId === voiceId}
+                    isActive={true}
+                    showPopularBadge={popularVoiceIds.includes(voice.id)}
+                    onSelect={() => handleSelectVoice(voiceId)}
+                    onPreview={() => onPreview?.(voiceId)}
+                    disabled={disabled}
+                  />
+                );
+              })
+            )}
+          </div>
+          {onViewAllClick && (
+            <div className="p-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => { setIsOpen(false); onViewAllClick(); }}
+                className="w-full py-2 text-xs font-medium text-primary hover:bg-primary/5 rounded-lg flex items-center justify-center gap-1.5"
+              >
+                <span>Mở thư viện giọng</span>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -339,10 +377,10 @@ export function AudioCustomization({
   const speedValue = Number(speed) || 1;
 
   return (
-    <div className="bg-card rounded-2xl p-6 border border-primary/10 shadow-lg hover:border-primary/20 transition-all">
+    <div className="glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all">
       <h3 className="text-sm font-semibold mb-5 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-          <svg className="w-4 h-4 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+          <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
         </div>
@@ -358,7 +396,7 @@ export function AudioCustomization({
               </svg>
               <label className="text-xs font-medium text-muted-foreground">Tốc độ</label>
             </div>
-            <span className="text-sm font-bold text-foreground bg-muted px-3 py-1 rounded-lg">{speedValue.toFixed(1)}x</span>
+            <span className="text-sm font-bold text-foreground bg-black/10 dark:bg-white/10 px-3 py-1 rounded-lg">{speedValue.toFixed(1)}x</span>
           </div>
           <div className="relative">
             <input
@@ -369,7 +407,7 @@ export function AudioCustomization({
               value={speedValue}
               onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
               disabled={disabled}
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-[#7c3aed]"
+              className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
               <span>0.5x</span>
@@ -387,7 +425,7 @@ export function AudioCustomization({
               </svg>
               <label className="text-xs font-medium text-muted-foreground">Cao độ</label>
             </div>
-            <span className="text-sm font-bold text-foreground bg-muted px-3 py-1 rounded-lg">
+            <span className="text-sm font-bold text-foreground bg-black/10 dark:bg-white/10 px-3 py-1 rounded-lg">
               {pitchValue > 0 ? `+${pitchValue}` : pitchValue}
             </span>
           </div>
@@ -400,7 +438,7 @@ export function AudioCustomization({
               value={pitchValue}
               onChange={(e) => onPitchChange(parseInt(e.target.value))}
               disabled={disabled}
-              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-[#7c3aed]"
+              className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
               <span>-12</span>
@@ -436,9 +474,9 @@ export function GenerateButton({
       <div className="flex justify-center pt-4">
         <button
           disabled
-          className="px-12 py-4 bg-muted/50 text-muted-foreground font-bold rounded-2xl flex items-center gap-3 cursor-not-allowed"
+          className="px-12 py-4 bg-black/5 dark:bg-white/5 text-muted-foreground font-bold rounded-2xl flex items-center gap-3 cursor-not-allowed border border-border"
         >
-          <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
           <span>Đang khởi tạo...</span>
         </button>
       </div>
@@ -451,16 +489,16 @@ export function GenerateButton({
         onClick={onClick}
         disabled={disabled}
         className={cn(
-          "px-12 py-4.5 text-primary-foreground font-bold rounded-2xl shadow-xl transition-all duration-200 flex items-center gap-3",
+          "px-12 py-4.5 font-bold rounded-2xl shadow-xl transition-all duration-200 flex items-center gap-3",
           "hover:scale-[1.02] active:scale-[0.98]",
           disabled 
-            ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" 
-            : "bg-gradient-to-r from-[#7c3aed] to-[#2563eb] hover:from-[#8b5cf6] hover:to-[#3b82f6] shadow-[#7c3aed]/30 hover:shadow-[#7c3aed]/50"
+            ? "bg-black/10 dark:bg-white/10 text-muted-foreground cursor-not-allowed shadow-none border border-border" 
+            : "glow-button text-primary-foreground hover:shadow-primary/40"
         )}
       >
         <div className={cn(
           "w-6 h-6 rounded-xl flex items-center justify-center",
-          disabled ? "bg-muted" : "bg-white/20"
+          disabled ? "bg-black/5 dark:bg-white/5" : "bg-white/20"
         )}>
           {disabled ? (
             <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -476,7 +514,7 @@ export function GenerateButton({
           {disabled ? "Nhập văn bản để tiếp tục" : "Tạo giọng nói ngay"}
         </span>
         {!disabled && (
-          <div className="ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium">
+          <div className="ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium text-primary-foreground">
             Ctrl + Enter
           </div>
         )}
@@ -512,7 +550,7 @@ function CompactGenerationProgress({ progress, onCancel }: CompactGenerationProg
             className="h-full rounded-full transition-all duration-300"
             style={{
               width: `${progress}%`,
-              background: "linear-gradient(90deg, #7c3aed, #2563eb)",
+              background: "hsl(var(--primary))",
             }}
           />
         </div>
@@ -562,7 +600,7 @@ export function GenerationProgress({ progress, onCancel }: GenerationProgressPro
         <div className="w-full bg-background/50 h-3 rounded-full overflow-hidden border border-primary/5">
           <div
             className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progress}%`, background: "linear-gradient(90deg, #7c3aed, #2563eb)" }}
+            style={{ width: `${progress}%`, background: "hsl(var(--primary))" }}
           />
         </div>
         <div className="flex justify-between items-center text-xs font-medium text-muted-foreground">
@@ -603,13 +641,14 @@ export function GenerationSuccess({ text, voiceName, duration, onClear, onRegene
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Animated waveform bars
+  // Thanh sóng – animation đặt inline để chắc chắn chạy (tránh bị CSS khác ghi đè)
   const waveformBars = Array.from({ length: 24 }, (_, i) => (
     <div
       key={i}
-      className="waveform-bar animate-pulse"
+      className="waveform-bar"
       style={{
-        height: `${Math.random() * 20 + 10}px`,
+        height: `${10 + (i % 5) * 4}px`,
+        animation: "gen-voice-waveform-pulse 1.2s ease-in-out infinite",
         animationDelay: `${i * 0.05}s`,
       }}
     />
@@ -643,13 +682,13 @@ export function GenerationSuccess({ text, voiceName, duration, onClear, onRegene
           placeholder="Nhập văn bản của bạn tại đây..."
         />
         
-        {/* Mini Audio Player Preview */}
+        {/* Mini Audio Player Preview - waveform có class wrapper để animation luôn chạy */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-background/50 border border-primary/5 mb-6">
           <div className="size-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shrink-0">
             <Play className="w-7 h-7" />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="gen-voice-waveform flex items-end gap-0.5 h-8 mb-1">
               {waveformBars}
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -694,10 +733,10 @@ export function TipsAndLinks({ onViewAllVoices }: TipsAndLinksProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold flex items-center gap-2 px-1">
-        <Sparkles className="w-4 h-4 text-[#7c3aed]" />
+        <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-foreground">Mẹo & Liên kết</span>
       </h3>
-      <div className="bg-card border border-primary/10 rounded-xl p-4 space-y-3">
+      <div className="glass-card border border-border rounded-xl p-4 space-y-3">
         <ul className="space-y-2 text-xs text-muted-foreground">
           {TIPS.map((tip, i) => (
             <li key={i} className="flex gap-2">
@@ -745,7 +784,7 @@ function SampleTextChips({ onSelect, disabled }: SampleTextChipsProps) {
             type="button"
             onClick={() => onSelect(sample)}
             disabled={disabled}
-            className="px-3 py-2 text-xs text-muted-foreground bg-card border border-primary/10 rounded-lg hover:border-primary/30 hover:bg-primary/5 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed line-clamp-1 max-w-full"
+            className="px-3 py-2 text-xs text-muted-foreground glass-card hover:bg-black/5 dark:hover:bg-white/10 border border-border rounded-lg hover:border-border/80 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed line-clamp-1 max-w-full"
             title={sample}
           >
             {sample.length > 36 ? `${sample.slice(0, 36)}…` : sample}
@@ -785,12 +824,12 @@ function RecentHistory({ onRefill, disabled }: RecentHistoryProps) {
         {recent.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between gap-3 p-3 bg-card border border-primary/10 rounded-xl"
+            className="flex items-center justify-between gap-3 p-3 glass-card border border-border rounded-xl"
           >
             <p className="text-xs text-muted-foreground line-clamp-1 flex-1 min-w-0">
               {item.text?.trim() || "(Không có văn bản)"}
             </p>
-            <span className="text-[10px] text-muted-foreground shrink-0">
+            <span className="text-[10px] text-muted-foreground/70 shrink-0">
               {getVoiceName(item.voice)}
             </span>
             <button
@@ -980,16 +1019,6 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
 
       {/* Settings Area */}
       <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
-        <VoiceSelection
-          selectedVoice={settings.voice}
-          onVoiceChange={handleVoiceChange}
-          isLoading={!isReady}
-          disabled={false}
-          previewingVoiceId={previewingVoiceId}
-          onPreview={(voiceId) => previewVoice(voiceId)}
-          onViewAllClick={onViewAllVoices}
-        />
-        
         <div className={cn(!isReady && "opacity-50 pointer-events-none")}>
           <AudioCustomization
             speed={settings.speed}
@@ -999,6 +1028,16 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
             disabled={false}
           />
         </div>
+
+        <VoiceSelection
+          selectedVoice={settings.voice}
+          onVoiceChange={handleVoiceChange}
+          isLoading={!isReady}
+          disabled={false}
+          previewingVoiceId={previewingVoiceId}
+          onPreview={(voiceId) => previewVoice(voiceId)}
+          onViewAllClick={onViewAllVoices}
+        />
       </div>
     </div>
   );

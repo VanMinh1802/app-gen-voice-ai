@@ -7,7 +7,7 @@ export type Theme = "light" | "dark";
 const THEME_KEY = "theme";
 
 function getSystemTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -20,9 +20,11 @@ function applyTheme(theme: Theme): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   if (theme === "dark") {
+    root.classList.remove("light");
     root.classList.add("dark");
   } else {
     root.classList.remove("dark");
+    root.classList.add("light");
   }
 }
 
@@ -45,9 +47,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
     const stored = getStoredTheme();
-    const next = stored || "light";
+    const next = stored || getSystemTheme();
     setThemeState(next);
     applyTheme(next);
+  }, [mounted]);
+
+  // Sync state with class already set by inline script (avoids flash)
+  useEffect(() => {
+    if (!mounted || typeof document === "undefined") return;
+    const isLight = document.documentElement.classList.contains("light");
+    setThemeState(isLight ? "light" : "dark");
   }, [mounted]);
 
   useEffect(() => {

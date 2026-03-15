@@ -31,16 +31,17 @@ const VERSIONS_URL = "/tts-model/vi/versions.json";
 
 /**
  * Compare two semantic versions. Returns true if cloudVersion > localVersion.
+ * Treats undefined/missing as "0.0.0" (legacy cache).
  */
-function isNewerVersion(cloudVersion: string, localVersion: string): boolean {
-  const cloudParts = cloudVersion.split(".").map(Number);
-  const localParts = localVersion.split(".").map(Number);
+function isNewerVersion(cloudVersion: string | undefined, localVersion: string | undefined): boolean {
+  const cloud = (cloudVersion ?? "0.0.0").split(".").map(Number);
+  const local = (localVersion ?? "0.0.0").split(".").map(Number);
 
-  for (let i = 0; i < Math.max(cloudParts.length, localParts.length); i++) {
-    const cloud = cloudParts[i] ?? 0;
-    const local = localParts[i] ?? 0;
-    if (cloud > local) return true;
-    if (cloud < local) return false;
+  for (let i = 0; i < Math.max(cloud.length, local.length); i++) {
+    const c = cloud[i] ?? 0;
+    const l = local[i] ?? 0;
+    if (c > l) return true;
+    if (c < l) return false;
   }
   return false;
 }
@@ -94,7 +95,7 @@ export async function loadPiperWithCache(
         const { deleteModelFromCache } = await import("@/lib/storage/modelCache");
         await deleteModelFromCache(voiceId);
       } else {
-        console.log(`[piperR2] Loading ${voiceId} (v${cached.version}) from IndexedDB cache`);
+        console.log(`[piperR2] Loading ${voiceId} (v${cached.version ?? "?"}) from IndexedDB cache`);
         const session = await loadFromArrayBuffer(voiceId, cached.model, cached.config);
         onProgress?.(100);
         return { session, fromCache: true };

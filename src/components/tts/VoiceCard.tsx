@@ -27,16 +27,16 @@ export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: 
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-all group relative",
+        "bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover-lift transition-all group relative cursor-pointer",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       {/* Top row: Avatar + Preview button */}
       <div className="flex items-center justify-between mb-4">
-        <div className="size-14 rounded-full overflow-hidden border-2 border-slate-700 p-0.5 group-hover:border-primary transition-colors">
+        <div className="size-14 rounded-full overflow-hidden border-2 border-slate-700 p-0.5 group-hover:border-primary group-hover:scale-105 transition-all duration-200">
           {voice.avatar ? (
-            <Image 
-              src={voice.avatar} 
+            <Image
+              src={voice.avatar}
               alt={voice.name}
               fill
               className="object-cover rounded-full"
@@ -44,21 +44,21 @@ export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: 
             />
           ) : (
             <div className={cn(
-              "w-full h-full rounded-full flex items-center justify-center text-lg font-medium",
-              voice.gender === "male" 
-                ? "bg-blue-500/20 text-blue-400" 
+              "w-full h-full rounded-full flex items-center justify-center text-lg font-medium transition-transform group-hover:scale-110 duration-200",
+              voice.gender === "male"
+                ? "bg-blue-500/20 text-blue-400"
                 : "bg-pink-500/20 text-pink-400"
             )}>
               {voice.name.charAt(0)}
             </div>
           )}
         </div>
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             onPreview?.();
           }}
-          className="size-10 bg-muted text-muted-foreground rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all shadow-lg"
+          className="size-10 bg-muted text-muted-foreground rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:scale-110 transition-all duration-200 shadow-lg"
           aria-label="Nghe thử"
         >
           <Headphones className="w-5 h-5" />

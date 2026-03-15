@@ -60,7 +60,7 @@ export function toast(type: ToastType, message: string, duration = 5000) {
   // This will be handled by the provider through events or we can use a simple event emitter
   // For now, dispatch a custom event
   if (typeof window !== "undefined") {
-    const event = new CustomEvent("vietvoice-toast", {
+    const event = new CustomEvent("genvoice-toast", {
       detail: { type, message, duration },
     });
     window.dispatchEvent(event);
@@ -164,9 +164,9 @@ export function GlobalToastListener({ addToast }: { addToast: (toast: Omit<Toast
       addToast(event.detail);
     };
 
-    window.addEventListener("vietvoice-toast", handleToast as EventListener);
+    window.addEventListener("genvoice-toast", handleToast as EventListener);
     return () => {
-      window.removeEventListener("vietvoice-toast", handleToast as EventListener);
+      window.removeEventListener("genvoice-toast", handleToast as EventListener);
     };
   }, [addToast]);
 

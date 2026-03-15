@@ -45,7 +45,7 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `vietvoice-${item.id}.wav`;
+      link.download = `genvoice-${item.id}.wav`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

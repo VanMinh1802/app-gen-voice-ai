@@ -8,6 +8,7 @@ import { CUSTOM_MODEL_PREFIX, config } from "@/config";
 import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
 import type { PiperCustomSession } from "@/lib/piper/piperCustom";
 import { loadPiperWithCache } from "@/lib/piper/piperR2";
+import { pitchShift } from "@/lib/audio/pitchShift";
 
 /** Prefer same-origin /onnx/ so .mjs is served with correct MIME (avoids blob fetch issues in worker). */
 const ONNX_WASM_BASE =
@@ -164,7 +165,7 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
           return;
         }
 
-        const { text, voice, speed = 1.0 } = payload as TtsRequest;
+        const { text, voice, speed = 1.0, pitch = 0 } = payload as TtsRequest;
         const effectiveVoice = voice || "vi_VN-vais1000-medium";
 
         if (!text) {
@@ -174,21 +175,30 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
 
         sendProgress(10);
 
+        let float32Audio: Float32Array;
+        let sampleRate: number;
+
         if (isCustomVoice(effectiveVoice)) {
           const custom = await initCustomSession(effectiveVoice);
           sendProgress(40);
           const lengthScale = 1 / speed;
-          const float32Audio = await custom.predict(text, { lengthScale });
-          sendProgress(95);
-          sendComplete(float32Audio, custom.sampleRate);
+          float32Audio = await custom.predict(text, { lengthScale });
+          sampleRate = custom.sampleRate;
         } else {
           const session = await initSession(effectiveVoice);
           sendProgress(40);
           const audioBlob = await session.predict(text);
-          sendProgress(95);
-          const float32Audio = await blobToFloat32Array(audioBlob);
-          sendComplete(float32Audio, 24000);
+          float32Audio = await blobToFloat32Array(audioBlob);
+          sampleRate = 24000;
         }
+
+        if (pitch !== 0 && Number.isFinite(pitch)) {
+          const clampedPitch = Math.max(-12, Math.min(12, pitch));
+          float32Audio = pitchShift(float32Audio, clampedPitch);
+        }
+
+        sendProgress(95);
+        sendComplete(float32Audio, sampleRate);
 
         break;
       }

@@ -5,6 +5,8 @@ export interface TtsRequest {
   model: string;
   voice?: string;
   speed?: number;
+  /** Pitch in semitones (-12 to +12). Applied as post-processing. */
+  pitch?: number;
 }
 
 export interface TtsResponse {
