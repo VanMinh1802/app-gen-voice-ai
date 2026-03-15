@@ -111,6 +111,42 @@ export async function GET(
     const r2Folder = getR2FolderForVoice(voiceId);
     const objectKey = `vi/${r2Folder}/${file}`;
 
+    /** Fetch from R2 public URL when binding fails or object missing (reduces 500 for sample.wav). */
+    const baseUrl =
+      getR2PublicUrlFromEnv() ||
+      request.headers.get("X-R2-Public-URL")?.trim();
+    const tryDirectUrl = !!baseUrl?.startsWith("http");
+    const directUrl = tryDirectUrl && baseUrl ? `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}` : "";
+
+    const respondFromDirectUrl = async (): Promise<NextResponse | Response> => {
+      if (!tryDirectUrl) {
+        return NextResponse.json(
+          {
+            error: "R2 public URL not configured",
+            hint: "Set NEXT_PUBLIC_R2_PUBLIC_URL in .env.local for local dev, or configure R2 binding in Cloudflare Dashboard",
+          },
+          { status: 503 }
+        );
+      }
+      const response = await fetch(directUrl, {
+        headers: { Accept: "*/*" },
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: "File not found", url: directUrl, status: response.status },
+          { status: 404 }
+        );
+      }
+      const blob = await response.blob();
+      return new Response(blob, {
+        headers: {
+          "Content-Type": getContentType(file),
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    };
+
     // Try R2 binding first (Cloudflare Pages)
     const r2Bucket = getR2Bucket();
     if (r2Bucket) {
@@ -118,6 +154,7 @@ export async function GET(
         const object = await r2Bucket.get(objectKey);
 
         if (!object) {
+          if (tryDirectUrl) return respondFromDirectUrl();
           return NextResponse.json(
             { error: "File not found", key: objectKey },
             { status: 404, headers: { "Content-Type": "application/json" } }
@@ -126,6 +163,7 @@ export async function GET(
 
         const body = object.body;
         if (!body || typeof (body as ReadableStream).getReader !== "function") {
+          if (tryDirectUrl) return respondFromDirectUrl();
           return json500({ error: "Invalid R2 object body", key: objectKey });
         }
 
@@ -138,46 +176,13 @@ export async function GET(
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         console.error("R2 fetch error:", msg, objectKey, error);
+        if (tryDirectUrl) return respondFromDirectUrl();
         return json500({ error: "Failed to fetch from R2", detail: msg, key: objectKey });
       }
     }
 
-    // Fallback: Use direct URL (local dev - R2 public bucket)
-    const baseUrl =
-      getR2PublicUrlFromEnv() ||
-      request.headers.get("X-R2-Public-URL")?.trim();
-
-    if (!baseUrl?.startsWith("http")) {
-      return NextResponse.json(
-        {
-          error: "R2 public URL not configured",
-          hint: "Set NEXT_PUBLIC_R2_PUBLIC_URL in .env.local for local dev, or configure R2 binding in Cloudflare Dashboard",
-        },
-        { status: 503 }
-      );
-    }
-
-    const url = `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}`;
-
-    const response = await fetch(url, {
-      headers: { "Accept": "*/*" },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: "File not found", url, status: response.status },
-        { status: 404 }
-      );
-    }
-
-    const blob = await response.blob();
-    return new Response(blob, {
-      headers: {
-        "Content-Type": getContentType(file),
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
+    // No R2 binding: use direct URL (local dev or fallback)
+    return respondFromDirectUrl();
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("Models API uncaught error:", msg, error);
