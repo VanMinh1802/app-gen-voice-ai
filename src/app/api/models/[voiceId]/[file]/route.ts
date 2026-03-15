@@ -8,11 +8,13 @@
 
 export const runtime = "edge";
 
-import { getOptionalRequestContext } from "@cloudflare/next-on-pages";
 import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
 
 const R2_BUCKET_VAR = "VIETVOICE_MODELS";
+
+/** Symbol next-on-pages uses for request context (avoid importing package to prevent server-only / nodejs_compat issues). */
+const CF_REQUEST_CONTEXT = Symbol.for("__cloudflare-request-context__");
 
 const ALLOWED_VOICE_IDS = [
   "anhkhoi",
@@ -56,15 +58,17 @@ function getR2PublicUrlFromEnv(): string {
 
 /**
  * Get R2 bucket from Cloudflare binding.
- * Uses getRequestContext (next-on-pages) on Cloudflare Pages; falls back to globalThis.__env or null.
+ * Reads context from globalThis (same as next-on-pages) to avoid importing the package
+ * (server-only / nodejs_compat can cause 500 on Pages). Fallback: globalThis.__env, then null.
  */
 function getR2Bucket(): R2Bucket | null {
   try {
-    const ctx = getOptionalRequestContext();
-    const fromEnv = ctx?.env && (ctx.env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR];
-    if (fromEnv) return fromEnv;
+    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
+    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, R2Bucket | undefined> }).env;
+    const bucket = env ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR] : undefined;
+    if (bucket && typeof (bucket as R2Bucket).get === "function") return bucket as R2Bucket;
   } catch {
-    // not in Cloudflare request context (e.g. local dev)
+    // ignore
   }
   const binding = (globalThis as unknown as { __env?: Record<string, R2Bucket> }).__env?.[R2_BUCKET_VAR];
   if (binding) return binding;
@@ -84,80 +88,77 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ voiceId: string; file: string }> }
 ) {
-  const { voiceId, file } = await params;
-
-  // Validate voiceId to prevent path traversal
-  if (!isValidVoiceId(voiceId)) {
-    return NextResponse.json({ error: "Invalid voice ID" }, { status: 404 });
-  }
-
-  // Validate file name: allow {voiceId}.onnx, {voiceId}.onnx.json, sample.wav (and legacy model.onnx, model.onnx.json)
-  if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
-    return NextResponse.json({ error: "Invalid file" }, { status: 400 });
-  }
-  const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json"];
-  if (!allowedFiles.includes(file)) {
-    return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
-  }
-
-  const r2Folder = getR2FolderForVoice(voiceId);
-  const objectKey = `vi/${r2Folder}/${file}`;
-
-  // Try R2 binding first (Cloudflare Pages)
-  const r2Bucket = getR2Bucket();
-  if (r2Bucket) {
-    try {
-      const object = await r2Bucket.get(objectKey);
-
-      if (!object) {
-        return NextResponse.json(
-          { error: "File not found", key: objectKey },
-          { status: 404, headers: { "Content-Type": "application/json" } }
-        );
-      }
-
-      const body = object.body;
-      if (!body || typeof (body as ReadableStream).getReader !== "function") {
-        return NextResponse.json(
-          { error: "Invalid R2 object body", key: objectKey },
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(body, {
-        headers: {
-          "Content-Type": getContentType(file),
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error("R2 fetch error:", msg, objectKey, error);
-      return NextResponse.json(
-        { error: "Failed to fetch from R2", detail: msg, key: objectKey },
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
-  }
-
-  // Fallback: Use direct URL (local dev - R2 public bucket)
-  const baseUrl =
-    getR2PublicUrlFromEnv() ||
-    request.headers.get("X-R2-Public-URL")?.trim();
-
-  if (!baseUrl?.startsWith("http")) {
-    return NextResponse.json(
-      {
-        error: "R2 public URL not configured",
-        hint: "Set NEXT_PUBLIC_R2_PUBLIC_URL in .env.local for local dev, or configure R2 binding in Cloudflare Dashboard",
-      },
-      { status: 503 }
-    );
-  }
-
-  const url = `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}`;
+  const json500 = (body: Record<string, unknown>) =>
+    NextResponse.json(body, { status: 500, headers: { "Content-Type": "application/json" } });
 
   try {
+    const { voiceId, file } = await params;
+
+    // Validate voiceId to prevent path traversal
+    if (!isValidVoiceId(voiceId)) {
+      return NextResponse.json({ error: "Invalid voice ID" }, { status: 404 });
+    }
+
+    // Validate file name: allow {voiceId}.onnx, {voiceId}.onnx.json, sample.wav (and legacy model.onnx, model.onnx.json)
+    if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
+      return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+    }
+    const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json"];
+    if (!allowedFiles.includes(file)) {
+      return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
+    }
+
+    const r2Folder = getR2FolderForVoice(voiceId);
+    const objectKey = `vi/${r2Folder}/${file}`;
+
+    // Try R2 binding first (Cloudflare Pages)
+    const r2Bucket = getR2Bucket();
+    if (r2Bucket) {
+      try {
+        const object = await r2Bucket.get(objectKey);
+
+        if (!object) {
+          return NextResponse.json(
+            { error: "File not found", key: objectKey },
+            { status: 404, headers: { "Content-Type": "application/json" } }
+          );
+        }
+
+        const body = object.body;
+        if (!body || typeof (body as ReadableStream).getReader !== "function") {
+          return json500({ error: "Invalid R2 object body", key: objectKey });
+        }
+
+        return new Response(body, {
+          headers: {
+            "Content-Type": getContentType(file),
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error("R2 fetch error:", msg, objectKey, error);
+        return json500({ error: "Failed to fetch from R2", detail: msg, key: objectKey });
+      }
+    }
+
+    // Fallback: Use direct URL (local dev - R2 public bucket)
+    const baseUrl =
+      getR2PublicUrlFromEnv() ||
+      request.headers.get("X-R2-Public-URL")?.trim();
+
+    if (!baseUrl?.startsWith("http")) {
+      return NextResponse.json(
+        {
+          error: "R2 public URL not configured",
+          hint: "Set NEXT_PUBLIC_R2_PUBLIC_URL in .env.local for local dev, or configure R2 binding in Cloudflare Dashboard",
+        },
+        { status: 503 }
+      );
+    }
+
+    const url = `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}`;
+
     const response = await fetch(url, {
       headers: { "Accept": "*/*" },
       cache: "no-store",
@@ -178,15 +179,8 @@ export async function GET(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("R2 public fetch error:", message, url);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch file from R2",
-        detail: message,
-        url,
-      },
-      { status: 502 }
-    );
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Models API uncaught error:", msg, error);
+    return json500({ error: "Internal error", detail: msg });
   }
 }
