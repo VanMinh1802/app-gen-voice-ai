@@ -41,6 +41,7 @@ git push -u origin main
 2. Nếu lần đầu: bấm **"Connect GitHub"** và authorize Cloudflare (chọn account/org, cho phép truy cập repo).
 3. Chọn **repository** chứa project (`app-gen-voice-ai` hoặc tên repo của anh/chị).
 4. Bấm **"Begin setup"**.
+5. **Lưu ý:** Nếu màn hình tiếp theo yêu cầu **Deploy command** (vd: `npx wrangler deploy`) và **API token**, đó là luồng **Workers**. Với hướng dẫn này nên dùng **Pages**: quay lại **Create application** → chọn **Pages** (không chọn Workers) → **Connect to Git** để có form **Build configuration** (Build command, Build output directory) như Bước 4.
 
 ---
 
@@ -62,6 +63,33 @@ git push -u origin main
 **Nếu chọn None:** tự điền **Build command** = `npm run build`, **Build output directory** = `.next`.
 
 Sau đó bấm **"Save and Deploy"**. Lần build đầu có thể fail nếu thiếu cấu hình; làm tiếp Bước 5–6 rồi **Deployments** → **Retry deployment**.
+
+---
+
+---
+
+### Nếu gặp lỗi deploy: "Missing entry-point to Worker script" hoặc "wrangler deploy on Pages project"
+
+Lỗi này xảy ra khi project **Pages** nhưng **Deploy command** bị điền thành `npx wrangler deploy` (lệnh của Workers). Cách sửa:
+
+1. Vào **Workers and Pages** → chọn project (vd: **gen-voice-ai**) → **Settings** → phần **Build**.
+2. Tìm field **Deploy command** (hiện đang là `npx wrangler deploy`).
+3. **Xoá hết** nội dung ô **Deploy command** (để trống) — với Pages, Cloudflare tự deploy từ Build output, không cần chạy wrangler deploy.
+4. (Tuỳ chọn) **Version command** cũng có thể để trống nếu không dùng Workers.
+5. Bấm **Save**.
+6. Vào **Deployments** → **Retry deployment** (hoặc push commit mới để build lại).
+
+**Không cần** chạy `wrangler deploy` — Cloudflare Pages tự động deploy từ output directory (`.next`) sau khi build xong.
+
+---
+
+### Nếu bạn đang ở màn hình "Set up your application" (Deploy command = wrangler deploy, có API token)
+
+Đó là luồng **Workers**. Bạn có hai lựa chọn:
+
+**Cách 1 – Dùng Pages (khuyến nghị, đúng với hướng dẫn trên):** Bấm **Back** → về **Create application** → chọn **Pages** (không chọn Workers) → **Connect to Git** → đi tiếp theo Bước 4 (Build command, **Build output directory** = `.next`), không cần API token hay Deploy command.
+
+**Cách 2 – Tiếp tục deploy bằng Workers:** Điền **API token** (bấm **"+ Create new token"** → vào Cloudflare Dashboard → My Profile → API Tokens → Create Token → chọn template "Edit Cloudflare Workers" hoặc quyền tương đương → tạo xong copy token và dán vào form; có thể điền **API token name**). Sau đó bấm **Deploy**. Lưu ý: với Workers, Next.js thường cần build qua adapter (vd. `@cloudflare/next-on-pages`); nếu build/deploy báo lỗi, nên chuyển sang Cách 1 (Pages).
 
 ---
 
