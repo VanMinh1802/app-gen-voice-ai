@@ -91,6 +91,21 @@ Lỗi này xảy ra khi project **Pages** nhưng **Deploy command** bị điền
 
 ---
 
+### Nếu mở trang thấy "Node.JS Compatibility Error" (no nodejs_compat)
+
+App build bằng `@cloudflare/next-on-pages` cần bật **Compatibility Flag** `nodejs_compat`.
+
+**Cách 1 – Dùng config (khuyến nghị):** Trong repo đã có `wrangler.toml` với `compatibility_flags = ["nodejs_compat"]`. Khi deploy qua Git, Cloudflare Pages có thể đọc config này; nếu vẫn lỗi thì dùng Cách 2.
+
+**Cách 2 – Cấu hình trên Dashboard:**
+
+1. Vào **Workers and Pages** → chọn project (**app-gen-voice-ai**) → **Settings**.
+2. Kéo xuống phần **Runtime** → **Compatibility flags**.
+3. Trong dropdown có thể **không hiện** `nodejs_compat`. Hãy **gõ tay** `nodejs_compat` vào ô **Production compatibility flags** (và Preview nếu có), rồi thêm vào danh sách.
+4. Bấm **Save**. Thay đổi có hiệu lực từ deployment tiếp theo.
+
+---
+
 ## Bước 5: Cấu hình R2 binding (quan trọng)
 
 Để API `/api/models/...` đọc được bucket R2:
