@@ -54,17 +54,11 @@ git push -u origin main
 | **Project name** | `vietvoice-ai` (hoặc tên khác) |
 | **Production branch** | `main` |
 | **Framework preset** | **Next.js** (nếu có trong danh sách) hoặc **None** |
-| **Build command** | `npm run build` |
-| **Build output directory** | `.next` |
+| **Build command** | `npx @cloudflare/next-on-pages@1` |
+| **Build output directory** | `.vercel/output/static` |
 | **Root directory** | Để trống (nếu repo là project gốc) |
 
-**Nếu có preset Next.js:** chọn **Next.js**, Cloudflare sẽ điền sẵn; kiểm tra **Build output directory** là `.next`.
-
-**Nếu chọn None:** tự điền **Build command** = `npm run build`, **Build output directory** = `.next`.
-
-**Cách 2 – Dùng adapter Next.js cho Cloudflare (next-on-pages):** Nếu bạn chọn preset Next.js và Cloudflare điền sẵn adapter:
-- **Build command:** `npx @cloudflare/next-on-pages@1` (hoặc `npx @cloudflare/next-on-pages`)
-- **Build output directory:** `.vercel/output/static` (phải có dấu chấm đầu: **`.vercel`**, không phải `./vercel` — adapter ghi ra thư mục ẩn `.vercel`)
+**Lưu ý:** Dùng next-on-pages adapter để build cho Cloudflare Pages. Output directory `.vercel/output/static` (đã xử lý, không có webpack cache).
 
 Sau đó bấm **"Save and Deploy"**. Lần build đầu có thể fail nếu thiếu cấu hình; làm tiếp Bước 5–6 rồi **Deployments** → **Retry deployment**.
 

@@ -1,6 +1,6 @@
 name = "gen-voice-ai"
 compatibility_date = "2024-01-01"
-pages_build_output_dir = ".next"
+pages_build_output_dir = ".vercel/output/static"
 
 # R2 bucket binding for TTS models
 # VIETVOICE_MODELS will be mapped to the R2 bucket
