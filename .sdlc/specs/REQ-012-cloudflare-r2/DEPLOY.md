@@ -62,6 +62,10 @@ git push -u origin main
 
 **Nếu chọn None:** tự điền **Build command** = `npm run build`, **Build output directory** = `.next`.
 
+**Cách 2 – Dùng adapter Next.js cho Cloudflare (next-on-pages):** Nếu bạn chọn preset Next.js và Cloudflare điền sẵn adapter:
+- **Build command:** `npx @cloudflare/next-on-pages@1` (hoặc `npx @cloudflare/next-on-pages`)
+- **Build output directory:** `.vercel/output/static` (phải có dấu chấm đầu: **`.vercel`**, không phải `./vercel` — adapter ghi ra thư mục ẩn `.vercel`)
+
 Sau đó bấm **"Save and Deploy"**. Lần build đầu có thể fail nếu thiếu cấu hình; làm tiếp Bước 5–6 rồi **Deployments** → **Retry deployment**.
 
 ---
