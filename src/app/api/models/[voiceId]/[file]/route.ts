@@ -8,6 +8,7 @@
 
 export const runtime = "edge";
 
+import { getOptionalRequestContext } from "@cloudflare/next-on-pages";
 import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
 
@@ -55,10 +56,16 @@ function getR2PublicUrlFromEnv(): string {
 
 /**
  * Get R2 bucket from Cloudflare binding.
- * In dev mode, returns null (falls back to direct URL).
+ * Uses getRequestContext (next-on-pages) on Cloudflare Pages; falls back to globalThis.__env or null.
  */
 function getR2Bucket(): R2Bucket | null {
-  // R2 binding available via globalThis in Cloudflare Pages runtime
+  try {
+    const ctx = getOptionalRequestContext();
+    const fromEnv = ctx?.env && (ctx.env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR];
+    if (fromEnv) return fromEnv;
+  } catch {
+    // not in Cloudflare request context (e.g. local dev)
+  }
   const binding = (globalThis as unknown as { __env?: Record<string, R2Bucket> }).__env?.[R2_BUCKET_VAR];
   if (binding) return binding;
   return null;
@@ -103,18 +110,33 @@ export async function GET(
       const object = await r2Bucket.get(objectKey);
 
       if (!object) {
-        return NextResponse.json({ error: "File not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "File not found", key: objectKey },
+          { status: 404, headers: { "Content-Type": "application/json" } }
+        );
       }
 
-      return new Response(object.body, {
+      const body = object.body;
+      if (!body || typeof (body as ReadableStream).getReader !== "function") {
+        return NextResponse.json(
+          { error: "Invalid R2 object body", key: objectKey },
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(body, {
         headers: {
           "Content-Type": getContentType(file),
           "Cache-Control": "public, max-age=31536000, immutable",
         },
       });
     } catch (error) {
-      console.error("R2 fetch error:", error);
-      return NextResponse.json({ error: "Failed to fetch from R2" }, { status: 500 });
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("R2 fetch error:", msg, objectKey, error);
+      return NextResponse.json(
+        { error: "Failed to fetch from R2", detail: msg, key: objectKey },
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
   }
 
