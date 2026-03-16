@@ -10,11 +10,9 @@ export const runtime = "edge";
 
 import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
+import { getCloudflareEnv } from "@/lib/cloudflare-env";
 
 const R2_BUCKET_VAR = "VIETVOICE_MODELS";
-
-/** next-on-pages injects request context at this Symbol (env + bindings). */
-const CF_REQUEST_CONTEXT = Symbol.for("__cloudflare-request-context__");
 
 const ALLOWED_VOICE_IDS = [
   "anhkhoi",
@@ -43,17 +41,6 @@ function getContentType(file: string): string {
   return "application/octet-stream";
 }
 
-/** Cloudflare Pages injects Variables/Secrets into request context env, not process.env. */
-function getCloudflareEnv(): Record<string, string | undefined> | null {
-  try {
-    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
-    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, unknown> }).env;
-    return env && typeof env === "object" ? (env as Record<string, string | undefined>) : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Read R2 public URL from Cloudflare context.env (Pages Variables) or process.env.
  */
@@ -76,8 +63,7 @@ function getR2PublicUrlFromEnv(): string {
  */
 function getR2Bucket(): R2Bucket | null {
   try {
-    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
-    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, R2Bucket | undefined> }).env;
+    const env = getCloudflareEnv();
     const bucket = env ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR] : undefined;
     if (bucket && typeof (bucket as R2Bucket).get === "function") return bucket as R2Bucket;
   } catch {

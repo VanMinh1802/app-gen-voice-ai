@@ -6,7 +6,7 @@
  */
 
 import { createClient, GenationClient, Session } from "@genation/sdk";
-import { genationConfig } from "./config";
+import { getGenationConfig } from "./config";
 
 /** License type inferred from SDK getLicenses() return */
 export type License = NonNullable<
@@ -18,20 +18,22 @@ export type License = NonNullable<
 let genationClient: GenationClient | null = null;
 
 /**
- * Get or create the Genation client instance (singleton)
+ * Get or create the Genation client instance (singleton).
+ * Uses getGenationConfig() so on Cloudflare Edge (e.g. callback route) env is read from request context.
  */
 export function getGenationClient(): GenationClient {
   if (!genationClient) {
-    if (!genationConfig.clientId || !genationConfig.clientSecret) {
+    const config = getGenationConfig();
+    if (!config.clientId || !config.clientSecret) {
       throw new Error(
         "Genation SDK not configured. Please set GENATION_CLIENT_ID and GENATION_CLIENT_SECRET environment variables."
       );
     }
 
     genationClient = createClient({
-      clientId: genationConfig.clientId,
-      clientSecret: genationConfig.clientSecret,
-      redirectUri: genationConfig.redirectUri,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      redirectUri: config.redirectUri,
     });
   }
 
