@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Header, Sidebar } from "@/components/layout";
 import { MainContent, AudioPlayer, VoiceLibrary } from "@/components/tts";
-import { ToastContainer, ToastProvider, useToast, GlobalToastListener } from "@/components/ui/Toast";
+import { ToastContainer, ToastProvider, useToast, GlobalToastListener, toast } from "@/components/ui/Toast";
 import { TtsProvider } from "@/features/tts/context/TtsContext";
 import { useTtsStore } from "@/features/tts/store";
 import { HistoryPanel } from "@/features/tts/components/HistoryPanel";
@@ -13,6 +14,8 @@ import { VoiceSettings } from "@/features/tts/components/VoiceSettings";
 type SidebarTab = "dashboard" | "voice_library" | "history" | "settings";
 
 function HomeContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
   const [refillText, setRefillText] = useState("");
@@ -24,6 +27,23 @@ function HomeContent() {
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  // Show toast when redirected back with auth_error (e.g. 400 invalid client credentials)
+  useEffect(() => {
+    if (searchParams.get("auth_error") !== "true") return;
+    const message = searchParams.get("message");
+    const decoded = message ? decodeURIComponent(message) : "Lỗi đăng nhập";
+    toast("error", decoded, 8000);
+    const lower = decoded.toLowerCase();
+    if (lower.includes("invalid") && (lower.includes("credential") || lower.includes("client"))) {
+      toast(
+        "info",
+        "Chạy local: thêm NEXT_PUBLIC_GENATION_CLIENT_SECRET vào .env.local (cùng giá trị với GENATION_CLIENT_SECRET), rồi restart npm run dev. Xem docs/cloudflare-pages-env.md.",
+        12000
+      );
+    }
+    router.replace("/", { scroll: false });
+  }, [searchParams, router]);
 
   const handleCloseSidebar = useCallback(() => {
     setSidebarOpen(false);

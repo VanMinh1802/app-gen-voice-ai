@@ -2,7 +2,7 @@
 
 ## Chạy local (localhost)
 
-Nếu thấy **"Chưa cấu hình Genation SDK"** hoặc bấm **Đăng nhập** không có phản hồi:
+Nếu thấy **"Chưa cấu hình Genation SDK"**, bấm **Đăng nhập** không có phản hồi, hoặc **lỗi 400 "invalid client credentials"** sau khi đăng nhập:
 
 1. Tạo file **`.env.local`** trong thư mục gốc project (cùng cấp với `package.json`).
 2. Thêm nội dung sau (thay giá trị bằng từ Genation Dashboard):
