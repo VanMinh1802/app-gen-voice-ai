@@ -2,8 +2,9 @@
  * OAuth Callback – redirect tới trang client /auth/callback.
  *
  * Genation redirect URI: .../api/v1/auth/callback
- * Route này CHỈ trả 302 sang /auth/callback?code=...&state=... (client gọi handleCallback).
- * Luôn trả 302, không bao giờ 500 (tránh lỗi trên Cloudflare Edge).
+ * - 302 là ĐÚNG (redirect), không phải lỗi.
+ * - Local: 302 → /auth/callback → client gọi handleCallback (nếu 400 thì do token exchange, xem redirect_uri + secret).
+ * - Production (Cloudflare): route tối giản để tránh 500 trên Edge.
  *
  * Route: /api/v1/auth/callback
  */
@@ -12,48 +13,38 @@ export const runtime = "edge";
 
 const FALLBACK_ORIGIN = "https://app-gen-voice-ai.pages.dev";
 
-/** Redirect 302 – chỉ dùng Response chuẩn, không dùng NextResponse. */
+/** Redirect 302 – Web API thuần, tương thích Cloudflare Workers. */
 function redirect302(location: string): Response {
-  return new Response(null, {
-    status: 302,
-    headers: new Headers({ Location: location }),
-  });
+  const h = new Headers();
+  h.set("Location", location);
+  return new Response("", { status: 302, headers: h });
 }
 
 export async function GET(request: Request): Promise<Response> {
+  let location = FALLBACK_ORIGIN + "/auth/callback";
+
   try {
+    const url = String(request?.url ?? "");
+    const qIndex = url.indexOf("?");
+    const search = qIndex >= 0 ? url.substring(qIndex) : "";
+
     let origin = FALLBACK_ORIGIN;
-    let search = "";
-
-    try {
-      const url = request.url;
-      if (url && typeof url === "string") {
-        const i = url.indexOf("?");
-        if (i >= 0) {
-          search = url.slice(i);
-        }
-        if (url.startsWith("http")) {
-          const end = url.indexOf("/", 8);
-          origin = end > 0 ? url.slice(0, end) : url.split("?")[0] || FALLBACK_ORIGIN;
-        }
-      }
-    } catch {
-      // use fallbacks
-    }
-
-    if (!origin || origin === FALLBACK_ORIGIN) {
-      try {
-        const host = request.headers.get("host") || request.headers.get("x-forwarded-host") || "";
-        const proto = request.headers.get("x-forwarded-proto") || "https";
-        if (host) origin = (proto === "https" ? "https" : "http") + "://" + host;
-      } catch {
-        // keep FALLBACK_ORIGIN
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      const slashAfterScheme = url.indexOf("/", 8);
+      if (slashAfterScheme > 0) {
+        origin = url.substring(0, slashAfterScheme);
       }
     }
+    if (origin === FALLBACK_ORIGIN && request?.headers) {
+      const host = request.headers.get("host") ?? request.headers.get("x-forwarded-host") ?? "";
+      const proto = request.headers.get("x-forwarded-proto") ?? "https";
+      if (host) origin = (proto === "https" ? "https" : "http") + "://" + host;
+    }
 
-    const location = origin + "/auth/callback" + search;
-    return redirect302(location);
-  } catch (_err) {
-    return redirect302(FALLBACK_ORIGIN + "/?auth_error=true&message=Callback+failed");
+    location = origin + "/auth/callback" + search;
+  } catch {
+    location = FALLBACK_ORIGIN + "/?auth_error=true&message=Callback+failed";
   }
+
+  return redirect302(location);
 }

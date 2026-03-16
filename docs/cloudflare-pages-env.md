@@ -44,3 +44,9 @@ NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/api/v1/auth/callback
 ## Lỗi "Internal Server Error" trên /api/auth/signin
 
 Nếu thấy lỗi này, thường là do **chưa set** hoặc **sai tên** biến trên Pages. Sau khi thêm đủ 3 biến và redeploy, thử lại nút **Đăng nhập**.
+
+## 302 vs 500 vs 400 khi callback
+
+- **302** từ `/api/v1/auth/callback`: **đúng** – đây là redirect sang `/auth/callback`, không phải lỗi.
+- **500** trên production (Cloudflare): route callback trả lỗi server. Đảm bảo đã deploy bản mới; nếu vẫn 500, xem **Function logs** trong Cloudflare Dashboard.
+- **400** sau khi vào `/auth/callback` (redirect về `/?auth_error=...`): token exchange thất bại. Kiểm tra **redirect_uri** khớp G-Store và **client secret** đã set (local: `NEXT_PUBLIC_GENATION_CLIENT_SECRET`, production: env vars trên Pages).
