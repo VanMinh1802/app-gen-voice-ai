@@ -44,6 +44,7 @@ export function Header({
     isAuthenticated, 
     activePlanCode, 
     canAccessPro,
+    signIn,
     signOut 
   } = useAuthContext();
 
@@ -246,9 +247,9 @@ export function Header({
               </div>
             ) : (
               <button 
-                onClick={() => {
-                  // Trigger sign in from context - will redirect to Genation
-                  window.location.href = "/api/auth/signin";
+                onClick={async () => {
+                  // Client-side sign in: SDK lấy URL Genation rồi redirect (không qua /api/auth/signin)
+                  await signIn();
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
               >
