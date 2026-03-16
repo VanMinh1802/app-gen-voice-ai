@@ -41,13 +41,14 @@ const nextConfig = {
   },
   async headers() {
     return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-        ],
-      },
+      // Bỏ COEP/COOP — gây blocked:COEP-frame cho chunks, model không load
+      // {
+      //   source: "/:path*",
+      //   headers: [
+      //     { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      //     { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+      //   ],
+      // },
       {
         source: "/onnx/:path*",
         headers: [
