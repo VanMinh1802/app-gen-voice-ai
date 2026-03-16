@@ -110,21 +110,33 @@ export function useTtsGenerate() {
               }
               setIsWorkerReady(true);
               setStatus("idle");
-              // Gửi R2 public URL cho worker (từ r2-config.json hoặc build-time env)
-              loadR2Config().then(() => {
-                const url = getR2PublicUrl();
-                if (url && workerRef.current) {
-                  workerRef.current.postMessage({
-                    type: "setR2PublicUrl",
-                    payload: url,
-                  });
-                }
-              });
-              // Preload default voice model (chạy nền, không chặn UI)
-              workerRef.current?.postMessage({
-                type: "loadModel",
-                payload: { voice: "custom:ngochuyen" },
-              });
+              // Gửi R2 URL trước, sau đó mới load model — tránh worker dùng /api/models (500)
+              loadR2Config()
+                .then(() => {
+                  const url = getR2PublicUrl();
+                  if (url && workerRef.current) {
+                    workerRef.current.postMessage({
+                      type: "setR2PublicUrl",
+                      payload: url,
+                    });
+                  }
+                  // Preload default voice model sau khi worker đã có R2 URL
+                  if (workerRef.current) {
+                    workerRef.current.postMessage({
+                      type: "loadModel",
+                      payload: { voice: "custom:ngochuyen" },
+                    });
+                  }
+                })
+                .catch(() => {
+                  // Vẫn thử preload nếu r2-config.json lỗi (worker sẽ dùng /api/models)
+                  if (workerRef.current) {
+                    workerRef.current.postMessage({
+                      type: "loadModel",
+                      payload: { voice: "custom:ngochuyen" },
+                    });
+                  }
+                });
               break;
             case "progress":
               setProgress(message.progress);
