@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Header, Sidebar } from "@/components/layout";
@@ -13,16 +13,15 @@ import { VoiceSettings } from "@/features/tts/components/VoiceSettings";
 
 type SidebarTab = "dashboard" | "voice_library" | "history" | "settings";
 
-function HomeContent() {
+function HomeContentInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
   const [refillText, setRefillText] = useState("");
-  const { currentAudioUrl, error, loadHistory } = useTtsStore();
+  const { currentAudioUrl, loadHistory } = useTtsStore();
   const { toasts, removeToast, addToast } = useToast();
   const [playerVisible, setPlayerVisible] = useState(true);
-  const mainContentRef = useRef<{ setText?: (text: string) => void }>(null);
 
   useEffect(() => {
     loadHistory();
@@ -135,7 +134,20 @@ function HomeContent() {
 export default function HomePage() {
   return (
     <ToastProvider>
-      <HomeContent />
+      <Suspense fallback={<LoadingFallback />}>
+        <HomeContentInner />
+      </Suspense>
     </ToastProvider>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-muted-foreground">Đang tải...</p>
+      </div>
+    </div>
   );
 }
