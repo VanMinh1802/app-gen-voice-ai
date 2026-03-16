@@ -21,7 +21,7 @@ import {
   getLicenses,
   hasActivePlan,
   getActivePlanCode,
-  isAuthenticated,
+  checkProAccess,
   type License,
 } from "@/lib/genation";
 import { useAuth } from "./useAuth";
@@ -29,6 +29,8 @@ import { useAuth } from "./useAuth";
 export interface LicenseState {
   licenses: License[];
   activePlanCode: string | null;
+  /** True if user has an active PRO license (purchased). Use to unlock Pro features. */
+  hasProAccess: boolean;
   isLoading: boolean;
   isVerified: boolean;
   error: string | null;
@@ -37,6 +39,8 @@ export interface LicenseState {
 export interface LicenseActions {
   refreshLicenses: () => Promise<void>;
   checkPlan: (planCode: string) => Promise<boolean>;
+  /** Async check: does the user have active PRO license? */
+  checkProAccess: () => Promise<boolean>;
 }
 
 export type UseLicenseReturn = LicenseState & LicenseActions;
@@ -131,6 +135,9 @@ export function useLicense(): UseLicenseReturn {
           getActivePlanCode(),
         ]);
 
+        console.log("[useLicense] fetched licenses:", licenseList);
+        console.log("[useLicense] active plan code:", planCode);
+
         if (isMounted) {
           setLicenses(licenseList);
           setActivePlanCode(planCode);
@@ -138,6 +145,7 @@ export function useLicense(): UseLicenseReturn {
           setError(null);
         }
       } catch (err) {
+        console.error("[useLicense] fetch error:", err);
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Failed to get licenses");
           setIsVerified(false);
@@ -189,13 +197,22 @@ export function useLicense(): UseLicenseReturn {
     [isAuth, isVerified]
   );
 
+  const checkProAccessFn = useCallback(async (): Promise<boolean> => {
+    if (!isAuth) return false;
+    return await checkProAccess();
+  }, [isAuth]);
+
+  const hasProAccess = activePlanCode === "PRO";
+
   return {
     licenses,
     activePlanCode,
+    hasProAccess,
     isLoading,
     isVerified,
     error,
     refreshLicenses,
     checkPlan,
+    checkProAccess: checkProAccessFn,
   };
 }

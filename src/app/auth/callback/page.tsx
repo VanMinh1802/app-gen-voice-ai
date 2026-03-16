@@ -45,14 +45,17 @@ function AuthCallbackContent() {
         const redirectUri = genationConfig.redirectUri || "";
         const qs = searchParams.toString();
         const fullUrl = redirectUri + (qs ? "?" + qs : "");
+        console.log("[auth/callback] handleCallback URL:", fullUrl);
         await handleCallback(fullUrl);
         if (cancelled) return;
+        console.log("[auth/callback] handleCallback success");
         setStatus("ok");
         router.replace("/?signed_in=true");
       } catch (err) {
         if (!cancelled) {
           setStatus("error");
           const msg = err instanceof Error ? err.message : "Unknown error";
+          console.error("[auth/callback] handleCallback error:", err);
           setMessage(msg);
           router.replace("/?auth_error=true&message=" + encodeURIComponent(msg));
         }

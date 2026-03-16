@@ -56,9 +56,18 @@ export async function getSession(): Promise<Session | null> {
  */
 export async function getLicenses(): Promise<License[]> {
   const client = getGenationClient();
-  if (!client) return [];
-  const licenses = await client.getLicenses();
-  return licenses ?? [];
+  if (!client) {
+    console.warn("[genation] Client not initialized");
+    return [];
+  }
+  try {
+    const licenses = await client.getLicenses();
+    console.log("[genation] getLicenses result:", licenses);
+    return licenses ?? [];
+  } catch (err) {
+    console.error("[genation] getLicenses error:", err);
+    return [];
+  }
 }
 
 /**
@@ -75,6 +84,24 @@ export async function hasActivePlan(planCode: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Plan code for Pro tier (unlock all features). */
+export const PRO_PLAN_CODE = "PRO";
+
+/**
+ * Check if the current user has an active PRO license (purchased).
+ * Use this to unlock Pro features, e.g.:
+ *   if (await checkProAccess()) showProFeatures();
+ *   else showUpgradePrompt();
+ */
+export async function checkProAccess(): Promise<boolean> {
+  const licenses = await getLicenses();
+  if (!licenses) return false;
+  return licenses.some(
+    (license) =>
+      license.plan.code === PRO_PLAN_CODE && license.status === "active"
+  );
 }
 
 /**
