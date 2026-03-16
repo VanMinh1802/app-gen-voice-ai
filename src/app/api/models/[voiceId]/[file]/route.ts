@@ -114,27 +114,17 @@ export async function GET(
   const json500 = (body: Record<string, unknown>) =>
     NextResponse.json(body, { status: 500, headers: withCoep({ "Content-Type": "application/json" }) });
 
-  // Debug: trả JSON ngay để kiểm tra route có chạy trên Cloudflare không. Gọi: /api/models/banmai/sample.wav?debug=1
+  // Debug: trả JSON tĩnh. Gọi: /api/models/banmai/sample.wav?debug=1
   try {
-    const url = new URL(request.url);
-    if (url.searchParams.get("debug") === "1") {
-      const env = getCloudflareEnv();
-      return NextResponse.json(
-        {
-          ok: true,
-          message: "route-running",
-          envKeys: env ? Object.keys(env) : [],
-          hasR2Bucket: !!getR2Bucket(),
-          hasR2PublicUrl: !!getR2PublicUrlFromEnv(),
-        },
-        { status: 200, headers: withCoep({ "Content-Type": "application/json" }) }
-      );
+    const u = request.url || "";
+    if (u.includes("debug=1")) {
+      return new Response('{"ok":true,"msg":"route-ok"}', {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: "debug-failed", detail: String(e) },
-      { status: 500, headers: withCoep({ "Content-Type": "application/json" }) }
-    );
+  } catch {
+    // ignore
   }
 
   try {
