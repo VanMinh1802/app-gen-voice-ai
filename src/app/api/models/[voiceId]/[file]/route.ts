@@ -8,12 +8,13 @@
 
 export const runtime = "edge";
 
+import { getOptionalRequestContext } from "@cloudflare/next-on-pages";
 import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
 
 const R2_BUCKET_VAR = "VIETVOICE_MODELS";
 
-/** Symbol next-on-pages uses for request context (avoid importing package to prevent server-only / nodejs_compat issues). */
+/** Symbol next-on-pages uses for request context (fallback when getOptionalRequestContext is undefined). */
 const CF_REQUEST_CONTEXT = Symbol.for("__cloudflare-request-context__");
 
 const ALLOWED_VOICE_IDS = [
@@ -55,10 +56,24 @@ function getCloudflareEnv(): Record<string, string | undefined> | null {
 }
 
 /**
- * Read R2 public URL: first from Cloudflare request context (Pages Variables/Secrets), then process.env.
- * On Pages, R2_PUBLIC_URL is only available via context env.
+ * Read R2 public URL: first from getOptionalRequestContext() (Pages), then Symbol/process.env.
+ * On Cloudflare Pages, Variables/Secrets are in context.env.
  */
 function getR2PublicUrlFromEnv(): string {
+  let ctx: ReturnType<typeof getOptionalRequestContext>;
+  try {
+    ctx = getOptionalRequestContext();
+  } catch {
+    ctx = undefined;
+  }
+  const fromCtx =
+    ctx?.env &&
+    typeof ctx.env === "object" &&
+    ((ctx.env as Record<string, unknown>).R2_PUBLIC_URL ??
+      (ctx.env as Record<string, unknown>).NEXT_PUBLIC_R2_PUBLIC_URL);
+  if (typeof fromCtx === "string" && fromCtx.startsWith("http")) {
+    return fromCtx.trim();
+  }
   const cfEnv = getCloudflareEnv();
   const fromCf = cfEnv?.R2_PUBLIC_URL ?? cfEnv?.NEXT_PUBLIC_R2_PUBLIC_URL;
   if (typeof fromCf === "string" && fromCf.startsWith("http")) {
@@ -74,13 +89,25 @@ function getR2PublicUrlFromEnv(): string {
 
 /**
  * Get R2 bucket from Cloudflare binding.
- * Reads context from globalThis (same as next-on-pages) to avoid importing the package
- * (server-only / nodejs_compat can cause 500 on Pages). Fallback: globalThis.__env, then null.
+ * Prefer getOptionalRequestContext().env (official API on Pages), then Symbol / __env fallback.
  */
 function getR2Bucket(): R2Bucket | null {
+  let ctx: ReturnType<typeof getOptionalRequestContext>;
   try {
-    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
-    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, R2Bucket | undefined> }).env;
+    ctx = getOptionalRequestContext();
+  } catch {
+    ctx = undefined;
+  }
+  const fromCtx =
+    ctx?.env &&
+    typeof ctx.env === "object" &&
+    (ctx.env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR];
+  if (fromCtx && typeof (fromCtx as R2Bucket).get === "function") {
+    return fromCtx as R2Bucket;
+  }
+  try {
+    const ctxSym = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
+    const env = ctxSym && typeof ctxSym === "object" && (ctxSym as { env?: Record<string, R2Bucket | undefined> }).env;
     const bucket = env ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR] : undefined;
     if (bucket && typeof (bucket as R2Bucket).get === "function") return bucket as R2Bucket;
   } catch {
