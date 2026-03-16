@@ -11,6 +11,8 @@ import { VoiceCardShared } from "./VoiceCardShared";
 import { useTtsStore } from "@/features/tts/store";
 import { isTextValid } from "@/lib/text-processing/textProcessor";
 import type { VoiceId } from "@/config";
+import { useAuthContext } from "@/components/AuthProvider";
+import { canUseVoiceForPlan } from "@/lib/hooks";
 
 // Text Input Component
 interface TextInputProps {
@@ -121,6 +123,7 @@ export function VoiceSelection({
   onPreview,
   onViewAllClick,
 }: VoiceSelectionProps) {
+  const { activePlanCode } = useAuthContext();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
@@ -360,6 +363,7 @@ export function VoiceSelection({
             ) : (
               filteredVoices.map((voice) => {
                 const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}` as VoiceId;
+                const isLockedForPlan = !canUseVoiceForPlan({ planCode: activePlanCode, voiceId: voice.id });
                 return (
                   <VoiceCardShared
                     key={voice.id}
@@ -371,7 +375,7 @@ export function VoiceSelection({
                     showPopularBadge={popularVoiceIds.includes(voice.id)}
                     onSelect={() => handleSelectVoice(voiceId)}
                     onPreview={() => onPreview?.(voiceId)}
-                    disabled={disabled}
+                    disabled={disabled || isLockedForPlan}
                   />
                 );
               })
@@ -497,6 +501,7 @@ export function AudioCustomization({
 // Generate Button
 interface GenerateButtonProps {
   disabled?: boolean;
+  disabledReason?: string;
   isGenerating?: boolean;
   isModelLoading?: boolean;
   progress?: number;
@@ -505,6 +510,7 @@ interface GenerateButtonProps {
 
 export function GenerateButton({
   disabled = false,
+  disabledReason,
   isGenerating = false,
   isModelLoading = false,
   progress = 0,
@@ -553,7 +559,7 @@ export function GenerateButton({
           )}
         </div>
         <span className="text-lg">
-          {disabled ? "Nhập văn bản để tiếp tục" : "Tạo giọng nói ngay"}
+          {disabled ? (disabledReason ?? "Nhập văn bản để tiếp tục") : "Tạo giọng nói ngay"}
         </span>
         {!disabled && (
           <div className="ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium text-primary-foreground">
@@ -900,6 +906,7 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
   const [text, setText] = useState(initialText);
   const { settings, status, progress, error, generate, stop, previewVoice, previewingVoiceId, isReady, currentAudioUrl, nowPlaying } = useTts();
   const { setSettings: setStoreSettings, setError } = useTtsStore();
+  const { activePlanCode, canAccessPro } = useAuthContext();
   const [textError, setTextError] = useState<string | null>(null);
 
   // Sync with initialText when it changes (from History refill)
@@ -911,7 +918,23 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
 
   const isGenerating = status === "generating";
   const isPreviewing = status === "previewing";
-  const canGenerate = text.trim().length > 0 && !textError && isReady && !isGenerating && !isPreviewing;
+  const selectedVoiceRawId = useMemo(() => {
+    const v = settings.voice;
+    return v.startsWith(CUSTOM_MODEL_PREFIX) ? v.slice(CUSTOM_MODEL_PREFIX.length) : v;
+  }, [settings.voice]);
+
+  const canUseSelectedVoice = useMemo(
+    () => canUseVoiceForPlan({ planCode: activePlanCode, voiceId: selectedVoiceRawId }),
+    [activePlanCode, selectedVoiceRawId]
+  );
+
+  const canGenerate =
+    text.trim().length > 0 &&
+    !textError &&
+    isReady &&
+    !isGenerating &&
+    !isPreviewing &&
+    canUseSelectedVoice;
 
   const handleTextChange = useCallback((newText: string) => {
     setText(newText);
@@ -952,9 +975,13 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
 
   const handleGenerate = useCallback(() => {
     if (!text.trim()) return;
+    if (!canUseSelectedVoice) {
+      setError("Gói Miễn phí chỉ tạo được 1 giọng nam + 1 giọng nữ. Bạn vẫn có thể nghe sample, hoặc nâng cấp Pro để dùng tất cả giọng.");
+      return;
+    }
     generate(text);
     onGenerate?.(text, settings.voice);
-  }, [text, generate, settings.voice, onGenerate]);
+  }, [text, generate, settings.voice, onGenerate, canUseSelectedVoice, setError]);
 
   // Keyboard shortcut: Ctrl+Enter to generate
   useEffect(() => {
@@ -983,6 +1010,14 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
       }
     }
   }, [setStoreSettings]);
+
+  // If user is on FREE (or not logged in) and currently selected voice is locked, fallback to a free-allowed default.
+  useEffect(() => {
+    if (canAccessPro) return;
+    if (canUseSelectedVoice) return;
+    const fallback = config.tts.defaultVoice as VoiceId; // currently custom:ngochuyen (free allowed)
+    setStoreSettings({ voice: fallback, model: fallback });
+  }, [canAccessPro, canUseSelectedVoice, setStoreSettings]);
 
   // Get voice name from config - memoized
   const voiceName = useMemo(() => {
@@ -1038,6 +1073,7 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
 
             <GenerateButton
               disabled={!canGenerate}
+              disabledReason={!canUseSelectedVoice ? "Giọng này chỉ nghe sample (cần Pro để tạo)" : undefined}
               isGenerating={isGenerating}
               isModelLoading={!isReady}
               progress={progress}

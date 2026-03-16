@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
+import { useAuthContext } from "@/components/AuthProvider";
+import { canUseVoiceForPlan } from "@/lib/hooks";
 
 type SettingsTab = "personal" | "subscription" | "customization" | "security";
 
@@ -36,6 +38,7 @@ function detectGender(voiceId: string): "male" | "female" {
 
 export function VoiceSettings() {
   const { settings, setSettings } = useTtsStore();
+  const { activePlanCode } = useAuthContext();
   const [activeTab, setActiveTab] = useState<SettingsTab>("personal");
 
   // Form state (Thông tin cá nhân)
@@ -329,6 +332,7 @@ export function VoiceSettings() {
                     .map((voice) => {
                       const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}`;
                       const isSelected = settings.voice === voiceId;
+                      const isLockedForPlan = !canUseVoiceForPlan({ planCode: activePlanCode, voiceId: voice.id });
                       const gender = detectGender(voice.id);
                       const initials = voice.name.replace(" (custom)", "").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
                       const avatarBg = gender === "female" ? "from-pink-500 to-pink-400" : "from-blue-500 to-blue-400";
@@ -337,7 +341,8 @@ export function VoiceSettings() {
                           key={voiceId}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                            isSelected ? "border-primary bg-primary/10" : "border-primary/10 hover:border-primary/30"
+                            isSelected ? "border-primary bg-primary/10" : "border-primary/10 hover:border-primary/30",
+                            isLockedForPlan && "opacity-60 cursor-not-allowed"
                           )}
                         >
                           <input
@@ -345,13 +350,18 @@ export function VoiceSettings() {
                             name="voice"
                             value={voiceId}
                             checked={isSelected}
-                            onChange={() => handleVoiceSelect(voiceId)}
+                            onChange={() => {
+                              if (!isLockedForPlan) handleVoiceSelect(voiceId);
+                            }}
                             className="sr-only"
                           />
                           <div className={cn("w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-primary-foreground font-bold text-sm", avatarBg)}>
                             {initials}
                           </div>
-                          <span className="text-sm font-medium text-foreground flex-1">{voice.name.replace(" (custom)", "")}</span>
+                          <span className="text-sm font-medium text-foreground flex-1">
+                            {voice.name.replace(" (custom)", "")}
+                            {isLockedForPlan && <span className="ml-2 text-[10px] font-bold text-primary/80">Pro</span>}
+                          </span>
                           {isSelected && <Check className="w-5 h-5 text-primary" />}
                         </label>
                       );

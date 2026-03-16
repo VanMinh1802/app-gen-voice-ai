@@ -64,9 +64,6 @@ function HomeContent() {
                 title={activeTab === "dashboard" ? "Tạo giọng nói mới" : 
                        activeTab === "voice_library" ? "Thư viện giọng" :
                        activeTab === "history" ? "Lịch sử" : "Cài đặt tài khoản"}
-                isLoggedIn={true}
-                userName="Quang Minh"
-                isPro={true}
               />
 
               {/* Mobile menu button */}

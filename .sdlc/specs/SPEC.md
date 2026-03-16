@@ -30,6 +30,7 @@
 | REQ-010 | IndexedDB History | ✅ Completed | P1 | v1.1.0 |
 | REQ-011 | Share Button | ✅ Completed | P2 | v1.1.0 |
 | REQ-012 | Cloudflare R2 Model Storage | ⏳ Pending | P0 | v1.2.0 |
+| REQ-013 | Plan & License Management | 🔄 In Progress | P0 | v1.2.0 |
 
 ---
 
@@ -60,6 +61,7 @@
 | Feature | Spec File |
 | ------- | --------- |
 | Cloudflare R2 Model Storage | [REQ-012-cloudflare-r2/SPEC.md](REQ-012-cloudflare-r2/SPEC.md) |
+| Plan & License Management | [REQ-013-plan-license-genation/SPEC.md](REQ-013-plan-license-genation/SPEC.md) |
 
 ---
 
@@ -84,6 +86,7 @@
 - Lazy Model Loading
 - Pre-rendered Voice Samples
 - IndexedDB Model Cache
+- Plan & License Management (Genation SDK)
 
 ---
 

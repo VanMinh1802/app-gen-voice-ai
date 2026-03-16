@@ -1,6 +1,13 @@
+/**
+ * Header Component
+ * 
+ * Main header with navigation, user menu, and notifications.
+ * Integrated with Genation authentication.
+ */
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Bell, 
   Settings, 
@@ -10,33 +17,59 @@ import {
   ChevronDown,
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface HeaderProps {
   title?: string;
-  isLoggedIn?: boolean;
-  avatarUrl?: string;
-  userName?: string;
-  isPro?: boolean;
   onSettingsClick?: () => void;
-  onUserMenuClick?: () => void;
 }
 
 export function Header({
   title = "Tạo giọng nói mới",
-  isLoggedIn = true,
-  avatarUrl,
-  userName = "Quang Minh",
-  isPro = true,
   onSettingsClick,
-  onUserMenuClick,
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  
+  // Use auth context
+  const { 
+    user, 
+    isLoading, 
+    isAuthenticated, 
+    activePlanCode, 
+    canAccessPro,
+    signOut 
+  } = useAuthContext();
+
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowNotifications(false);
+      setShowUserMenu(false);
+    };
+    
+    if (showNotifications || showUserMenu) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [showNotifications, showUserMenu]);
 
   const notifications = [
     { id: 1, title: "Model mới đã sẵn sàng", desc: "Giọng Linh Lan đã được cập nhật", time: "2 phút trước", unread: true },
@@ -45,6 +78,11 @@ export function Header({
   ];
 
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  // Get user display info
+  const userName = user?.name || user?.email?.split("@")[0] || "Khách";
+  const userEmail = user?.email || "";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
     <header className="h-16 border-b border-border glass-card flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30">
@@ -69,7 +107,8 @@ export function Header({
         {/* Notifications */}
         <div className="relative">
           <button 
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShowNotifications(!showNotifications);
               setShowUserMenu(false);
             }}
@@ -130,73 +169,96 @@ export function Header({
           )}
         </div>
 
-        {/* User Menu */}
-        <div className="relative ml-2">
-          <button 
-            onClick={() => {
-              setShowUserMenu(!showUserMenu);
-              setShowNotifications(false);
-            }}
-            className="flex items-center gap-2 p-1.5 pr-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
-          >
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/25">
-              {userName.charAt(0)}
-            </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-xs font-bold text-foreground">{userName}</p>
-              {isPro && (
-                <p className="text-[10px] text-amber-500 font-medium">PRO</p>
-              )}
-            </div>
-            <ChevronDown className={cn(
-              "w-4 h-4 text-muted-foreground transition-transform hidden sm:block",
-              showUserMenu && "rotate-180"
-            )} />
-          </button>
+        {/* User Menu - Authenticated */}
+        {isAuthenticated ? (
+          <div className="relative ml-2">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowUserMenu(!showUserMenu);
+                setShowNotifications(false);
+              }}
+              className="flex items-center gap-2 p-1.5 pr-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/25">
+                {userInitial}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-xs font-bold text-foreground">{userName}</p>
+                {canAccessPro && (
+                  <p className="text-[10px] text-amber-500 font-medium">PRO</p>
+                )}
+              </div>
+              <ChevronDown className={cn(
+                "w-4 h-4 text-muted-foreground transition-transform hidden sm:block",
+                showUserMenu && "rotate-180"
+              )} />
+            </button>
 
-          {/* User Menu Dropdown */}
-          {showUserMenu && (
-            <div className="absolute right-0 top-full mt-2 w-56 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
-              <div className="p-3 border-b border-border">
-                <p className="text-sm font-bold text-foreground">{userName}</p>
-                <p className="text-xs text-muted-foreground">quangminh@email.com</p>
+            {/* User Menu Dropdown */}
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-2 w-56 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
+                <div className="p-3 border-b border-border">
+                  <p className="text-sm font-bold text-foreground">{userName}</p>
+                  <p className="text-xs text-muted-foreground">{userEmail}</p>
+                </div>
+                <div className="p-2">
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">Hồ sơ</span>
+                  </button>
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
+                    <CreditCard className="w-4 h-4" />
+                    <span className="text-sm">Quản lý Credits</span>
+                    <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">250</span>
+                  </button>
+                  <button 
+                    onClick={onSettingsClick}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="text-sm">Cài đặt</span>
+                  </button>
+                </div>
+                <div className="p-2 border-t border-border">
+                  <button 
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition-colors text-red-400 hover:text-red-300 text-left disabled:opacity-50"
+                  >
+                    {isSigningOut ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <LogOut className="w-4 h-4" />
+                    )}
+                    <span className="text-sm">Đăng xuất</span>
+                  </button>
+                </div>
               </div>
-              <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
-                  <User className="w-4 h-4" />
-                  <span className="text-sm">Hồ sơ</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
-                  <CreditCard className="w-4 h-4" />
-                  <span className="text-sm">Quản lý Credits</span>
-                  <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">250</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
-                  <Settings className="w-4 h-4" />
-                  <span className="text-sm">Cài đặt</span>
-                </button>
+            )}
+          </div>
+        ) : (
+          /* User Menu - Not Authenticated - Show Login */
+          <div className="relative ml-2">
+            {isLoading ? (
+              <div className="flex items-center gap-2 px-3 py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
-              <div className="p-2 border-t border-border">
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition-colors text-red-400 hover:text-red-300 text-left">
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Đăng xuất</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              <button 
+                onClick={() => {
+                  // Trigger sign in from context - will redirect to Genation
+                  window.location.href = "/api/auth/signin";
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm">Đăng nhập</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Click outside to close dropdowns */}
-      {(showNotifications || showUserMenu) && (
-        <div 
-          className="fixed inset-0 z-40"
-          onClick={() => {
-            setShowNotifications(false);
-            setShowUserMenu(false);
-          }}
-        />
-      )}
     </header>
   );
 }

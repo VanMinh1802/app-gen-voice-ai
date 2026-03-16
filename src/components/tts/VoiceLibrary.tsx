@@ -8,6 +8,8 @@ import { voiceMetadata, type VoiceMetadata } from "@/config/voiceData";
 import { useTtsStore } from "@/features/tts/store";
 import { useTts } from "@/features/tts/context/TtsContext";
 import { VoiceCardShared } from "./VoiceCardShared";
+import { useAuthContext } from "@/components/AuthProvider";
+import { canUseVoiceForPlan } from "@/lib/hooks";
 
 type RegionFilter = "all" | "Miền Bắc" | "Miền Trung" | "Miền Nam";
 type GenderFilter = "all" | "Nam" | "Nữ";
@@ -20,6 +22,7 @@ interface VoiceLibraryProps {
 export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
   const { settings, setSettings, status } = useTtsStore();
   const { previewVoice } = useTts();
+  const { activePlanCode } = useAuthContext();
   const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
   const [styleFilter, setStyleFilter] = useState<string>("all");
@@ -229,6 +232,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
           const isActive = config.activeVoiceIds.includes(voice.id);
           const isSelected = isActive && settings.voice === `${CUSTOM_MODEL_PREFIX}${voice.id}`;
           const isPreviewing = previewingVoice === voice.id;
+          const isLockedForPlan = isActive && !canUseVoiceForPlan({ planCode: activePlanCode, voiceId: voice.id });
 
           return (
             <VoiceCardShared
@@ -238,6 +242,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
               isSelected={!!isSelected}
               isPreviewing={isPreviewing}
               isActive={isActive}
+              disabled={isLockedForPlan}
               showPopularBadge={false}
               onSelect={() => handleSelectVoice(voice)}
               onPreview={() => handlePreview(voice)}

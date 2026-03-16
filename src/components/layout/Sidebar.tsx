@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  LayoutDashboard, 
-  Mic, 
-  History, 
+import {
+  LayoutDashboard,
+  Mic,
+  History,
   Settings,
   ChevronRight,
+  CreditCard,
+  Loader2,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/components/AuthProvider";
+import { PLAN_ACCESS } from "@/lib/hooks";
 
 type SidebarTab = "dashboard" | "voice_library" | "history" | "settings";
 
@@ -21,6 +26,13 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, onClose }: SidebarProps) {
   const [hoveredTab, setHoveredTab] = useState<SidebarTab | null>(null);
+  const { isAuthenticated, activePlanCode, isLoading: isLicenseLoading, licenses } = useAuthContext();
+
+  const planInfo = activePlanCode ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) : null;
+  const planName = planInfo?.name ?? "Miễn phí";
+  const hasActiveLicense = licenses.some((l) => l.status === "active");
+  const activeLicense = licenses.find((l) => l.status === "active");
+  const expiresAt = activeLicense?.expiresAt;
 
   const navItems = [
     { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
@@ -118,41 +130,47 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
           })}
         </nav>
 
-        {/* Premium Plan Card */}
+        {/* Plan Card - real license data */}
         <div className="p-4 mt-auto">
-          <button
-            onClick={() => {
-              window.location.href = "/settings?tab=credits";
-            }}
-            className="w-full text-left glass-card-hover rounded-2xl p-5 group"
+          <Link
+            href="/pricing"
+            className="block w-full text-left glass-card-hover rounded-2xl p-5 group"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-white text-xs font-bold">★</span>
+                  <CreditCard className="text-white w-3.5 h-3.5" />
                 </div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Premium
+                  Gói của bạn
                 </p>
               </div>
               <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0">
-                Nâng cấp →
+                Xem gói →
               </span>
             </div>
-            <p className="text-base font-bold mb-3 text-foreground flex items-center gap-2">
-              250/1000 credits
-              <span className="text-[10px] font-normal text-muted-foreground">/tháng</span>
-            </p>
-            <div className="w-full bg-black/10 dark:bg-white/10 h-2 rounded-full mb-2 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-primary relative overflow-hidden"
-                style={{ width: "25%" }}
-              >
-                <div className="absolute inset-0 bg-white/30 animate-pulse" />
+            {isLicenseLoading ? (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Đang tải...</span>
               </div>
-            </div>
-            <p className="text-xs text-muted-foreground">Còn 750 credits</p>
-          </button>
+            ) : (
+              <>
+                <p className="text-base font-bold mb-1 text-foreground flex items-center gap-2">
+                  {planName}
+                </p>
+                {hasActiveLicense && expiresAt ? (
+                  <p className="text-xs text-muted-foreground">
+                    Hết hạn: {new Date(expiresAt).toLocaleDateString("vi-VN")}
+                  </p>
+                ) : !isAuthenticated ? (
+                  <p className="text-xs text-muted-foreground">Đăng nhập để xem gói</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Chưa có gói trả phí</p>
+                )}
+              </>
+            )}
+          </Link>
         </div>
       </aside>
     </>

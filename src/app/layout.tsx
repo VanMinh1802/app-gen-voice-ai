@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { R2ConfigProvider } from "@/components/R2ConfigProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
   title: "TTS App - Text to Speech",
@@ -44,7 +45,9 @@ export default function RootLayout({
         <R2ConfigProvider>
           <ThemeProvider>
             <ToastProvider>
-              {children}
+              <AuthProvider>
+                {children}
+              </AuthProvider>
             </ToastProvider>
           </ThemeProvider>
         </R2ConfigProvider>

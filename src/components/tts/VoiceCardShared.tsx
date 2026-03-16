@@ -139,13 +139,21 @@ export function VoiceCardShared({
     <div
       className={cn(
         "bg-card border rounded-xl p-5 transition-all group relative",
-        isSelected ? "border-primary bg-primary/10 ring-2 ring-primary/50" : "border-primary/10"
+        isSelected ? "border-primary bg-primary/10 ring-2 ring-primary/50" : "border-primary/10",
+        disabled && "opacity-60"
       )}
     >
       {!isActive && (
         <div className="absolute top-3 right-3 z-10">
           <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-full">
             Coming soon
+          </span>
+        </div>
+      )}
+      {isActive && disabled && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary border border-primary/30 px-2 py-1 rounded-full">
+            Pro
           </span>
         </div>
       )}
@@ -217,16 +225,19 @@ export function VoiceCardShared({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onSelect();
+            if (!disabled) onSelect();
           }}
+          disabled={disabled}
           className={cn(
             "w-full border py-2 rounded-lg text-xs font-bold transition-colors",
-            isSelected
+            disabled
+              ? "border-border bg-muted/30 text-muted-foreground cursor-not-allowed"
+              : isSelected
               ? "border-primary bg-primary text-primary-foreground"
               : "border-primary/20 text-muted-foreground hover:bg-muted"
           )}
         >
-          {isSelected ? "Đang chọn" : "Chọn giọng này"}
+          {disabled ? "Chỉ nghe sample (cần Pro)" : isSelected ? "Đang chọn" : "Chọn giọng này"}
         </button>
       ) : (
         <div className="w-full border border-border py-2 rounded-lg text-xs font-bold text-muted-foreground text-center bg-muted/30 cursor-not-allowed">

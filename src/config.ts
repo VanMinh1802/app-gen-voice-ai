@@ -23,6 +23,11 @@ export const config = {
     /** Base URL for custom Piper models - use R2 API proxy */
     customModelBaseUrl: "/api/models",
   },
+  /**
+   * Free plan: only these 2 voices can be used for generation.
+   * Others are previewable via sample, but generation requires Pro.
+   */
+  freeAllowedVoiceIds: ["manhdung", "ngochuyen"] as const,
   storage: {
     settingsKey: "tts-settings",
     historyKey: "tts-history",
