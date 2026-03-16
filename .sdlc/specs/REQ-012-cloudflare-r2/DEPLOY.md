@@ -144,9 +144,21 @@ Bấm **Save**.
 ## Bước 8: Kiểm tra
 
 1. **URL**: Dạng `https://<project-name>.<account>.pages.dev`.
-2. Mở app → chọn giọng → Generate. Lần đầu sẽ tải model từ R2 (qua `/api/models/...`), lần sau dùng cache IndexedDB.
-3. Nếu lỗi **404** khi tải model: kiểm tra R2 binding (`VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
-4. Nếu lỗi **500** khi tải model/sample.wav: app đã hỗ trợ **tải trực tiếp từ R2** qua file `public/r2-config.json`. Đảm bảo file này có `r2PublicUrl` = public URL của bucket (vd: `https://pub-xxxx.r2.dev`). Client sẽ đọc file này khi load trang và dùng URL đó để fetch sample.wav và model .onnx, **không qua API** `/api/models/...`. Repo mặc định đã có `public/r2-config.json` với URL mẫu; nếu bucket khác thì sửa lại URL trong file đó.
+2. Mở app → chọn giọng → Generate. Lần đầu sẽ tải model từ R2 (trực tiếp qua URL trong `r2-config.json`), lần sau dùng cache IndexedDB.
+3. Nếu lỗi **404** khi tải model: kiểm tra R2 bucket và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
+4. Nếu Network tab thấy `(blocked:COEP-frame...)` cho các chunk JS (`_next/static/chunks/*.js`): Đã **bỏ COEP/COOP** trong `next.config.js` và `public/_headers`. Đảm bảo code mới nhất đã được deploy.
+
+---
+
+## Lưu ý quan trọng: Không dùng COEP/COOP
+
+App đã bỏ **Cross-Origin-Embedder-Policy (COEP)** và **Cross-Origin-Opener-Policy (COOP)** vì:
+
+- Khi dùng COEP `require-corp`, mọi tài nguyên con (kể cả JS cùng origin) đều phải có header phù hợp.
+- Trên Cloudflare Pages, các chunk JS (`_next/static/chunks/*.js`) không có COEP header → browser chặn → `(blocked:COEP-frame...)` → model không tải được.
+- ONNX Runtime WASM **không cần** COEP/SharedArrayBuffer để chạy single-thread.
+
+**Nếu sau này cần SharedArrayBuffer** (multi-thread WASM): dùng `credentialless` hoặc đảm bảo mọi response (kể cả chunk) đều có COEP header phù hợp.
 
 ---
 

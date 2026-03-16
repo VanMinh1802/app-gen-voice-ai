@@ -113,7 +113,29 @@ genvoice-models/       # R2 Bucket Name (user-created)
 │   │   ├── lacphi.onnx.json
 │   │   └── sample.wav
 │   └── ... (other voices)
+│── tts-model/
+│   └── vi/
+│       └── versions.json   # Version manifest for cache invalidation
 ```
+
+### Client-Side R2 Configuration
+
+App sử dụng **file cấu hình tĩnh** thay vì build-time env var để tránh phụ thuộc vào Cloudflare Pages build environment:
+
+| File | Purpose |
+|------|---------|
+| `public/r2-config.json` | Chứa `r2PublicUrl` - URL public của R2 bucket |
+| `src/components/R2ConfigProvider.tsx` | Fetch config khi app load, set vào `window` |
+| `src/lib/config/r2Config.ts` | Cung cấp `loadR2Config()`, `getR2PublicUrl()` |
+
+**Flow:**
+1. App load → `R2ConfigProvider` fetch `/r2-config.json`
+2. `getR2PublicUrl()` trả URL để sample/model dùng direct R2 fetch
+3. Worker nhận URL qua `setR2PublicUrl` message từ main thread
+
+**Tại sao không dùng `NEXT_PUBLIC_R2_PUBLIC_URL`?**
+- Build trên Cloudflare Pages có thể không có quyền truy cập environment variables
+- File tĩnh `r2-config.json` deploy cùng app, không phụ thuộc build env
 
 ### Voice Preview Sample
 
@@ -216,9 +238,23 @@ export async function clearModelCache(): Promise<void>;
 
 ### Implementation Notes
 
-- **Voice preview:** `getVoiceSampleUrl(voiceId)` in `piperR2.ts` returns R2 sample URL or `/api/models/{voiceId}/sample.wav`. `useTtsGenerate.previewVoice()` fetches that URL first; on success plays the WAV, otherwise falls back to TTS generation.
+- **Voice preview:** `getVoiceSampleUrl(voiceId)` in `piperR2.ts` returns R2 sample URL (direct) or `/api/models/{voiceId}/sample.wav`. `useTtsGenerate.previewVoice()` fetches that URL first; on success plays the WAV, otherwise falls back to TTS generation.
 - **API route (dev):** When R2 binding is not present, the route reads `R2_PUBLIC_URL` from `process.env` or by parsing `.env.local` (supports UTF-16-saved files). Debug info in 503 response only in `NODE_ENV=development`.
 - **Phonemizer WASM:** Piper phonemizer `.wasm`/`.data` are loaded from CDN in `piperR2.ts` (`locateFile`) to avoid 404 on relative paths.
+- **COEP/COOP removed:** App does NOT use Cross-Origin-Embedder-Policy (COEP) or Cross-Origin-Opener-Policy (COOP) because:
+  - COEP `require-corp` blocks JS chunks that don't have COEP headers
+  - Cloudflare Pages responses for `_next/static/chunks/*.js` don't include COEP → `(blocked:COEP-frame...)`
+  - ONNX Runtime WASM runs fine without COEP/SharedArrayBuffer (single-thread mode)
+  - If future need for SharedArrayBuffer: use `credentialless` or ensure all responses have COEP headers
+
+- **Worker ↔ Main thread R2 URL flow:**
+  1. Worker posts `workerReady` message
+  2. Main thread loads `r2-config.json` via `loadR2Config()`
+  3. Main thread sends `setR2PublicUrl` with URL to worker (MUST be before `loadModel`)
+  4. Worker uses R2 direct URL to fetch model `.onnx`, not `/api/models` proxy
+  - This avoids API 500 errors on Cloudflare Pages
+
+- **Version checking:** `loadPiperWithCache()` fetches `/tts-model/vi/versions.json` from Pages static files, compares with IndexedDB cache version. If cloud version > local, re-downloads model.
 
 ---
 
