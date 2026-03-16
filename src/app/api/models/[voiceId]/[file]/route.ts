@@ -147,6 +147,16 @@ export async function GET(
     const useDirectUrl = !!baseUrl?.startsWith("http");
     const directUrl = useDirectUrl && baseUrl ? `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}` : "";
 
+    const debug = (extra: Record<string, unknown> = {}) => ({
+      key: objectKey,
+      voiceId,
+      file,
+      r2Folder,
+      useDirectUrl,
+      hasBaseUrl: !!baseUrl,
+      ...extra,
+    });
+
     /** Fetch from R2 public URL. Prefer this when set to avoid 500 from R2 binding on Pages. */
     const fetchFromDirectUrl = async (): Promise<NextResponse | Response> => {
       if (!useDirectUrl || !directUrl) {
@@ -209,7 +219,7 @@ export async function GET(
         return json500({
           error: "Failed to fetch from R2",
           detail: msg,
-          key: objectKey,
+          ...debug({ source: "r2_binding" }),
           hint: "On Cloudflare Pages, set R2_PUBLIC_URL to your R2 bucket public URL to use direct fetch instead of binding.",
         });
       }
@@ -219,6 +229,10 @@ export async function GET(
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("Models API uncaught error:", msg, error);
-    return json500({ error: "Internal error", detail: msg });
+    return json500({
+      error: "Internal error",
+      detail: msg,
+      hint: "Check that R2 has the file at vi/<voiceId>/sample.wav (e.g. vi/banmai/sample.wav). If useDirectUrl is false, set R2_PUBLIC_URL in Cloudflare Pages env.",
+    });
   }
 }
