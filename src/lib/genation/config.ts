@@ -6,13 +6,25 @@
  * Env vars:
  * - NEXT_PUBLIC_GENATION_CLIENT_ID (required)
  * - GENATION_CLIENT_SECRET or NEXT_PUBLIC_GENATION_CLIENT_SECRET (client-side ok)
- * - NEXT_PUBLIC_GENATION_REDIRECT_URI (optional; defaults to origin + /api/auth/callback)
+ * - NEXT_PUBLIC_GENATION_REDIRECT_URI (optional; default /api/v1/auth/callback – phải khớp với G-Store)
+ *
+ * Luồng: Đăng nhập (OAuth) trước → có session → sau đó check license (getLicenses / checkProAccess).
+ * Đăng ký / quản lý tài khoản qua Genation; license do G-Store quản lý (mua/redeem).
  *
  * On Cloudflare Pages (Edge), process.env may be empty; vars are in request context.
- * getGenationConfig() reads from Cloudflare env first when available.
  */
 
 import { getCloudflareEnv } from "@/lib/cloudflare-env";
+
+/** Redirect path đăng ký trên G-Store; đổi thì phải cập nhật Redirect URIs trong G-Store. */
+export const GENATION_REDIRECT_PATH = "/api/v1/auth/callback";
+
+function defaultRedirectUri(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${GENATION_REDIRECT_PATH}`;
+  }
+  return "http://localhost:3000" + GENATION_REDIRECT_PATH;
+}
 
 export const genationConfig = {
   clientId: process.env.NEXT_PUBLIC_GENATION_CLIENT_ID || "",
@@ -21,10 +33,7 @@ export const genationConfig = {
     process.env.NEXT_PUBLIC_GENATION_CLIENT_SECRET ||
     "",
   redirectUri:
-    process.env.NEXT_PUBLIC_GENATION_REDIRECT_URI ||
-    (typeof window !== "undefined"
-      ? `${window.location.origin}/api/auth/callback`
-      : "http://localhost:3000/api/auth/callback"),
+    process.env.NEXT_PUBLIC_GENATION_REDIRECT_URI || defaultRedirectUri(),
 } as const;
 
 /** Runtime config: Cloudflare Edge env first, then process.env (for callback route). */
@@ -52,9 +61,7 @@ export function getGenationConfig(): {
       ? cf.NEXT_PUBLIC_GENATION_REDIRECT_URI
       : "") ||
     genationConfig.redirectUri ||
-    (typeof window !== "undefined"
-      ? `${window.location.origin}/api/auth/callback`
-      : "http://localhost:3000/api/auth/callback");
+    defaultRedirectUri();
   return { clientId, clientSecret, redirectUri };
 }
 
@@ -66,11 +73,11 @@ export function isGenationConfigured(): boolean {
 }
 
 /**
- * Get redirect URI based on environment
+ * Get redirect URI based on environment (phải khớp với Redirect URIs trong G-Store).
  */
 export function getRedirectUri(): string {
   if (typeof window !== "undefined") {
-    return `${window.location.origin}/api/auth/callback`;
+    return `${window.location.origin}${GENATION_REDIRECT_PATH}`;
   }
   return genationConfig.redirectUri;
 }

@@ -10,7 +10,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { handleCallback } from "@/lib/genation";
-import { genationConfig } from "@/lib/genation/config";
+import { getGenationConfig } from "@/lib/genation/config";
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -42,9 +42,9 @@ function AuthCallbackContent() {
 
     (async () => {
       try {
-        const redirectUri = genationConfig.redirectUri || "";
+        const { redirectUri } = getGenationConfig();
         const qs = searchParams.toString();
-        const fullUrl = redirectUri + (qs ? "?" + qs : "");
+        const fullUrl = (redirectUri || "") + (qs ? "?" + qs : "");
         console.log("[auth/callback] handleCallback URL:", fullUrl);
         await handleCallback(fullUrl);
         if (cancelled) return;
