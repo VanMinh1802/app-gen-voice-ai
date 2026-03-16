@@ -41,8 +41,26 @@ function AuthCallbackContent() {
     let cancelled = false;
 
     (async () => {
+      let config;
       try {
-        const { redirectUri } = getGenationConfig();
+        config = getGenationConfig();
+        console.log("[auth/callback] config:", { clientId: config.clientId ? "set" : "missing", clientSecret: config.clientSecret ? "set" : "missing", redirectUri: config.redirectUri });
+        if (!config.clientId || !config.clientSecret) {
+          setStatus("error");
+          setMessage("Genation chưa cấu hình (clientId/secret)");
+          router.replace("/?auth_error=true&message=Genation+not+configured");
+          return;
+        }
+      } catch (err) {
+        console.error("[auth/callback] getGenationConfig error:", err);
+        setStatus("error");
+        setMessage("Lỗi cấu hình: " + (err instanceof Error ? err.message : "Unknown"));
+        router.replace("/?auth_error=true&message=Config+error");
+        return;
+      }
+
+      try {
+        const { redirectUri } = config;
         const qs = searchParams.toString();
         const fullUrl = (redirectUri || "") + (qs ? "?" + qs : "");
         console.log("[auth/callback] handleCallback URL:", fullUrl);
@@ -55,8 +73,9 @@ function AuthCallbackContent() {
         if (!cancelled) {
           setStatus("error");
           const msg = err instanceof Error ? err.message : "Unknown error";
-          console.error("[auth/callback] handleCallback error:", err);
-          setMessage(msg);
+          const cause = err instanceof Error && err.cause ? String(err.cause) : "";
+          console.error("[auth/callback] handleCallback error:", err, cause);
+          setMessage(msg + (cause ? ` (${cause})` : ""));
           router.replace("/?auth_error=true&message=" + encodeURIComponent(msg));
         }
       }
