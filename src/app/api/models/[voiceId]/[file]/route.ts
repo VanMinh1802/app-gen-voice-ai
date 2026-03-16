@@ -43,15 +43,31 @@ function getContentType(file: string): string {
   return "application/octet-stream";
 }
 
+/** Cloudflare Pages injects Variables/Secrets into request context env, not process.env. */
+function getCloudflareEnv(): Record<string, string | undefined> | null {
+  try {
+    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
+    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, unknown> }).env;
+    return env && typeof env === "object" ? (env as Record<string, string | undefined>) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Read R2 public URL from environment variable.
- * In Edge runtime, use process.env directly (set via Cloudflare Dashboard).
- * For local dev: set NEXT_PUBLIC_R2_PUBLIC_URL in .env.local
+ * Read R2 public URL: first from Cloudflare request context (Pages Variables/Secrets), then process.env.
+ * On Pages, R2_PUBLIC_URL is only available via context env.
  */
 function getR2PublicUrlFromEnv(): string {
-  const fromEnv = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL;
-  if (fromEnv?.startsWith("http")) {
-    return fromEnv.trim();
+  const cfEnv = getCloudflareEnv();
+  const fromCf = cfEnv?.R2_PUBLIC_URL ?? cfEnv?.NEXT_PUBLIC_R2_PUBLIC_URL;
+  if (typeof fromCf === "string" && fromCf.startsWith("http")) {
+    return fromCf.trim();
+  }
+  const fromProcess =
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL || process.env.R2_PUBLIC_URL;
+  if (fromProcess?.startsWith("http")) {
+    return fromProcess.trim();
   }
   return "";
 }
