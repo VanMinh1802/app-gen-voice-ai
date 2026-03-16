@@ -8,13 +8,12 @@
 
 export const runtime = "edge";
 
-import { getOptionalRequestContext } from "@cloudflare/next-on-pages";
 import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
 
 const R2_BUCKET_VAR = "VIETVOICE_MODELS";
 
-/** Symbol next-on-pages uses for request context (fallback when getOptionalRequestContext is undefined). */
+/** next-on-pages injects request context at this Symbol (env + bindings). */
 const CF_REQUEST_CONTEXT = Symbol.for("__cloudflare-request-context__");
 
 const ALLOWED_VOICE_IDS = [
@@ -56,24 +55,9 @@ function getCloudflareEnv(): Record<string, string | undefined> | null {
 }
 
 /**
- * Read R2 public URL: first from getOptionalRequestContext() (Pages), then Symbol/process.env.
- * On Cloudflare Pages, Variables/Secrets are in context.env.
+ * Read R2 public URL from Cloudflare context.env (Pages Variables) or process.env.
  */
 function getR2PublicUrlFromEnv(): string {
-  let ctx: ReturnType<typeof getOptionalRequestContext>;
-  try {
-    ctx = getOptionalRequestContext();
-  } catch {
-    ctx = undefined;
-  }
-  const fromCtx =
-    ctx?.env &&
-    typeof ctx.env === "object" &&
-    ((ctx.env as Record<string, unknown>).R2_PUBLIC_URL ??
-      (ctx.env as Record<string, unknown>).NEXT_PUBLIC_R2_PUBLIC_URL);
-  if (typeof fromCtx === "string" && fromCtx.startsWith("http")) {
-    return fromCtx.trim();
-  }
   const cfEnv = getCloudflareEnv();
   const fromCf = cfEnv?.R2_PUBLIC_URL ?? cfEnv?.NEXT_PUBLIC_R2_PUBLIC_URL;
   if (typeof fromCf === "string" && fromCf.startsWith("http")) {
@@ -88,26 +72,12 @@ function getR2PublicUrlFromEnv(): string {
 }
 
 /**
- * Get R2 bucket from Cloudflare binding.
- * Prefer getOptionalRequestContext().env (official API on Pages), then Symbol / __env fallback.
+ * Get R2 bucket from Cloudflare binding (context.env.VIETVOICE_MODELS on Pages).
  */
 function getR2Bucket(): R2Bucket | null {
-  let ctx: ReturnType<typeof getOptionalRequestContext>;
   try {
-    ctx = getOptionalRequestContext();
-  } catch {
-    ctx = undefined;
-  }
-  const fromCtx =
-    ctx?.env &&
-    typeof ctx.env === "object" &&
-    (ctx.env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR];
-  if (fromCtx && typeof (fromCtx as R2Bucket).get === "function") {
-    return fromCtx as R2Bucket;
-  }
-  try {
-    const ctxSym = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
-    const env = ctxSym && typeof ctxSym === "object" && (ctxSym as { env?: Record<string, R2Bucket | undefined> }).env;
+    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
+    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, R2Bucket | undefined> }).env;
     const bucket = env ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR] : undefined;
     if (bucket && typeof (bucket as R2Bucket).get === "function") return bucket as R2Bucket;
   } catch {
@@ -145,11 +115,26 @@ export async function GET(
     NextResponse.json(body, { status: 500, headers: withCoep({ "Content-Type": "application/json" }) });
 
   try {
-    const resolvedParams =
-      params && typeof (params as Promise<unknown>).then === "function"
-        ? await params
-        : (params as unknown as { voiceId: string; file: string });
-    const { voiceId, file } = resolvedParams;
+    let resolvedParams: { voiceId?: string; file?: string };
+    try {
+      resolvedParams =
+        params && typeof (params as Promise<unknown>).then === "function"
+          ? await params
+          : (params as unknown as { voiceId: string; file: string });
+    } catch (e) {
+      return json500({
+        error: "Invalid params",
+        detail: e instanceof Error ? e.message : String(e),
+      });
+    }
+    const voiceId = resolvedParams?.voiceId;
+    const file = resolvedParams?.file;
+    if (!voiceId || !file) {
+      return NextResponse.json(
+        { error: "Missing voiceId or file", voiceId, file },
+        { status: 400, headers: withCoep({ "Content-Type": "application/json" }) }
+      );
+    }
 
     // Validate voiceId to prevent path traversal
     if (!isValidVoiceId(voiceId)) {
@@ -195,23 +180,32 @@ export async function GET(
           { status: 503, headers: withCoep({ "Content-Type": "application/json" }) }
         );
       }
-      const response = await fetch(directUrl, {
-        headers: { Accept: "*/*" },
-        cache: "no-store",
-      });
-      if (!response.ok) {
-        return NextResponse.json(
-          { error: "File not found", url: directUrl, status: response.status },
-          { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
-        );
+      try {
+        const response = await fetch(directUrl, {
+          headers: { Accept: "*/*" },
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          return NextResponse.json(
+            { error: "File not found", url: directUrl, status: response.status },
+            { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
+          );
+        }
+        const blob = await response.blob();
+        return new Response(blob, {
+          headers: withCoep({
+            "Content-Type": getContentType(file),
+            "Cache-Control": "public, max-age=31536000, immutable",
+          }),
+        });
+      } catch (fetchError) {
+        const msg = fetchError instanceof Error ? fetchError.message : String(fetchError);
+        return json500({
+          error: "Direct fetch failed",
+          detail: msg,
+          ...debug({ source: "direct_fetch" }),
+        });
       }
-      const blob = await response.blob();
-      return new Response(blob, {
-        headers: withCoep({
-          "Content-Type": getContentType(file),
-          "Cache-Control": "public, max-age=31536000, immutable",
-        }),
-      });
     };
 
     // Prefer direct R2 URL when configured (avoids 500 from binding on Cloudflare Pages)
@@ -219,7 +213,7 @@ export async function GET(
       return fetchFromDirectUrl();
     }
 
-    // Otherwise use R2 binding (Cloudflare Pages without env var)
+    // Otherwise use R2 binding (Cloudflare Pages)
     const r2Bucket = getR2Bucket();
     if (r2Bucket) {
       try {
@@ -242,24 +236,24 @@ export async function GET(
         });
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        console.error("R2 fetch error:", msg, objectKey, error);
         return json500({
           error: "Failed to fetch from R2",
           detail: msg,
           ...debug({ source: "r2_binding" }),
-          hint: "On Cloudflare Pages, set R2_PUBLIC_URL to your R2 bucket public URL to use direct fetch instead of binding.",
+          hint: "Set R2_PUBLIC_URL in Cloudflare Pages env to use direct fetch instead.",
         });
       }
     }
 
-    return fetchFromDirectUrl();
+    // No binding and no direct URL: try direct fetch (will return 503 with message)
+    const directResponse = await fetchFromDirectUrl();
+    return directResponse;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error("Models API uncaught error:", msg, error);
     return json500({
       error: "Internal error",
       detail: msg,
-      hint: "Check that R2 has the file at vi/<voiceId>/sample.wav (e.g. vi/banmai/sample.wav). If useDirectUrl is false, set R2_PUBLIC_URL in Cloudflare Pages env.",
+      hint: "Set R2_PUBLIC_URL in Cloudflare Pages → Settings → Environment variables.",
     });
   }
 }
