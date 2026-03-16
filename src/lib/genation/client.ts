@@ -111,6 +111,34 @@ export async function handleCallback(url: string): Promise<void> {
   await client.handleCallback(url);
 }
 
+/** Config for creating a one-off client (e.g. in Edge callback with request-scoped env). */
+export interface GenationCallbackConfig {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+}
+
+/**
+ * Handle OAuth callback with explicit config (for Edge/Cloudflare where env is request-scoped).
+ * Use this in API routes that have access to getRequestContext().env.
+ */
+export async function handleCallbackWithConfig(
+  url: string,
+  config: GenationCallbackConfig
+): Promise<void> {
+  if (!config.clientId || !config.clientSecret) {
+    throw new Error(
+      "Genation SDK not configured. Need clientId and clientSecret."
+    );
+  }
+  const client = createClient({
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    redirectUri: config.redirectUri,
+  });
+  await client.handleCallback(url);
+}
+
 /**
  * Sign out current user
  */
