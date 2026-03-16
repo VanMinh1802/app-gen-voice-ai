@@ -1,9 +1,11 @@
 /**
- * Genation Client Wrapper
- * 
- * Singleton client for Genation SDK authentication and license management.
- * Uses OAuth 2.1 with PKCE for secure authentication.
+ * Genation Client Wrapper (client-side only)
+ *
+ * Next.js renders on server first – dùng guard "window" và "use client" để SDK chỉ chạy trên client.
+ * Theo docs Genation: https://dev.genation.ai/docs
  */
+
+"use client";
 
 import { createClient, GenationClient, Session } from "@genation/sdk";
 import { getGenationConfig } from "./config";
@@ -19,15 +21,15 @@ let genationClient: GenationClient | null = null;
 
 /**
  * Get or create the Genation client instance (singleton).
- * Uses getGenationConfig() so on Cloudflare Edge (e.g. callback route) env is read from request context.
+ * Returns null on server (typeof window === "undefined") – callers phải check trước khi dùng.
  */
-export function getGenationClient(): GenationClient {
+export function getGenationClient(): GenationClient | null {
+  if (typeof window === "undefined") return null;
+
   if (!genationClient) {
     const config = getGenationConfig();
     if (!config.clientId || !config.clientSecret) {
-      throw new Error(
-        "Genation SDK not configured. Please set GENATION_CLIENT_ID and GENATION_CLIENT_SECRET environment variables."
-      );
+      return null;
     }
 
     genationClient = createClient({
@@ -45,6 +47,7 @@ export function getGenationClient(): GenationClient {
  */
 export async function getSession(): Promise<Session | null> {
   const client = getGenationClient();
+  if (!client) return null;
   return await client.getSession();
 }
 
@@ -53,6 +56,7 @@ export async function getSession(): Promise<Session | null> {
  */
 export async function getLicenses(): Promise<License[]> {
   const client = getGenationClient();
+  if (!client) return [];
   const licenses = await client.getLicenses();
   return licenses ?? [];
 }
@@ -99,6 +103,7 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function signIn(): Promise<string> {
   const client = getGenationClient();
+  if (!client) throw new Error("Genation SDK not configured or not available on server.");
   return await client.signIn();
 }
 
@@ -108,6 +113,7 @@ export async function signIn(): Promise<string> {
  */
 export async function handleCallback(url: string): Promise<void> {
   const client = getGenationClient();
+  if (!client) throw new Error("Genation SDK not configured or not available on server.");
   await client.handleCallback(url);
 }
 
@@ -144,18 +150,20 @@ export async function handleCallbackWithConfig(
  */
 export async function signOut(): Promise<void> {
   const client = getGenationClient();
+  if (!client) return;
   await client.signOut();
 }
 
 /**
  * Listen to auth state changes
  * @param callback - Called when auth state changes
- * @returns Unsubscribe function
+ * @returns Unsubscribe function (no-op nếu client chưa có)
  */
 export function onAuthStateChange(
   callback: (event: string, session: Session | null) => void
 ): { unsubscribe: () => void } {
   const client = getGenationClient();
+  if (!client) return { unsubscribe: () => {} };
   const { subscription } = client.onAuthStateChange(callback);
   return { unsubscribe: () => subscription.unsubscribe() };
 }
