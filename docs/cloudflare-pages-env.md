@@ -1,8 +1,32 @@
-# Biến môi trường khi deploy lên Cloudflare Pages
+# Biến môi trường Genation (Auth & License)
+
+## Chạy local (localhost)
+
+Nếu thấy **"Chưa cấu hình Genation SDK"** hoặc bấm **Đăng nhập** không có phản hồi:
+
+1. Tạo file **`.env.local`** trong thư mục gốc project (cùng cấp với `package.json`).
+2. Thêm nội dung sau (thay giá trị bằng từ Genation Dashboard):
+
+```
+NEXT_PUBLIC_GENATION_CLIENT_ID=your-client-id
+GENATION_CLIENT_SECRET=your-client-secret
+# Bắt buộc cho local: nút Đăng nhập chạy trên browser, Next.js chỉ expose biến NEXT_PUBLIC_ xuống client
+NEXT_PUBLIC_GENATION_CLIENT_SECRET=your-client-secret
+NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/api/v1/auth/callback
+```
+
+**Lưu ý:** Ở local, cần thêm **`NEXT_PUBLIC_GENATION_CLIENT_SECRET`** (copy cùng giá trị với `GENATION_CLIENT_SECRET`) vì nút Đăng nhập chạy trên client; Next.js không gửi biến không có tiền tố `NEXT_PUBLIC_` xuống browser. Trên production (Cloudflare) chỉ cần set `GENATION_CLIENT_SECRET` (callback chạy server-side).
+
+3. **Restart** dev server (`npm run dev`).
+4. Trên **Genation Dashboard** (G-Store) cần đăng ký thêm Redirect URI: `http://localhost:3000/api/v1/auth/callback`.
+
+---
+
+## Deploy lên Cloudflare Pages
 
 Để **Đăng nhập Genation** và **quản lý license** chạy đúng trên `app-gen-voice-ai.pages.dev`, cần cấu hình Environment Variables trong Cloudflare Pages.
 
-## Cách thêm
+### Cách thêm
 
 1. Vào **Cloudflare Dashboard** → **Workers & Pages** → chọn project **app-gen-voice-ai**.
 2. Vào **Settings** → **Environment variables**.
@@ -13,8 +37,6 @@
 | `NEXT_PUBLIC_GENATION_CLIENT_ID` | `98459c3f-dabd-4d42-8219-0488e6a3acbf` | Bắt buộc |
 | `GENATION_CLIENT_SECRET` | *(secret từ Genation)* | Bắt buộc, **không** dùng tiền tố `NEXT_PUBLIC_` |
 | `NEXT_PUBLIC_GENATION_REDIRECT_URI` | `https://app-gen-voice-ai.pages.dev/api/v1/auth/callback` | Khớp với Redirect URI đã đăng ký trên Genation |
-
-4. **Redeploy** project (Build lại) để biến môi trường có hiệu lực.
 
 ## Lỗi "Internal Server Error" trên /api/auth/signin
 

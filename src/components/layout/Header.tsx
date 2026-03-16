@@ -42,10 +42,12 @@ export function Header({
     user, 
     isLoading, 
     isAuthenticated, 
+    isConfigured,
     activePlanCode, 
     canAccessPro,
     signIn,
-    signOut 
+    signOut,
+    error: authError 
   } = useAuthContext();
 
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -240,7 +242,17 @@ export function Header({
           </div>
         ) : (
           /* User Menu - Not Authenticated - Show Login */
-          <div className="relative ml-2">
+          <div className="relative ml-2 flex flex-col items-end gap-1">
+            {!isConfigured && (
+              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                ⚠️ Chưa cấu hình Genation SDK
+              </span>
+            )}
+            {authError && (
+              <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                {authError}
+              </span>
+            )}
             {isLoading ? (
               <div className="flex items-center gap-2 px-3 py-2">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -248,6 +260,7 @@ export function Header({
             ) : (
               <button 
                 onClick={async () => {
+                  console.log("[Auth] signIn clicked, isConfigured:", isConfigured);
                   // Client-side sign in: SDK lấy URL Genation rồi redirect (không qua /api/auth/signin)
                   await signIn();
                 }}
