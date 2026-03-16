@@ -1,0 +1,6 @@
+# COEP/COOP required so same-origin subresources (e.g. _next/static/chunks/*.js)
+# are not blocked when the document uses Cross-Origin-Embedder-Policy.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cross-Origin-Embedder-Policy
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp

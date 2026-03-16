@@ -100,28 +100,42 @@ interface R2Bucket {
   get: (key: string) => Promise<R2Object | null>;
 }
 
+/** Required so this API response is not blocked by COEP when loaded from the same-origin page. */
+const COEP_HEADERS: Record<string, string> = {
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+};
+
+function withCoep<T extends Record<string, string>>(h: T): T & Record<string, string> {
+  return { ...h, ...COEP_HEADERS };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ voiceId: string; file: string }> }
 ) {
   const json500 = (body: Record<string, unknown>) =>
-    NextResponse.json(body, { status: 500, headers: { "Content-Type": "application/json" } });
+    NextResponse.json(body, { status: 500, headers: withCoep({ "Content-Type": "application/json" }) });
 
   try {
-    const { voiceId, file } = await params;
+    const resolvedParams =
+      params && typeof (params as Promise<unknown>).then === "function"
+        ? await params
+        : (params as unknown as { voiceId: string; file: string });
+    const { voiceId, file } = resolvedParams;
 
     // Validate voiceId to prevent path traversal
     if (!isValidVoiceId(voiceId)) {
-      return NextResponse.json({ error: "Invalid voice ID" }, { status: 404 });
+      return NextResponse.json({ error: "Invalid voice ID" }, { status: 404, headers: withCoep({ "Content-Type": "application/json" }) });
     }
 
     // Validate file name: allow {voiceId}.onnx, {voiceId}.onnx.json, sample.wav (and legacy model.onnx, model.onnx.json)
     if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
-      return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid file" }, { status: 400, headers: withCoep({ "Content-Type": "application/json" }) });
     }
     const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json"];
     if (!allowedFiles.includes(file)) {
-      return NextResponse.json({ error: "Invalid file name" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid file name" }, { status: 400, headers: withCoep({ "Content-Type": "application/json" }) });
     }
 
     const r2Folder = getR2FolderForVoice(voiceId);
@@ -141,7 +155,7 @@ export async function GET(
             error: "R2 public URL not configured",
             hint: "Set R2_PUBLIC_URL or NEXT_PUBLIC_R2_PUBLIC_URL (Cloudflare: Settings → Environment variables)",
           },
-          { status: 503 }
+          { status: 503, headers: withCoep({ "Content-Type": "application/json" }) }
         );
       }
       const response = await fetch(directUrl, {
@@ -151,15 +165,15 @@ export async function GET(
       if (!response.ok) {
         return NextResponse.json(
           { error: "File not found", url: directUrl, status: response.status },
-          { status: 404 }
+          { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
         );
       }
       const blob = await response.blob();
       return new Response(blob, {
-        headers: {
+        headers: withCoep({
           "Content-Type": getContentType(file),
           "Cache-Control": "public, max-age=31536000, immutable",
-        },
+        }),
       });
     };
 
@@ -176,7 +190,7 @@ export async function GET(
         if (!object) {
           return NextResponse.json(
             { error: "File not found", key: objectKey },
-            { status: 404, headers: { "Content-Type": "application/json" } }
+            { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
           );
         }
         const body = object.body;
@@ -184,15 +198,20 @@ export async function GET(
           return json500({ error: "Invalid R2 object body", key: objectKey });
         }
         return new Response(body, {
-          headers: {
+          headers: withCoep({
             "Content-Type": getContentType(file),
             "Cache-Control": "public, max-age=31536000, immutable",
-          },
+          }),
         });
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         console.error("R2 fetch error:", msg, objectKey, error);
-        return json500({ error: "Failed to fetch from R2", detail: msg, key: objectKey });
+        return json500({
+          error: "Failed to fetch from R2",
+          detail: msg,
+          key: objectKey,
+          hint: "On Cloudflare Pages, set R2_PUBLIC_URL to your R2 bucket public URL to use direct fetch instead of binding.",
+        });
       }
     }
 

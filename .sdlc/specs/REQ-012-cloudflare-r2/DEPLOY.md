@@ -121,13 +121,14 @@ App build bằng `@cloudflare/next-on-pages` cần bật **Compatibility Flag** 
 
 ---
 
-## Bước 6: Environment variables (tuỳ chọn)
+## Bước 6: Environment variables (khuyến nghị: R2_PUBLIC_URL)
 
 Trong **Settings** → **Environment variables**:
 
 - **Production** (và Preview nếu muốn):
-  - Không bắt buộc thêm biến cho R2 (đã dùng binding).
-  - Nếu có dùng `NEXT_PUBLIC_*` (vd: `NEXT_PUBLIC_R2_PUBLIC_URL`) thì thêm ở đây.
+  - **Khuyến nghị:** Thêm `R2_PUBLIC_URL` = URL public của bucket R2 (vd: `https://pub-xxxx.r2.dev`). Khi có biến này, API sẽ dùng direct fetch thay vì R2 binding, **tránh lỗi 500** khi tải model/sample.wav trên Pages.
+  - Nếu không set: app dùng R2 binding; nếu binding lỗi hoặc bucket thiếu file sẽ trả 500. Khi gặp 500, hãy thêm `R2_PUBLIC_URL` (bucket cần bật public access hoặc dùng custom domain).
+  - Nếu có dùng `NEXT_PUBLIC_R2_PUBLIC_URL` (client gọi trực tiếp R2) thì cũng thêm ở đây.
 
 Bấm **Save**.
 
@@ -144,7 +145,8 @@ Bấm **Save**.
 
 1. **URL**: Dạng `https://<project-name>.<account>.pages.dev`.
 2. Mở app → chọn giọng → Generate. Lần đầu sẽ tải model từ R2 (qua `/api/models/...`), lần sau dùng cache IndexedDB.
-3. Nếu lỗi 404 khi tải model: kiểm tra R2 binding (`VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
+3. Nếu lỗi **404** khi tải model: kiểm tra R2 binding (`VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
+4. Nếu lỗi **500** khi tải model/sample.wav: thêm env **R2_PUBLIC_URL** (Bước 6) trỏ tới public URL của bucket, rồi deploy lại. Repo đã có `public/_headers` (COEP/COOP) để tránh trình duyệt chặn tài nguyên; đảm bảo build output có file `_headers`.
 
 ---
 
