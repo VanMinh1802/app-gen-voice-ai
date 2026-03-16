@@ -6,7 +6,6 @@ import {
   Mic, 
   History, 
   Settings,
-  Volume2,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,9 +49,11 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
         {/* Logo */}
         <div className="p-6">
           <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <Volume2 className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="GenVoice AI"
+              className="w-10 h-10 rounded-xl object-contain shadow-lg group-hover:scale-105 transition-transform"
+            />
             <div className="flex flex-col">
               <span className="text-xl font-bold tracking-tight text-foreground">
                 GenVoice <span className="text-primary">AI</span>

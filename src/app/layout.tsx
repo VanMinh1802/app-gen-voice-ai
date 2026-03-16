@@ -31,7 +31,8 @@ export default function RootLayout({
             `.trim(),
           }}
         />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/logo.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

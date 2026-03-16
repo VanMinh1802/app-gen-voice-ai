@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X, Sparkles, Headphones, SlidersHorizontal, Edit3, User, Settings, CheckCircle, Play, Pause, Hourglass, Activity, Clock, Check, RefreshCw, AlertCircle, Search, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config, CUSTOM_MODEL_PREFIX, popularVoiceIds } from "@/config";
@@ -125,6 +126,9 @@ export function VoiceSelection({
   const [regionFilter, setRegionFilter] = useState<RegionFilter>("all");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
 
   // Cùng nguồn voiceMetadata với Thư viện giọng — chỉ lấy giọng active
   const sortedVoices = useMemo(() => {
@@ -163,11 +167,34 @@ export function VoiceSelection({
     [onVoiceChange]
   );
 
+  // Cập nhật vị trí dropdown khi mở / resize / scroll (để render qua portal)
+  const updateDropdownPosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const maxHeight = Math.min(400, window.innerHeight - rect.bottom - 8 - 24);
+    setDropdownPosition({ top: rect.bottom + 8, left: rect.left, width: rect.width, maxHeight });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+    updateDropdownPosition();
+    window.addEventListener("resize", updateDropdownPosition);
+    window.addEventListener("scroll", updateDropdownPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateDropdownPosition);
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+    };
+  }, [isOpen, updateDropdownPosition]);
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = e.target as Node;
+      const inCard = dropdownRef.current?.contains(target);
+      const inPanel = panelRef.current?.contains(target);
+      if (!inCard && !inPanel) setIsOpen(false);
     }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -231,6 +258,7 @@ export function VoiceSelection({
 
       {/* Trigger: dropdown hiển thị giọng đang chọn */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => !disabled && setIsOpen((o) => !o)}
         disabled={disabled}
@@ -268,10 +296,20 @@ export function VoiceSelection({
         <ChevronDown className={cn("w-5 h-5 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
       </button>
 
-      {/* Dropdown panel: search + filter + list */}
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
-          <div className="p-3 border-b border-border space-y-3">
+      {/* Dropdown panel: render qua portal để không bị cắt bởi overflow của main, scroll được hết danh sách */}
+      {isOpen && dropdownPosition && typeof document !== "undefined" && createPortal(
+        <div
+          ref={panelRef}
+          className="rounded-xl border border-border bg-card shadow-xl overflow-hidden z-[200]"
+          style={{
+            position: "fixed",
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            maxHeight: dropdownPosition.maxHeight,
+          }}
+        >
+          <div className="p-3 border-b border-border space-y-3 bg-card">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -313,7 +351,10 @@ export function VoiceSelection({
               ))}
             </div>
           </div>
-          <div className="max-h-[280px] overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
+          <div
+            className="overflow-y-auto p-2 space-y-1.5 custom-scrollbar"
+            style={{ maxHeight: Math.max(160, Math.min(320, dropdownPosition.maxHeight - 140)) }}
+          >
             {filteredVoices.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Không có giọng phù hợp</p>
             ) : (
@@ -337,7 +378,7 @@ export function VoiceSelection({
             )}
           </div>
           {onViewAllClick && (
-            <div className="p-2 border-t border-border">
+            <div className="p-2 border-t border-border bg-card">
               <button
                 type="button"
                 onClick={() => { setIsOpen(false); onViewAllClick(); }}
@@ -350,7 +391,8 @@ export function VoiceSelection({
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

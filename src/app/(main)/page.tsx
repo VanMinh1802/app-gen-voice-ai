@@ -79,7 +79,7 @@ function HomeContent() {
               </button>
 
               {/* Main content */}
-              <main className="flex-1 flex flex-col overflow-y-auto custom-scrollbar pb-28 sm:pb-24">
+              <main className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar pb-28 sm:pb-24">
                 <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-screen-2xl">
                   {activeTab === "dashboard" ? (
                     <MainContent 
