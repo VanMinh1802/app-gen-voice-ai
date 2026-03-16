@@ -146,7 +146,7 @@ Bấm **Save**.
 1. **URL**: Dạng `https://<project-name>.<account>.pages.dev`.
 2. Mở app → chọn giọng → Generate. Lần đầu sẽ tải model từ R2 (qua `/api/models/...`), lần sau dùng cache IndexedDB.
 3. Nếu lỗi **404** khi tải model: kiểm tra R2 binding (`VIETVOICE_MODELS`, bucket `genvoice-models`) và cấu trúc object: `vi/<voiceId>/<voiceId>.onnx`, `vi/<voiceId>/<voiceId>.onnx.json`, `vi/<voiceId>/sample.wav`.
-4. Nếu lỗi **500** khi tải model/sample.wav: thêm env **R2_PUBLIC_URL** (Bước 6) trỏ tới public URL của bucket, rồi deploy lại. Repo đã có `public/_headers` (COEP/COOP) để tránh trình duyệt chặn tài nguyên; đảm bảo build output có file `_headers`.
+4. Nếu lỗi **500** khi tải model/sample.wav: app đã hỗ trợ **tải trực tiếp từ R2** qua file `public/r2-config.json`. Đảm bảo file này có `r2PublicUrl` = public URL của bucket (vd: `https://pub-xxxx.r2.dev`). Client sẽ đọc file này khi load trang và dùng URL đó để fetch sample.wav và model .onnx, **không qua API** `/api/models/...`. Repo mặc định đã có `public/r2-config.json` với URL mẫu; nếu bucket khác thì sửa lại URL trong file đó.
 
 ---
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { R2ConfigProvider } from "@/components/R2ConfigProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 
@@ -39,11 +40,13 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-background antialiased font-sans">
-        <ThemeProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </ThemeProvider>
+        <R2ConfigProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </ThemeProvider>
+        </R2ConfigProvider>
       </body>
     </html>
   );

@@ -3,7 +3,7 @@ import { useTtsStore } from "../store";
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 import type { TtsWorkerOutgoingMessage, TtsHistoryItem } from "../types";
 import { CUSTOM_MODEL_PREFIX } from "@/config";
-import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
+import { getR2PublicUrl, loadR2Config } from "@/lib/config/r2Config";
 import { getVoiceSampleUrl } from "@/lib/piper/piperR2";
 
 /** Mẫu văn bản ngắn dùng cho preview giọng (không lưu lịch sử). */
@@ -110,13 +110,16 @@ export function useTtsGenerate() {
               }
               setIsWorkerReady(true);
               setStatus("idle");
-              // Gửi R2 public URL cho worker (main thread có env, worker bundle có thể không)
-              if (R2_PUBLIC_URL) {
-                workerRef.current?.postMessage({
-                  type: "setR2PublicUrl",
-                  payload: R2_PUBLIC_URL,
-                });
-              }
+              // Gửi R2 public URL cho worker (từ r2-config.json hoặc build-time env)
+              loadR2Config().then(() => {
+                const url = getR2PublicUrl();
+                if (url && workerRef.current) {
+                  workerRef.current.postMessage({
+                    type: "setR2PublicUrl",
+                    payload: url,
+                  });
+                }
+              });
               // Preload default voice model (chạy nền, không chặn UI)
               workerRef.current?.postMessage({
                 type: "loadModel",
