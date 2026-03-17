@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
 import {
   User,
   CreditCard,
@@ -21,13 +22,15 @@ import {
   Waves,
   Sparkles,
   Info,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 import { useAuthContext } from "@/components/AuthProvider";
-import { canUseVoiceForPlan } from "@/lib/hooks";
+import { canUseVoiceForPlan, PLAN_ACCESS, isProPlanCode } from "@/lib/hooks";
+import { useToast } from "@/components/ui/Toast";
 
 type SettingsTab = "personal" | "subscription" | "customization" | "security";
 
@@ -36,16 +39,31 @@ function detectGender(voiceId: string): "male" | "female" {
   return maleKeywords.some((kw) => voiceId.toLowerCase().includes(kw)) ? "male" : "female";
 }
 
+const GENATION_ACCOUNT_URL = process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
+
 export function VoiceSettings() {
   const { settings, setSettings } = useTtsStore();
-  const { activePlanCode } = useAuthContext();
+  const {
+    user,
+    isAuthenticated,
+    activePlanCode,
+    licenses,
+    isLoading: isLicenseLoading,
+    upgradeToPlan,
+  } = useAuthContext();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<SettingsTab>("personal");
 
-  // Form state (Thông tin cá nhân)
-  const [fullName, setFullName] = useState("Quang Minh");
-  const [email, setEmail] = useState("quangminh@email.com");
-  const [phone, setPhone] = useState("+84 901 234 567");
+  // Form state (Thông tin cá nhân) — khởi tạo từ user
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("Việt Nam");
+
+  useEffect(() => {
+    setFullName(user?.name ?? "");
+    setEmail(user?.email ?? "");
+  }, [user?.name, user?.email]);
 
   // Customization state
   const [language, setLanguage] = useState("vi");
@@ -71,6 +89,47 @@ export function VoiceSettings() {
   const handlePitchChange = useCallback((v: number) => setSettings({ pitch: v }), [setSettings]);
   const handleVolumeChange = useCallback((v: number) => setSettings({ volume: v }), [setSettings]);
   const handleNormalizeToggle = useCallback((v: boolean) => setSettings({ normalizeText: v }), [setSettings]);
+
+  const handleCancelPersonal = useCallback(() => {
+    setFullName(user?.name ?? "");
+    setEmail(user?.email ?? "");
+    setPhone("");
+    setLocation("Việt Nam");
+  }, [user?.name, user?.email]);
+
+  const handleSavePersonal = useCallback(() => {
+    addToast({
+      type: "info",
+      message: "Cập nhật hồ sơ được quản lý qua tài khoản Genation. Vui lòng truy cập genation.ai để thay đổi thông tin.",
+      duration: 6000,
+    });
+    if (typeof window !== "undefined") {
+      window.open(GENATION_ACCOUNT_URL, "_blank");
+    }
+  }, [addToast]);
+
+  const handleSecurityAction = useCallback(
+    (action: "password" | "2fa" | "delete") => {
+      const messages: Record<typeof action, string> = {
+        password: "Đổi mật khẩu: quản lý tại tài khoản Genation.",
+        "2fa": "Xác thực 2 yếu tố: quản lý tại tài khoản Genation.",
+        delete: "Xóa tài khoản: liên hệ hoặc quản lý tại genation.ai.",
+      };
+      addToast({ type: "info", message: messages[action], duration: 5000 });
+      if (typeof window !== "undefined") {
+        window.open(GENATION_ACCOUNT_URL, "_blank");
+      }
+    },
+    [addToast]
+  );
+
+  const planInfo = activePlanCode
+    ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) ?? (isProPlanCode(activePlanCode) ? PLAN_ACCESS.PRO : PLAN_ACCESS.FREE)
+    : PLAN_ACCESS.FREE;
+  const planName = planInfo?.name ?? "Miễn phí";
+  const activeLicense = licenses.find((l) => l.status === "active");
+  const expiresAt = activeLicense?.expiresAt;
+  const hasActiveLicense = !!activeLicense;
 
   const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
     { id: "personal", label: "Thông tin cá nhân", icon: User },
@@ -113,69 +172,79 @@ export function VoiceSettings() {
         {/* Thông tin cá nhân */}
         {activeTab === "personal" && (
           <div className="bg-card border border-primary/10 rounded-xl p-6">
-            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-              <div className="relative group">
-                <div className="size-32 rounded-full border-4 border-primary/10 overflow-hidden bg-muted flex items-center justify-center text-foreground text-4xl font-bold">
-                  {fullName.charAt(0)}
-                </div>
-                <button
-                  type="button"
-                  className="absolute bottom-1 right-1 size-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground border-2 border-card hover:scale-110 transition-transform"
-                  aria-label="Đổi avatar"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex-1 space-y-4 w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Họ và tên</label>
-                    <input
-                      className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
+            {!isAuthenticated ? (
+              <p className="text-muted-foreground text-sm py-4">
+                Đăng nhập để xem và cập nhật thông tin cá nhân. Hồ sơ được quản lý qua tài khoản Genation.
+              </p>
+            ) : (
+              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+                <div className="relative group">
+                  <div className="size-32 rounded-full border-4 border-primary/10 overflow-hidden bg-muted flex items-center justify-center text-foreground text-4xl font-bold">
+                    {(fullName || email).charAt(0).toUpperCase() || "?"}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</label>
-                    <input
-                      type="email"
-                      className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Số điện thoại</label>
-                    <input
-                      className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vị trí</label>
-                    <select
-                      className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    >
-                      <option>Việt Nam</option>
-                      <option>Hoa Kỳ</option>
-                      <option>Khác</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-2">
-                  <button type="button" className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                    Hủy
-                  </button>
-                  <button type="button" className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all">
-                    Lưu thay đổi
+                  <button
+                    type="button"
+                    onClick={handleSavePersonal}
+                    className="absolute bottom-1 right-1 size-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground border-2 border-card hover:scale-110 transition-transform"
+                    aria-label="Đổi avatar"
+                  >
+                    <Pencil className="w-4 h-4" />
                   </button>
                 </div>
+                <div className="flex-1 space-y-4 w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Họ và tên</label>
+                      <input
+                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Từ tài khoản Genation"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</label>
+                      <input
+                        type="email"
+                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Từ tài khoản Genation"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Số điện thoại</label>
+                      <input
+                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Tùy chọn"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vị trí</label>
+                      <select
+                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                      >
+                        <option>Việt Nam</option>
+                        <option>Hoa Kỳ</option>
+                        <option>Khác</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button type="button" onClick={handleCancelPersonal} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Hủy
+                    </button>
+                    <button type="button" onClick={handleSavePersonal} className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all">
+                      Lưu thay đổi
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -183,63 +252,92 @@ export function VoiceSettings() {
         {activeTab === "subscription" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-card border border-primary/10 rounded-xl p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                    Gói đăng ký hiện tại
-                    <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black border border-primary/20">
-                      Active
-                    </span>
-                  </h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Bạn đang sử dụng gói <span className="text-foreground font-bold">Pro Member</span> (Cá nhân)
-                  </p>
+              {!isAuthenticated ? (
+                <p className="text-muted-foreground text-sm py-4">Đăng nhập để xem gói đăng ký hiện tại.</p>
+              ) : isLicenseLoading ? (
+                <div className="flex items-center gap-2 py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Đang tải thông tin gói...</span>
                 </div>
-                <button type="button" className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all">
-                  Gia hạn
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Chu kỳ thanh toán</span>
-                  <span className="text-foreground font-medium">Hàng tháng (Thanh toán tiếp: 15/10/2023)</span>
-                </div>
-                <div className="h-px bg-primary/10" />
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Hạn mức ký tự (Credits)</span>
-                    <span className="text-foreground font-medium">75,000 / 100,000</span>
+              ) : (
+                <>
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                        Gói đăng ký hiện tại
+                        {hasActiveLicense && (
+                          <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black border border-primary/20">
+                            Active
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        Bạn đang sử dụng gói <span className="text-foreground font-bold">{planName}</span>
+                        {isProPlanCode(activePlanCode) && " (Cá nhân)"}
+                      </p>
+                    </div>
+                    {hasActiveLicense && (
+                      <button
+                        type="button"
+                        onClick={() => upgradeToPlan("PRO")}
+                        className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all"
+                      >
+                        Gia hạn
+                      </button>
+                    )}
                   </div>
-                  <div className="w-full bg-background rounded-full h-2 overflow-hidden border border-primary/10">
-                    <div className="bg-primary h-full rounded-full" style={{ width: "75%" }} />
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Chu kỳ thanh toán</span>
+                      <span className="text-foreground font-medium">
+                        {expiresAt
+                          ? `Hết hạn: ${new Date(expiresAt).toLocaleDateString("vi-VN")}`
+                          : isProPlanCode(activePlanCode)
+                            ? "Pro"
+                            : "Miễn phí"}
+                      </span>
+                    </div>
+                    <div className="h-px bg-primary/10" />
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Quyền sử dụng giọng</span>
+                        <span className="text-foreground font-medium">
+                          {isProPlanCode(activePlanCode) ? "Tất cả giọng Pro" : "2 giọng (Miễn phí)"}
+                        </span>
+                      </div>
+                      {isProPlanCode(activePlanCode) && (
+                        <p className="text-[11px] text-muted-foreground italic text-right">
+                          * Gia hạn qua Genation để tiếp tục dùng Pro
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-muted-foreground italic text-right">* Tự động làm mới vào ngày 15 hàng tháng</p>
-                </div>
-              </div>
+                </>
+              )}
             </div>
             <div className="bg-card/95 border border-primary/15 rounded-xl p-6 flex flex-col justify-between shadow-sm">
               <div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Nâng cấp Business</h3>
+                <h3 className="text-lg font-bold text-foreground mb-2">Nâng cấp Pro</h3>
                 <p className="text-foreground/85 text-sm leading-relaxed">
-                  Mở khóa giọng nói độc quyền, cộng tác nhóm và API không giới hạn.
+                  Mở khóa tất cả giọng nói, chất lượng cao và tùy chỉnh tốc độ/âm lượng.
                 </p>
                 <ul className="mt-4 space-y-2">
                   <li className="flex items-center gap-2 text-sm text-foreground/90">
                     <Check className="w-4 h-4 text-primary shrink-0" />
-                    500,000 ký tự/tháng
+                    Tất cả giọng có sẵn
                   </li>
                   <li className="flex items-center gap-2 text-sm text-foreground/90">
                     <Check className="w-4 h-4 text-primary shrink-0" />
-                    Clone giọng nói siêu thực
+                    Xuất WAV, MP3
                   </li>
                 </ul>
               </div>
-              <button
-                type="button"
-                className="mt-6 w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide"
+              <Link
+                href="/pricing"
+                className="mt-6 w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide text-center block"
               >
                 Xem các gói
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -434,9 +532,13 @@ export function VoiceSettings() {
         {activeTab === "security" && (
           <div className="bg-card border border-primary/10 rounded-xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-6">Bảo mật tài khoản</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Đổi mật khẩu, xác thực 2 yếu tố và xóa tài khoản được quản lý tại tài khoản Genation. Bấm vào từng mục để mở trang quản lý.
+            </p>
             <div className="space-y-4">
               <button
                 type="button"
+                onClick={() => handleSecurityAction("password")}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-background transition-all group"
               >
                 <div className="flex items-center gap-3">
@@ -447,6 +549,7 @@ export function VoiceSettings() {
               </button>
               <button
                 type="button"
+                onClick={() => handleSecurityAction("2fa")}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-background transition-all group"
               >
                 <div className="flex items-center gap-3">
@@ -460,6 +563,7 @@ export function VoiceSettings() {
               </button>
               <button
                 type="button"
+                onClick={() => handleSecurityAction("delete")}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-red-900/10 transition-all group"
               >
                 <div className="flex items-center gap-3">
