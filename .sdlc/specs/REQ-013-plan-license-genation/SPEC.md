@@ -10,6 +10,7 @@
 | **Priority** | P0 (High) |
 | **Owner** | Development Team |
 | **Created** | 2026-03-16 |
+| **Last Updated** | 2026-03-17 |
 | **Target Release** | v1.2.0 |
 
 ---
@@ -29,6 +30,7 @@ Users need to purchase plans to access premium features. Currently, there is no 
 - Integrate with Genation SDK for authentication and license management
 - Check user plan status and apply feature restrictions/activations
 - Show user's current plan and usage in sidebar
+- Handle Genation plan codes (e.g., "PRO_1_Month", "PRO_1_Year") as Pro tier
 
 ---
 
@@ -79,6 +81,15 @@ flowchart TD
 3. **Feature Access Flow**: App checks `activePlanCode` against `PLAN_ACCESS` config
 4. **Purchase Flow**: User clicks upgrade → redirected to Genation store → purchases plan → returns with updated license
 
+### Plan Code Handling
+
+Genation returns various plan codes depending on subscription type:
+- `"PRO"` - Pro tier (exact match)
+- `"PRO_1_Month"` - Pro monthly subscription
+- `"PRO_1_Year"` - Pro yearly subscription
+
+The app normalizes all `"PRO_*"` codes to `"PRO"` for consistent feature gating.
+
 ---
 
 ## 👥 User Stories
@@ -89,10 +100,10 @@ flowchart TD
 
 **Acceptance Criteria:**
 
-- [ ] Pricing page shows Free, Pro plans with prices
-- [ ] Each plan shows included features
-- [ ] Current plan is highlighted for logged-in users
-- [ ] "Mua ngay" button redirects to Genation store
+- [x] Pricing page shows Free, Pro plans with prices
+- [x] Each plan shows included features
+- [x] Current plan is highlighted for logged-in users
+- [x] "Mua ngay" button redirects to Genation store
 
 ### Story 2: Login with Genation
 
@@ -100,10 +111,10 @@ flowchart TD
 
 **Acceptance Criteria:**
 
-- [ ] "Đăng nhập" button triggers Genation OAuth flow
-- [ ] After login, user info displayed in header
-- [ ] Session persists across page refreshes
-- [ ] "Đăng xuất" button signs out user
+- [x] "Đăng nhập" button triggers Genation OAuth flow
+- [x] After login, user info displayed in header
+- [x] Session persists across page refreshes
+- [x] "Đăng xuất" button signs out user
 
 ### Story 3: Check Plan Status
 
@@ -111,10 +122,10 @@ flowchart TD
 
 **Acceptance Criteria:**
 
-- [ ] Sidebar shows current plan (Free/Pro)
-- [ ] Usage stats displayed (credits used/available)
-- [ ] Plan badge shown next to user name
-- [ ] Auto-refresh when returning from purchase
+- [x] Sidebar shows current plan (Free/Pro)
+- [x] Shows plan expiry date
+- [x] Plan badge shown next to user name
+- [x] Auto-refresh when returning from purchase (detect `?signed_in=true`)
 
 ### Story 4: Feature Access Control
 
@@ -122,9 +133,9 @@ flowchart TD
 
 **Acceptance Criteria:**
 
-- [ ] Free users: chỉ tạo được 1 giọng nam + 1 giọng nữ (các giọng khác chỉ nghe sample)
-- [ ] Pro users: tạo được tất cả giọng
-- [ ] Feature restrictions enforced at UI level
+- [x] Free users: chỉ tạo được 1 giọng nam + 1 giọng nữ (các giọng khác chỉ nghe sample)
+- [x] Pro users: tạo được tất cả giọng
+- [x] Feature restrictions enforced at UI level
 
 ### Story 5: Upgrade Plan
 
@@ -132,10 +143,10 @@ flowchart TD
 
 **Acceptance Criteria:**
 
-- [ ] "Nâng cấp" button in sidebar opens upgrade modal/page
-- [ ] Clicking upgrade redirects to Genation store
-- [ ] After purchase, user redirected back to app
-- [ ] License automatically refreshes after return
+- [x] "Nâng cấp" button in sidebar opens upgrade modal/page
+- [x] Clicking upgrade redirects to Genation store
+- [x] After purchase, user redirected back to app
+- [x] License automatically refreshes after return
 
 ---
 
@@ -147,7 +158,7 @@ flowchart TD
 |-------|---------------|
 | Auth | Genation OAuth 2.1 with PKCE |
 | License | Genation SDK `getLicenses()` |
-| State | React Context (AuthProvider) |
+| State | React Context (AuthProvider) + Suspense boundary |
 | Config | `PLAN_ACCESS` constant |
 
 ### Files Structure
@@ -160,19 +171,54 @@ src/
 │   └── index.ts           # ✅ Existing - Exports
 ├── lib/hooks/
 │   ├── useAuth.ts         # ✅ Existing - Auth state
-│   ├── useLicense.ts      # ✅ Existing - License state
+│   ├── useLicense.ts      # ✅ Existing - License state + isProPlanCode()
 │   └── index.ts           # ✅ Existing - Exports
 ├── components/
 │   ├── LoginButton.tsx    # ✅ Existing - Login UI
-│   ├── AuthProvider.tsx   # ✅ Existing - Auth context
+│   ├── AuthProvider.tsx   # ✅ Existing - Auth context with Suspense
 │   └── layout/
-│       └── Sidebar.tsx    # ⚠️ Need update - Show real plan
+│       └── Sidebar.tsx    # ✅ Existing - Shows real plan + expiry
 └── app/
     └── pricing/
-        └── page.tsx       # 🆕 New - Pricing page
+        └── page.tsx       # ✅ Existing - Pricing page
 ```
 
-### Plan Configuration (Existing)
+### Key Functions
+
+#### isProPlanCode (src/lib/genation/client.ts)
+
+```typescript
+/**
+ * Genation may return plan codes like "PRO_1_Month", "PRO_1_Year".
+ * Treat any code that equals "PRO" or starts with "PRO_" as Pro tier.
+ */
+export function isProPlanCode(code: string | null): boolean {
+  if (!code) return false;
+  return code === PRO_PLAN_CODE || code.startsWith("PRO_");
+}
+```
+
+#### getActivePlanCode (src/lib/genation/client.ts)
+
+```typescript
+/**
+ * Get the highest active plan code for the user.
+ * Normalizes Genation plan codes (e.g. "PRO_1_Month") to "PRO" so app logic stays simple.
+ */
+export async function getActivePlanCode(): Promise<string | null> {
+  try {
+    const licenses = await getLicenses();
+    const activeLicense = licenses.find((l) => l.status === "active");
+    const raw = activeLicense?.plan.code || null;
+    if (!raw) return null;
+    return isProPlanCode(raw) ? PRO_PLAN_CODE : raw;
+  } catch {
+    return null;
+  }
+}
+```
+
+### Plan Configuration
 
 ```typescript
 // src/lib/hooks/useLicense.ts
@@ -198,19 +244,23 @@ export const PLAN_ACCESS = {
 } as const;
 ```
 
-### API Integration
+### Suspense Boundary for useSearchParams
+
+Due to Next.js static generation requirements, `useSearchParams()` must be wrapped in Suspense:
 
 ```typescript
-// Genation SDK methods used
-import { 
-  getSession,        // Get current user session
-  getLicenses,       // Get user licenses
-  hasActivePlan,    // Check specific plan
-  getActivePlanCode, // Get highest plan
-  signIn,           // Start OAuth flow
-  signOut,          // Sign out
-  onAuthStateChange, // Listen to auth changes
-} from "@/lib/genation";
+// src/components/AuthProvider.tsx
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+
+  return (
+    <Suspense fallback={<AuthContext.Provider value={getDefaultAuthContextValue()}>...</div></AuthContext.Provider>}>
+      <LicenseProvider auth={auth}>
+        {children}
+      </LicenseProvider>
+    </Suspense>
+  );
+}
 ```
 
 ---
@@ -229,6 +279,8 @@ import {
 - [x] Fetch licenses from SDK
 - [x] Check active plan
 - [x] Plan feature configuration
+- [x] Handle "PRO_*" plan codes (PRO_1_Month, PRO_1_Year)
+- [x] Suspense boundary for useSearchParams
 
 ### UI Updates
 - [x] Sidebar shows real plan data (not hardcoded)
@@ -239,6 +291,7 @@ import {
 - [x] Connect sidebar to useLicense
 - [x] Add "Mua plan" link to Genation store
 - [x] Handle OAuth callback after purchase (client-side)
+- [x] Auto-refresh license after purchase (detect `?signed_in=true`)
 
 ---
 
@@ -248,6 +301,7 @@ import {
 - Genation SDK (`@genation/sdk`)
 - Auth hooks (`useAuth`, `useLicense`)
 - PLAN_ACCESS configuration
+- isProPlanCode utility
 
 ### External
 - Genation OAuth endpoint
@@ -270,6 +324,7 @@ NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id
 GENATION_CLIENT_SECRET=your_client_secret
 # hoặc NEXT_PUBLIC_GENATION_CLIENT_SECRET=your_client_secret
 NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
+NEXT_PUBLIC_GENATION_STORE_URL=https://genation.ai
 ```
 
 ### Security Considerations
@@ -284,6 +339,21 @@ NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
 - **Reason**: Avoids `async_hooks` module error on Cloudflare Pages Edge runtime
 - **Flow**: Genation OAuth → redirect to `/auth/callback?code=...&state=...` → client-side `handleCallback()`
 - **Redirect URI**: Must be configured in Genation Dashboard as `/auth/callback` (not `/api/v1/auth/callback`)
+
+#### Post-Purchase Flow
+1. User purchases on Genation Store
+2. Genation redirects to app: `https://app.com/?signed_in=true`
+3. useLicense detects `signed_in=true` in URL
+4. Calls `refreshLicenses()` to fetch new license data
+5. Cleans up URL with `router.replace("/", { scroll: false })`
+
+#### Plan Code Normalization
+Genation returns various plan codes for Pro tier:
+- `"PRO"` - Direct Pro
+- `"PRO_1_Month"` - Monthly subscription
+- `"PRO_1_Year"` - Yearly subscription
+
+All are normalized to `"PRO"` in `getActivePlanCode()` for consistent app logic.
 
 #### Environment Variables
 ```
