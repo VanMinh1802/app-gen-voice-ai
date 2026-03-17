@@ -7,7 +7,7 @@
 "use client";
 
 import { ReactNode, createContext, useContext, Suspense } from "react";
-import { useAuth, useLicense, type AuthState, type AuthActions, type LicenseState, type LicenseActions } from "@/lib/hooks";
+import { useAuth, useLicense, isProPlanCode, type AuthState, type AuthActions, type LicenseState, type LicenseActions } from "@/lib/hooks";
 
 /**
  * Combined auth + license context type
@@ -41,7 +41,7 @@ function LicenseProvider({ children, auth }: { children: ReactNode; auth: AuthSt
   const license = useLicense();
 
   // Computed: user has PRO access
-  const canAccessPro = license.activePlanCode === "PRO";
+  const canAccessPro = isProPlanCode(license.activePlanCode);
 
   const value: AuthContextValue = {
     ...auth,

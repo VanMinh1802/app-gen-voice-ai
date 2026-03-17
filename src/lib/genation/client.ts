@@ -84,6 +84,15 @@ export async function hasActivePlan(planCode: string): Promise<boolean> {
 export const PRO_PLAN_CODE = "PRO";
 
 /**
+ * Genation may return plan codes like "PRO_1_Month", "PRO_1_Year".
+ * Treat any code that equals "PRO" or starts with "PRO_" as Pro tier.
+ */
+export function isProPlanCode(code: string | null): boolean {
+  if (!code) return false;
+  return code === PRO_PLAN_CODE || code.startsWith("PRO_");
+}
+
+/**
  * Check if the current user has an active PRO license.
  */
 export async function checkProAccess(): Promise<boolean> {
@@ -91,18 +100,21 @@ export async function checkProAccess(): Promise<boolean> {
   if (!licenses) return false;
   return licenses.some(
     (license) =>
-      license.plan.code === PRO_PLAN_CODE && license.status === "active"
+      isProPlanCode(license.plan.code) && license.status === "active"
   );
 }
 
 /**
- * Get the highest active plan code for the user
+ * Get the highest active plan code for the user.
+ * Normalizes Genation plan codes (e.g. "PRO_1_Month") to "PRO" so app logic stays simple.
  */
 export async function getActivePlanCode(): Promise<string | null> {
   try {
     const licenses = await getLicenses();
     const activeLicense = licenses.find((l) => l.status === "active");
-    return activeLicense?.plan.code || null;
+    const raw = activeLicense?.plan.code || null;
+    if (!raw) return null;
+    return isProPlanCode(raw) ? PRO_PLAN_CODE : raw;
   } catch {
     return null;
   }

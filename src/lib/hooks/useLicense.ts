@@ -84,13 +84,21 @@ export const PLAN_ACCESS = {
 } as const;
 
 /**
+ * Treat Genation plan codes like "PRO_1_Month" as Pro tier.
+ */
+export function isProPlanCode(planCode: string | null): boolean {
+  if (!planCode) return false;
+  return planCode === "PRO" || planCode.startsWith("PRO_");
+}
+
+/**
  * Voice access by plan.
  * - Free: only 2 allowed voices can be used for generation
  * - Pro: all voices can be used
  */
 export function canUseVoiceForPlan(opts: { planCode: string | null; voiceId: string }): boolean {
   const { planCode, voiceId } = opts;
-  if (planCode === "PRO") return true;
+  if (isProPlanCode(planCode)) return true;
   // Treat null/unknown as FREE for MVP
   return (FREE_ALLOWED_VOICE_IDS as readonly string[]).includes(voiceId);
 }
@@ -100,7 +108,7 @@ export function canUseVoiceForPlan(opts: { planCode: string | null; voiceId: str
  */
 export function getPlanFeatures(planCode: string | null) {
   if (!planCode) return PLAN_ACCESS.FREE.features;
-  
+  if (isProPlanCode(planCode)) return PLAN_ACCESS.PRO.features;
   const plan = Object.values(PLAN_ACCESS).find(p => p.code === planCode);
   return plan?.features || PLAN_ACCESS.FREE.features;
 }
@@ -240,7 +248,7 @@ function useLicenseInner(): UseLicenseReturn {
     window.location.href = purchaseUrl;
   }, []);
 
-  const hasProAccess = activePlanCode === "PRO";
+  const hasProAccess = isProPlanCode(activePlanCode);
 
   return {
     licenses,

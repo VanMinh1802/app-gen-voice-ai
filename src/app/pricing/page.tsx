@@ -8,6 +8,7 @@
 import { Check, Sparkles, Crown, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "@/components/AuthProvider";
+import { isProPlanCode } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 
 interface PlanData {
@@ -59,7 +60,7 @@ function PlanCard({
   activePlanCode: string | null;
 }) {
   const Icon = plan.code === "FREE" ? Sparkles : Crown;
-  const showFreeCurrentBadge = plan.code === "FREE" && activePlanCode !== "PRO";
+  const showFreeCurrentBadge = plan.code === "FREE" && !isProPlanCode(activePlanCode);
   return (
     <div
       className={cn(

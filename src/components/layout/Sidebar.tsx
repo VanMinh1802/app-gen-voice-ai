@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/components/AuthProvider";
-import { PLAN_ACCESS } from "@/lib/hooks";
+import { PLAN_ACCESS, isProPlanCode } from "@/lib/hooks";
 
 type SidebarTab = "dashboard" | "voice_library" | "history" | "settings";
 
@@ -29,7 +29,7 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
   const { isAuthenticated, activePlanCode, isLoading: isLicenseLoading, licenses, upgradeToPlan } = useAuthContext();
 
   const planInfo = activePlanCode ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) : null;
-  const planName = planInfo?.name ?? "Miễn phí";
+  const planName = planInfo?.name ?? (isProPlanCode(activePlanCode) ? "Pro" : "Miễn phí");
   const hasActiveLicense = licenses.some((l) => l.status === "active");
   const activeLicense = licenses.find((l) => l.status === "active");
   const expiresAt = activeLicense?.expiresAt;
@@ -168,7 +168,7 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
                 ) : (
                   <p className="text-xs text-muted-foreground">Chưa có gói trả phí</p>
                 )}
-                {activePlanCode !== "PRO" && isAuthenticated && (
+                {!isProPlanCode(activePlanCode) && isAuthenticated && (
                   <button
                     onClick={() => upgradeToPlan("PRO")}
                     className="mt-2 w-full py-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-lg transition-colors"
