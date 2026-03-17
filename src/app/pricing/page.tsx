@@ -137,7 +137,7 @@ function PlanCard({
 }
 
 export default function PricingPage() {
-  const { isAuthenticated, signIn, activePlanCode, isLoading: isLicenseLoading } = useAuthContext();
+  const { isAuthenticated, signIn, activePlanCode, isLoading: isLicenseLoading, upgradeToPlan } = useAuthContext();
 
   const handleSelectPlan = async (planCode: string) => {
     if (!isAuthenticated) {
@@ -145,9 +145,8 @@ export default function PricingPage() {
       return;
     }
     if (planCode !== "FREE" && activePlanCode !== planCode) {
-      // Redirect to Genation store (replace with actual store URL when available)
-      const storeUrl = process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
-      window.location.href = `${storeUrl}?plan=${planCode}`;
+      // Redirect to Genation store with upgradeToPlan helper
+      upgradeToPlan(planCode);
     }
   };
 

@@ -26,7 +26,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, onClose }: SidebarProps) {
   const [hoveredTab, setHoveredTab] = useState<SidebarTab | null>(null);
-  const { isAuthenticated, activePlanCode, isLoading: isLicenseLoading, licenses } = useAuthContext();
+  const { isAuthenticated, activePlanCode, isLoading: isLicenseLoading, licenses, upgradeToPlan } = useAuthContext();
 
   const planInfo = activePlanCode ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) : null;
   const planName = planInfo?.name ?? "Miễn phí";
@@ -167,6 +167,14 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
                   <p className="text-xs text-muted-foreground">Đăng nhập để xem gói</p>
                 ) : (
                   <p className="text-xs text-muted-foreground">Chưa có gói trả phí</p>
+                )}
+                {activePlanCode !== "PRO" && isAuthenticated && (
+                  <button
+                    onClick={() => upgradeToPlan("PRO")}
+                    className="mt-2 w-full py-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-lg transition-colors"
+                  >
+                    Nâng cấp Pro
+                  </button>
                 )}
               </>
             )}

@@ -169,6 +169,53 @@ Before deploying:
 
 ---
 
+## 🔑 License & Plan Access
+
+### Plan Codes
+
+| Code | Name | Access |
+|------|------|--------|
+| `FREE` | Miễn phí | 2 voices (1 male + 1 female) |
+| `PRO` | Pro | All voices |
+
+### License Gating Helpers
+
+```tsx
+import { canUseVoiceForPlan, getPlanFeatures, isLicenseActiveForPlan, PLAN_ACCESS } from "@/lib/hooks";
+
+// Check if a voice can be used with a specific plan
+const canUse = canUseVoiceForPlan({ planCode: "PRO", voiceId: "some-voice" });
+
+// Get features for a plan
+const features = getPlanFeatures("PRO");
+// Returns: { maxVoiceModels: -1, exportFormat: ["wav", "mp3"], prioritySupport: true }
+
+// Check if user has active license for a plan
+const hasPro = isLicenseActiveForPlan("PRO", licenses);
+```
+
+### License Refresh Flow
+
+After purchasing a plan from Genation Store, the user is redirected back with `?signed_in=true`. The `useLicense` hook automatically:
+
+1. Detects the `signed_in` query parameter
+2. Calls `refreshLicenses()` to fetch updated license data
+3. Cleans up the URL
+
+### Upgrading Plans
+
+Use `upgradeToPlan` from `useAuthContext` to redirect users to the Genation Store:
+
+```tsx
+const { upgradeToPlan } = useAuthContext();
+
+<button onClick={() => upgradeToPlan("PRO")}>
+  Nâng cấp Pro
+</button>
+```
+
+---
+
 ## 🔗 Quick Reference
 
 | Need       | Location              |

@@ -10,6 +10,7 @@ export {
   PLAN_ACCESS,
   FREE_ALLOWED_VOICE_IDS,
   canUseVoiceForPlan,
+  isLicenseActiveForPlan,
   type LicenseState, 
   type LicenseActions, 
   type UseLicenseReturn 

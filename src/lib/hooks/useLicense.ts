@@ -17,6 +17,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   getLicenses,
   hasActivePlan,
@@ -41,6 +42,8 @@ export interface LicenseActions {
   checkPlan: (planCode: string) => Promise<boolean>;
   /** Async check: does the user have active PRO license? */
   checkProAccess: () => Promise<boolean>;
+  /** Redirect to Genation store to upgrade to a specific plan */
+  upgradeToPlan: (planCode: string) => void;
 }
 
 export type UseLicenseReturn = LicenseState & LicenseActions;
@@ -103,10 +106,24 @@ export function getPlanFeatures(planCode: string | null) {
 }
 
 /**
+ * Check if user has an active license for a specific plan.
+ * @param planCode - The plan code to check (e.g., "PRO", "FREE")
+ * @param licenses - Array of user licenses
+ * @returns true if user has an active license for the given plan
+ */
+export function isLicenseActiveForPlan(planCode: string, licenses: License[]): boolean {
+  return licenses.some(
+    (license) => license.status === "active" && license.plan.code === planCode
+  );
+}
+
+/**
  * Hook for license and plan management
  * Requires useAuth to be set up first
  */
 export function useLicense(): UseLicenseReturn {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated: isAuth, isLoading: isAuthLoading } = useAuth();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [activePlanCode, setActivePlanCode] = useState<string | null>(null);
@@ -185,6 +202,16 @@ export function useLicense(): UseLicenseReturn {
     }
   }, [isAuth]);
 
+  // Handle post-purchase redirect: refresh licenses when returning from purchase
+  useEffect(() => {
+    const signedIn = searchParams.get("signed_in");
+    if (signedIn === "true" && isAuth && !isLoading) {
+      refreshLicenses();
+      // Clean up the URL
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, isAuth, isLoading, refreshLicenses, router]);
+
   const checkPlan = useCallback(
     async (planCode: string): Promise<boolean> => {
       if (!isAuth || !isVerified) return false;
@@ -198,6 +225,16 @@ export function useLicense(): UseLicenseReturn {
     return await checkProAccess();
   }, [isAuth]);
 
+  const upgradeToPlan = useCallback((planCode: string) => {
+    const storeUrl = process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
+    const redirectUri = typeof window !== "undefined" 
+      ? `${window.location.origin}/auth/callback`
+      : "http://localhost:3000/auth/callback";
+    // Build the store URL with plan and redirect back to app after purchase
+    const purchaseUrl = `${storeUrl}?plan=${planCode}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = purchaseUrl;
+  }, []);
+
   const hasProAccess = activePlanCode === "PRO";
 
   return {
@@ -210,5 +247,6 @@ export function useLicense(): UseLicenseReturn {
     refreshLicenses,
     checkPlan,
     checkProAccess: checkProAccessFn,
+    upgradeToPlan,
   };
 }
