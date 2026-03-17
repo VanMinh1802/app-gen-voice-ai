@@ -81,7 +81,7 @@ export function TextInput({
         placeholder="Nhập văn bản tiếng Việt của bạn tại đây..."
         disabled={disabled}
         className={cn(
-          "w-full min-h-[220px] sm:min-h-[280px] lg:min-h-[320px] glass-input border border-border rounded-xl p-5",
+          "w-full min-h-[180px] sm:min-h-[220px] lg:min-h-[280px] xl:min-h-[320px] glass-input border border-border rounded-xl p-4 sm:p-5",
           "text-foreground placeholder:text-muted-foreground resize-none font-medium leading-relaxed",
           "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
           "transition-all duration-200",
@@ -174,8 +174,9 @@ export function VoiceSelection({
   const updateDropdownPosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const maxHeight = Math.min(400, window.innerHeight - rect.bottom - 8 - 24);
-    setDropdownPosition({ top: rect.bottom + 8, left: rect.left, width: rect.width, maxHeight });
+    const spaceBelow = window.innerHeight - rect.bottom - 16;
+    const maxHeight = Math.max(320, Math.min(520, Math.floor(0.7 * window.innerHeight), spaceBelow));
+    setDropdownPosition({ top: rect.bottom + 8, left: rect.left, width: Math.max(rect.width, 320), maxHeight });
   }, []);
 
   useEffect(() => {
@@ -242,7 +243,7 @@ export function VoiceSelection({
   return (
     <div
       className={cn(
-        "glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all relative",
+        "glass-card rounded-2xl p-4 sm:p-6 border border-border hover:border-border/80 transition-all relative",
         isOpen && "z-[100]"
       )}
       ref={dropdownRef}
@@ -266,7 +267,7 @@ export function VoiceSelection({
         onClick={() => !disabled && setIsOpen((o) => !o)}
         disabled={disabled}
         className={cn(
-          "w-full flex items-center gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all",
+          "w-full flex items-center gap-2 sm:gap-3 rounded-xl border-2 px-3 sm:px-3.5 py-2 sm:py-2.5 text-left transition-all",
           isOpen ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-primary/50 bg-primary/5 hover:border-primary/70 hover:bg-primary/10",
           disabled && "opacity-60 cursor-not-allowed"
         )}
@@ -355,8 +356,11 @@ export function VoiceSelection({
             </div>
           </div>
           <div
-            className="overflow-y-auto p-2 space-y-1.5 custom-scrollbar"
-            style={{ maxHeight: Math.max(160, Math.min(320, dropdownPosition.maxHeight - 140)) }}
+            className="overflow-y-auto overflow-x-hidden p-2 space-y-1.5 custom-scrollbar min-h-[200px] voice-list-scroll"
+            style={{
+              maxHeight: Math.max(240, Math.min(400, dropdownPosition.maxHeight - 180)),
+              WebkitOverflowScrolling: "touch",
+            }}
           >
             {filteredVoices.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Không có giọng phù hợp</p>
@@ -423,16 +427,16 @@ export function AudioCustomization({
   const speedValue = Number(speed) || 1;
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all">
-      <h3 className="text-sm font-semibold mb-5 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+    <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border hover:border-border/80 transition-all">
+      <h3 className="text-sm font-semibold mb-4 sm:mb-5 flex items-center gap-2">
+        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
           <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
         </div>
         <span className="text-foreground">Tùy chỉnh âm thanh</span>
       </h3>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Speed */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
@@ -1028,9 +1032,9 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
   }, [settings.voice]);
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8 items-start">
-      {/* Editor Area */}
-      <div className="xl:col-span-8 space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 md:gap-6 lg:gap-8 items-start">
+      {/* Editor Area - trên mobile/tablet: full width, trên xl: 8/12 cột */}
+      <div className="xl:col-span-8 md:col-span-1 space-y-4 md:space-y-6">
         {isSuccess ? (
           <GenerationSuccess
             text={text}
@@ -1095,8 +1099,8 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
         )}
       </div>
 
-      {/* Settings Area */}
-      <div className="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
+      {/* Settings Area - trên mobile/tablet: full width bên dưới, trên xl: 4/12 cột bên phải */}
+      <div className="xl:col-span-4 md:col-span-1 space-y-4 md:space-y-6 xl:sticky xl:top-6">
         <div className={cn(!isReady && "opacity-50 pointer-events-none")}>
           <AudioCustomization
             speed={settings.speed}
