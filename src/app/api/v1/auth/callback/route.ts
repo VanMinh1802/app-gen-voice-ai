@@ -4,12 +4,10 @@
  * Genation redirect URI: .../api/v1/auth/callback
  * - 302 là ĐÚNG (redirect), không phải lỗi.
  * - Local: 302 → /auth/callback → client gọi handleCallback (nếu 400 thì do token exchange, xem redirect_uri + secret).
- * - Production (Cloudflare): route tối giản để tránh 500 trên Edge.
+ * - Production (Cloudflare): bỏ edge runtime để tránh 500.
  *
  * Route: /api/v1/auth/callback
  */
-
-export const runtime = "edge";
 
 const FALLBACK_ORIGIN = "https://app-gen-voice-ai.pages.dev";
 
@@ -21,10 +19,14 @@ function redirect302(location: string): Response {
 }
 
 export async function GET(request: Request): Promise<Response> {
+  console.log("[callback] request.url:", request?.url);
+
   let location = FALLBACK_ORIGIN + "/auth/callback";
 
   try {
     const url = String(request?.url ?? "");
+    console.log("[callback] url:", url);
+
     const qIndex = url.indexOf("?");
     const search = qIndex >= 0 ? url.substring(qIndex) : "";
 
@@ -42,7 +44,9 @@ export async function GET(request: Request): Promise<Response> {
     }
 
     location = origin + "/auth/callback" + search;
-  } catch {
+    console.log("[callback] redirect to:", location);
+  } catch (err) {
+    console.error("[callback] error:", err);
     location = FALLBACK_ORIGIN + "/?auth_error=true&message=Callback+failed";
   }
 
