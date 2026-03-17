@@ -277,6 +277,34 @@
   -webkit-animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite !important;
 }
 
+/* Logo 3D - xoay + nổi rõ (không đặt trong @layer để tránh bị ghi đè) */
+@keyframes logo-3d-float {
+  0%, 100% {
+    transform: perspective(320px) rotateY(-14deg) rotateX(4deg) scale(1);
+  }
+  50% {
+    transform: perspective(320px) rotateY(14deg) rotateX(-4deg) scale(1.06);
+  }
+}
+
+.logo-3d-wrapper {
+  perspective: 320px;
+  transform-style: preserve-3d;
+  display: inline-block;
+}
+
+.logo-3d-wrapper .logo-3d-inner {
+  display: inline-block;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  animation: logo-3d-float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+.logo-3d-wrapper:hover .logo-3d-inner {
+  animation-duration: 1.5s;
+}
+
 /* Glassmorphism effect - Enhanced */
 @layer utilities {
   .glass {

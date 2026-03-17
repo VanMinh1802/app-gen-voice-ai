@@ -5,9 +5,13 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "TTS App - Text to Speech",
+  title: "GenVoice AI - Text to Speech",
   description:
     "Browser-based Text-to-Speech for Vietnamese and English using Piper TTS",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -32,8 +36,6 @@ export default function RootLayout({
             `.trim(),
           }}
         />
-        <link rel="icon" href="/logo.png" type="image/png" sizes="any" />
-        <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

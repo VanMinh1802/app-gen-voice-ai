@@ -58,21 +58,36 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
           "glass-card"
         )}
       >
-        {/* Logo */}
+        {/* Logo - bấm vào quay về Dashboard */}
         <div className="p-6">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <img
-              src="/logo.png"
-              alt="GenVoice AI"
-              className="w-10 h-10 rounded-xl object-contain shadow-lg group-hover:scale-105 transition-transform"
-            />
+          <button
+            type="button"
+            onClick={() => {
+              onTabChange?.("dashboard");
+              onClose?.();
+            }}
+            className="w-full flex items-center gap-3 group cursor-pointer text-left rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors -m-2 p-2"
+            aria-label="Về Dashboard"
+          >
+            <div className="logo-3d-wrapper shrink-0">
+              <div className="logo-3d-inner">
+                <video
+                  src="/logo_3d_rmbr.mp4"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-16 h-35 rounded-xl object-contain shadow-lg"
+                />
+              </div>
+            </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold tracking-tight text-foreground">
                 GenVoice <span className="text-primary">AI</span>
               </span>
               <span className="text-[10px] text-slate-500 -mt-1">Text to Speech</span>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Navigation */}
