@@ -10,10 +10,7 @@
 import { useState, useEffect } from "react";
 import { 
   Bell, 
-  Settings, 
   LogOut, 
-  User,
-  CreditCard,
   ChevronDown,
   Sparkles,
   Sun,
@@ -26,12 +23,10 @@ import { useAuthContext } from "@/components/AuthProvider";
 
 interface HeaderProps {
   title?: string;
-  onSettingsClick?: () => void;
 }
 
 export function Header({
   title = "Tạo giọng nói mới",
-  onSettingsClick,
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -204,24 +199,6 @@ export function Header({
                 <div className="p-3 border-b border-border">
                   <p className="text-sm font-bold text-foreground">{userName}</p>
                   <p className="text-xs text-muted-foreground">{userEmail}</p>
-                </div>
-                <div className="p-2">
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">Hồ sơ</span>
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left">
-                    <CreditCard className="w-4 h-4" />
-                    <span className="text-sm">Quản lý Credits</span>
-                    <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">250</span>
-                  </button>
-                  <button 
-                    onClick={onSettingsClick}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground text-left"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span className="text-sm">Cài đặt</span>
-                  </button>
                 </div>
                 <div className="p-2 border-t border-border">
                   <button 

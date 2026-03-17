@@ -50,13 +50,16 @@ function PlanCard({
   isCurrentPlan,
   onSelect,
   isLoading,
+  activePlanCode,
 }: {
   plan: PlanData;
   isCurrentPlan: boolean;
   onSelect: () => void;
   isLoading: boolean;
+  activePlanCode: string | null;
 }) {
   const Icon = plan.code === "FREE" ? Sparkles : Crown;
+  const showFreeCurrentBadge = plan.code === "FREE" && activePlanCode !== "PRO";
   return (
     <div
       className={cn(
@@ -71,7 +74,7 @@ function PlanCard({
           Phổ biến nhất
         </div>
       )}
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 relative">
         <div
           className={cn(
             "w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center",
@@ -82,6 +85,11 @@ function PlanCard({
         </div>
         <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
         <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+        {showFreeCurrentBadge && (
+          <span className="absolute right-4 top-3 text-[10px] font-bold uppercase tracking-[0.2em] text-primary bg-primary/10 px-3 py-1 rounded-full">
+            Gói hiện tại
+          </span>
+        )}
       </div>
       <div className="text-center mb-6">
         <span className="text-4xl font-bold text-foreground">{plan.price}</span>
@@ -185,6 +193,7 @@ export default function PricingPage() {
                 isCurrentPlan={activePlanCode === plan.code}
                 onSelect={() => handleSelectPlan(plan.code)}
                 isLoading={isLicenseLoading}
+                activePlanCode={activePlanCode}
               />
             ))}
           </div>
