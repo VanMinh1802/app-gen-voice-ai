@@ -1,8 +1,8 @@
 /**
  * Genation Client Wrapper (client-side only)
  *
- * Next.js renders on server first – dùng guard "window" và "use client" để SDK chỉ chạy trên client.
- * Theo docs Genation: https://dev.genation.ai/docs
+ * Provides authentication and license management via Genation SDK.
+ * Only runs in browser (guarded by typeof window check).
  */
 
 "use client";
@@ -21,7 +21,7 @@ let genationClient: GenationClient | null = null;
 
 /**
  * Get or create the Genation client instance (singleton).
- * Returns null on server (typeof window === "undefined") – callers phải check trước khi dùng.
+ * Returns null on server (typeof window === "undefined") – callers must check.
  */
 export function getGenationClient(): GenationClient | null {
   if (typeof window === "undefined") return null;
@@ -56,23 +56,17 @@ export async function getSession(): Promise<Session | null> {
  */
 export async function getLicenses(): Promise<License[]> {
   const client = getGenationClient();
-  if (!client) {
-    console.warn("[genation] Client not initialized");
-    return [];
-  }
+  if (!client) return [];
   try {
     const licenses = await client.getLicenses();
-    console.log("[genation] getLicenses result:", licenses);
     return licenses ?? [];
-  } catch (err) {
-    console.error("[genation] getLicenses error:", err);
+  } catch {
     return [];
   }
 }
 
 /**
  * Check if user has active license with specific plan code
- * @param planCode - The plan code to check (e.g., "PRO", "FREE")
  */
 export async function hasActivePlan(planCode: string): Promise<boolean> {
   try {
@@ -90,10 +84,7 @@ export async function hasActivePlan(planCode: string): Promise<boolean> {
 export const PRO_PLAN_CODE = "PRO";
 
 /**
- * Check if the current user has an active PRO license (purchased).
- * Use this to unlock Pro features, e.g.:
- *   if (await checkProAccess()) showProFeatures();
- *   else showUpgradePrompt();
+ * Check if the current user has an active PRO license.
  */
 export async function checkProAccess(): Promise<boolean> {
   const licenses = await getLicenses();
@@ -130,45 +121,16 @@ export async function isAuthenticated(): Promise<boolean> {
  */
 export async function signIn(): Promise<string> {
   const client = getGenationClient();
-  if (!client) throw new Error("Genation SDK not configured or not available on server.");
+  if (!client) throw new Error("Genation SDK not configured");
   return await client.signIn();
 }
 
 /**
  * Handle OAuth callback
- * @param url - The full URL with query params (code & state)
  */
 export async function handleCallback(url: string): Promise<void> {
   const client = getGenationClient();
-  if (!client) throw new Error("Genation SDK not configured or not available on server.");
-  await client.handleCallback(url);
-}
-
-/** Config for creating a one-off client (e.g. in Edge callback with request-scoped env). */
-export interface GenationCallbackConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-}
-
-/**
- * Handle OAuth callback with explicit config (for Edge/Cloudflare where env is request-scoped).
- * Use this in API routes that have access to getRequestContext().env.
- */
-export async function handleCallbackWithConfig(
-  url: string,
-  config: GenationCallbackConfig
-): Promise<void> {
-  if (!config.clientId || !config.clientSecret) {
-    throw new Error(
-      "Genation SDK not configured. Need clientId and clientSecret."
-    );
-  }
-  const client = createClient({
-    clientId: config.clientId,
-    clientSecret: config.clientSecret,
-    redirectUri: config.redirectUri,
-  });
+  if (!client) throw new Error("Genation SDK not configured");
   await client.handleCallback(url);
 }
 
@@ -183,8 +145,6 @@ export async function signOut(): Promise<void> {
 
 /**
  * Listen to auth state changes
- * @param callback - Called when auth state changes
- * @returns Unsubscribe function (no-op nếu client chưa có)
  */
 export function onAuthStateChange(
   callback: (event: string, session: Session | null) => void

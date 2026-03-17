@@ -2,9 +2,8 @@
 
 /**
  * OAuth callback page – chạy trên client (browser).
- * API /api/v1/auth/callback redirect về đây với ?code=...&state=...
- * Trang này gọi handleCallback(callbackUrl) trong browser (tránh lỗi 500 trên Edge).
- * callbackUrl = redirectUri từ config + query (để khớp với redirect_uri đã gửi lúc signIn).
+ * Genation OAuth redirect về đây với ?code=...&state=...
+ * Trang này gọi handleCallback(callbackUrl) trong browser.
  */
 
 import { Suspense, useEffect, useState } from "react";
@@ -44,7 +43,6 @@ function AuthCallbackContent() {
       let config;
       try {
         config = getGenationConfig();
-        console.log("[auth/callback] config:", { clientId: config.clientId ? "set" : "missing", clientSecret: config.clientSecret ? "set" : "missing", redirectUri: config.redirectUri });
         if (!config.clientId || !config.clientSecret) {
           setStatus("error");
           setMessage("Genation chưa cấu hình (clientId/secret)");
@@ -52,7 +50,6 @@ function AuthCallbackContent() {
           return;
         }
       } catch (err) {
-        console.error("[auth/callback] getGenationConfig error:", err);
         setStatus("error");
         setMessage("Lỗi cấu hình: " + (err instanceof Error ? err.message : "Unknown"));
         router.replace("/?auth_error=true&message=Config+error");
@@ -63,10 +60,8 @@ function AuthCallbackContent() {
         const { redirectUri } = config;
         const qs = searchParams.toString();
         const fullUrl = (redirectUri || "") + (qs ? "?" + qs : "");
-        console.log("[auth/callback] handleCallback URL:", fullUrl);
         await handleCallback(fullUrl);
         if (cancelled) return;
-        console.log("[auth/callback] handleCallback success");
         setStatus("ok");
         router.replace("/?signed_in=true");
       } catch (err) {
@@ -74,7 +69,6 @@ function AuthCallbackContent() {
           setStatus("error");
           const msg = err instanceof Error ? err.message : "Unknown error";
           const cause = err instanceof Error && err.cause ? String(err.cause) : "";
-          console.error("[auth/callback] handleCallback error:", err, cause);
           setMessage(msg + (cause ? ` (${cause})` : ""));
           router.replace("/?auth_error=true&message=" + encodeURIComponent(msg));
         }

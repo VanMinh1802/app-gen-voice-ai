@@ -6,7 +6,7 @@
 | ------------------ | ------------------------------------------------------ |
 | **Feature ID** | REQ-013 |
 | **Feature Name** | Plan & License Management with Genation SDK |
-| **Status** | 🔄 In Progress |
+| **Status** | ✅ Completed |
 | **Priority** | P0 (High) |
 | **Owner** | Development Team |
 | **Created** | 2026-03-16 |
@@ -222,6 +222,7 @@ import {
 - [x] OAuth flow with Genation
 - [x] Session persistence
 - [x] Sign out functionality
+- [x] Client-side callback page (/auth/callback)
 
 ### License Management
 - [x] useLicense hook implemented
@@ -229,15 +230,15 @@ import {
 - [x] Check active plan
 - [x] Plan feature configuration
 
-### UI Updates Needed
-- [ ] Sidebar shows real plan data (not hardcoded)
-- [ ] Pricing page created
-- [ ] Plan upgrade flow
+### UI Updates
+- [x] Sidebar shows real plan data (not hardcoded)
+- [x] Pricing page created
+- [x] Plan upgrade flow
 
 ### Integration
-- [ ] Connect sidebar to useLicense
-- [ ] Add "Mua plan" link to Genation store
-- [ ] Handle OAuth callback after purchase
+- [x] Connect sidebar to useLicense
+- [x] Add "Mua plan" link to Genation store
+- [x] Handle OAuth callback after purchase (client-side)
 
 ---
 
@@ -275,3 +276,24 @@ NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
 - **Client secret**: Theo quyết định sản phẩm, secret có thể để client-side (`NEXT_PUBLIC_GENATION_CLIENT_SECRET`). Config hỗ trợ cả hai.
 - Validate license on server-side cho thao tác quan trọng (nếu cần).
 - Sanitize user input before TTS processing.
+
+### Technical Notes
+
+#### OAuth Callback Implementation
+- **Approach**: Client-side callback page (`/auth/callback`) instead of API route
+- **Reason**: Avoids `async_hooks` module error on Cloudflare Pages Edge runtime
+- **Flow**: Genation OAuth → redirect to `/auth/callback?code=...&state=...` → client-side `handleCallback()`
+- **Redirect URI**: Must be configured in Genation Dashboard as `/auth/callback` (not `/api/v1/auth/callback`)
+
+#### Environment Variables
+```
+# Development
+NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id
+NEXT_PUBLIC_GENATION_CLIENT_SECRET=your_client_secret
+NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
+
+# Production (Cloudflare Pages)
+NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id
+NEXT_PUBLIC_GENATION_CLIENT_SECRET=your_client_secret
+NEXT_PUBLIC_GENATION_REDIRECT_URI=https://your-app.pages.dev/auth/callback
+```

@@ -135,9 +135,6 @@ export function useLicense(): UseLicenseReturn {
           getActivePlanCode(),
         ]);
 
-        console.log("[useLicense] fetched licenses:", licenseList);
-        console.log("[useLicense] active plan code:", planCode);
-
         if (isMounted) {
           setLicenses(licenseList);
           setActivePlanCode(planCode);
@@ -145,7 +142,6 @@ export function useLicense(): UseLicenseReturn {
           setError(null);
         }
       } catch (err) {
-        console.error("[useLicense] fetch error:", err);
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Failed to get licenses");
           setIsVerified(false);

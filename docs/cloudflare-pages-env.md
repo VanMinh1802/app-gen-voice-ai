@@ -18,7 +18,7 @@ NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
 **Lưu ý:** Ở local, cần thêm **`NEXT_PUBLIC_GENATION_CLIENT_SECRET`** (copy cùng giá trị với `GENATION_CLIENT_SECRET`) vì nút Đăng nhập chạy trên client; Next.js không gửi biến không có tiền tố `NEXT_PUBLIC_` xuống browser. Trên production (Cloudflare) chỉ cần set `GENATION_CLIENT_SECRET` (callback chạy server-side).
 
 3. **Restart** dev server (`npm run dev`).
-4. Trên **Genation Dashboard** (G-Store) cần đăng ký thêm Redirect URI: `http://localhost:3000/api/v1/auth/callback`.
+4. Trên **Genation Dashboard** (G-Store) cần đăng ký thêm Redirect URI: `http://localhost:3000/auth/callback`.
 
 ---
 

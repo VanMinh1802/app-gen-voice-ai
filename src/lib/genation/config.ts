@@ -6,7 +6,7 @@
  * Env vars:
  * - NEXT_PUBLIC_GENATION_CLIENT_ID (required)
  * - GENATION_CLIENT_SECRET or NEXT_PUBLIC_GENATION_CLIENT_SECRET (client-side ok)
- * - NEXT_PUBLIC_GENATION_REDIRECT_URI (optional; default /api/v1/auth/callback – phải khớp với G-Store)
+ * - NEXT_PUBLIC_GENATION_REDIRECT_URI (optional; default /auth/callback – phải khớp với G-Store)
  *
  * Luồng: Đăng nhập (OAuth) trước → có session → sau đó check license (getLicenses / checkProAccess).
  * Đăng ký / quản lý tài khoản qua Genation; license do G-Store quản lý (mua/redeem).
@@ -36,7 +36,7 @@ export const genationConfig = {
     process.env.NEXT_PUBLIC_GENATION_REDIRECT_URI || defaultRedirectUri(),
 } as const;
 
-/** Runtime config: Cloudflare Edge env first, then process.env (for callback route). */
+/** Runtime config: Cloudflare Edge env first, then process.env. */
 export function getGenationConfig(): {
   clientId: string;
   clientSecret: string;
