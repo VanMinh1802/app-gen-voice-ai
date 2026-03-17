@@ -8,7 +8,6 @@
 
 export const runtime = "edge";
 
-import { NextResponse } from "next/server";
 import { getR2FolderForVoice } from "@/config";
 import { getCloudflareEnv } from "@/lib/cloudflare-env";
 
@@ -89,8 +88,15 @@ const COEP_HEADERS: Record<string, string> = {
   "Cross-Origin-Embedder-Policy": "require-corp",
 };
 
-function withCoep<T extends Record<string, string>>(h: T): T & Record<string, string> {
-  return { ...h, ...COEP_HEADERS };
+function withCoep(headers: Record<string, string>): Record<string, string> {
+  return { ...headers, ...COEP_HEADERS };
+}
+
+function jsonResponse(body: unknown, status: number, extraHeaders: Record<string, string> = {}): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: withCoep({ "Content-Type": "application/json", ...extraHeaders }),
+  });
 }
 
 export async function GET(
@@ -98,7 +104,7 @@ export async function GET(
   { params }: { params: Promise<{ voiceId: string; file: string }> }
 ) {
   const json500 = (body: Record<string, unknown>) =>
-    NextResponse.json(body, { status: 500, headers: withCoep({ "Content-Type": "application/json" }) });
+    jsonResponse(body, 500);
 
   // Debug: trả JSON tĩnh. Gọi: /api/models/banmai/sample.wav?debug=1
   try {
@@ -129,24 +135,24 @@ export async function GET(
     const voiceId = resolvedParams?.voiceId;
     const file = resolvedParams?.file;
     if (!voiceId || !file) {
-      return NextResponse.json(
+      return jsonResponse(
         { error: "Missing voiceId or file", voiceId, file },
-        { status: 400, headers: withCoep({ "Content-Type": "application/json" }) }
+        400
       );
     }
 
     // Validate voiceId to prevent path traversal
     if (!isValidVoiceId(voiceId)) {
-      return NextResponse.json({ error: "Invalid voice ID" }, { status: 404, headers: withCoep({ "Content-Type": "application/json" }) });
+      return jsonResponse({ error: "Invalid voice ID" }, 404);
     }
 
     // Validate file name: allow {voiceId}.onnx, {voiceId}.onnx.json, sample.wav (and legacy model.onnx, model.onnx.json)
     if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
-      return NextResponse.json({ error: "Invalid file" }, { status: 400, headers: withCoep({ "Content-Type": "application/json" }) });
+      return jsonResponse({ error: "Invalid file" }, 400);
     }
     const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json"];
     if (!allowedFiles.includes(file)) {
-      return NextResponse.json({ error: "Invalid file name" }, { status: 400, headers: withCoep({ "Content-Type": "application/json" }) });
+      return jsonResponse({ error: "Invalid file name" }, 400);
     }
 
     const r2Folder = getR2FolderForVoice(voiceId);
@@ -169,14 +175,14 @@ export async function GET(
     });
 
     /** Fetch from R2 public URL. Prefer this when set to avoid 500 from R2 binding on Pages. */
-    const fetchFromDirectUrl = async (): Promise<NextResponse | Response> => {
+    const fetchFromDirectUrl = async (): Promise<Response> => {
       if (!useDirectUrl || !directUrl) {
-        return NextResponse.json(
+        return jsonResponse(
           {
             error: "R2 public URL not configured",
             hint: "Set R2_PUBLIC_URL or NEXT_PUBLIC_R2_PUBLIC_URL (Cloudflare: Settings → Environment variables)",
           },
-          { status: 503, headers: withCoep({ "Content-Type": "application/json" }) }
+          503
         );
       }
       try {
@@ -185,9 +191,9 @@ export async function GET(
           cache: "no-store",
         });
         if (!response.ok) {
-          return NextResponse.json(
+          return jsonResponse(
             { error: "File not found", url: directUrl, status: response.status },
-            { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
+            404
           );
         }
         const blob = await response.blob();
@@ -218,9 +224,9 @@ export async function GET(
       try {
         const object = await r2Bucket.get(objectKey);
         if (!object) {
-          return NextResponse.json(
+          return jsonResponse(
             { error: "File not found", key: objectKey },
-            { status: 404, headers: withCoep({ "Content-Type": "application/json" }) }
+            404
           );
         }
         const body = object.body;
