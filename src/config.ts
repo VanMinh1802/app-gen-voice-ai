@@ -43,11 +43,13 @@ export const config = {
     "minhkhang",
     "minhquang",
     "mytam2",
+    "ngocngan",
     "ngochuyen",
   ] as string[],
   /** Custom models: add .onnx + .onnx.json to public/tts-model/vi/ and list id (filename without extension) here */
   customModels: [
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
+    { id: "ngocngan", name: "Ngọc Ngạn (custom)" },
     { id: "banmai", name: "Ban Mai (custom)" },
     { id: "manhdung", name: "Mạnh Dũng (custom)" },
     { id: "minhquang", name: "Minh Quang (custom)" },

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Header, Sidebar } from "@/components/layout";
 import { MainContent, AudioPlayer, VoiceLibrary } from "@/components/tts";
 import { ToastContainer, ToastProvider, useToast, GlobalToastListener, toast } from "@/components/ui/Toast";
@@ -17,6 +18,7 @@ function HomeContentInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
   const [refillText, setRefillText] = useState("");
   const { currentAudioUrl, loadHistory } = useTtsStore();
@@ -73,11 +75,16 @@ function HomeContentInner() {
               activeTab={activeTab} 
               onTabChange={handleTabChange}
               isOpen={sidebarOpen} 
-              onClose={handleCloseSidebar} 
+              onClose={handleCloseSidebar}
+              collapsed={sidebarCollapsed}
+              onCollapsedChange={setSidebarCollapsed}
             />
 
-            {/* Main Area */}
-            <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+            {/* Main Area - margin trái theo trạng thái thu gọn sidebar */}
+            <div className={cn(
+              "flex-1 flex flex-col overflow-hidden",
+              sidebarCollapsed ? "lg:ml-[4.5rem]" : "lg:ml-64"
+            )}>
               {/* Header — nút menu gắn trong header để title không bị đè/tràn khi resize */}
               <Header
                 title={activeTab === "dashboard" ? "Tạo giọng nói mới" : 

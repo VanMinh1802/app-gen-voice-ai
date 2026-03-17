@@ -28,6 +28,15 @@ export const voiceMetadata: VoiceMetadata[] = [
     avatarColor: "#ec4899"
   },
   { 
+    id: "ngocngan", 
+    name: "Ngọc Ngạn", 
+    region: "Miền Bắc", 
+    gender: "Nữ", 
+    style: "Tin tức", 
+    description: "Giọng đọc rõ ràng, chuyên nghiệp, phù hợp bản tin và nội dung chính thống.",
+    avatarColor: "#ec4899"
+  },
+  { 
     id: "banmai", 
     name: "Ban Mai", 
     region: "Miền Bắc", 

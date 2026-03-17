@@ -24,6 +24,7 @@ const ALLOWED_VOICE_IDS = [
   "minhquang",
   "mytam",
   "mytam2",
+  "ngocngan",
   "ngochuyen",
 ] as const;
 
