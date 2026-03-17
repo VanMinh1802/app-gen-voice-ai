@@ -175,8 +175,15 @@ export function VoiceSelection({
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom - 16;
-    const maxHeight = Math.max(320, Math.min(520, Math.floor(0.7 * window.innerHeight), spaceBelow));
-    setDropdownPosition({ top: rect.bottom + 8, left: rect.left, width: Math.max(rect.width, 320), maxHeight });
+    const vh70 = Math.floor(0.7 * window.innerHeight);
+    const maxHeight = Math.max(280, Math.min(520, vh70, spaceBelow));
+    const width = Math.min(Math.max(rect.width, 300), window.innerWidth - rect.left - 16);
+    setDropdownPosition({
+      top: rect.bottom + 8,
+      left: rect.left,
+      width,
+      maxHeight,
+    });
   }, []);
 
   useEffect(() => {
@@ -300,20 +307,22 @@ export function VoiceSelection({
         <ChevronDown className={cn("w-5 h-5 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
       </button>
 
-      {/* Dropdown panel: render qua portal để không bị cắt bởi overflow của main, scroll được hết danh sách */}
+      {/* Dropdown panel: flex + height cố định để vùng list luôn scroll được */}
       {isOpen && dropdownPosition && typeof document !== "undefined" && createPortal(
         <div
           ref={panelRef}
-          className="rounded-xl border border-border bg-card shadow-xl overflow-hidden z-[200]"
+          className="flex flex-col rounded-xl border border-border bg-card shadow-xl overflow-hidden z-[200]"
           style={{
             position: "fixed",
             top: dropdownPosition.top,
             left: dropdownPosition.left,
             width: dropdownPosition.width,
+            height: dropdownPosition.maxHeight,
             maxHeight: dropdownPosition.maxHeight,
           }}
         >
-          <div className="p-3 border-b border-border space-y-3 bg-card">
+          {/* Header: search + filter — không co lại */}
+          <div className="shrink-0 p-3 border-b border-border space-y-3 bg-card">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -355,12 +364,10 @@ export function VoiceSelection({
               ))}
             </div>
           </div>
+          {/* Danh sách giọng: chiếm phần còn lại, luôn scroll */}
           <div
-            className="overflow-y-auto overflow-x-hidden p-2 space-y-1.5 custom-scrollbar min-h-[200px] voice-list-scroll"
-            style={{
-              maxHeight: Math.max(240, Math.min(400, dropdownPosition.maxHeight - 180)),
-              WebkitOverflowScrolling: "touch",
-            }}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 space-y-1.5 custom-scrollbar voice-list-scroll"
+            style={{ WebkitOverflowScrolling: "touch" }}
           >
             {filteredVoices.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Không có giọng phù hợp</p>
@@ -386,7 +393,7 @@ export function VoiceSelection({
             )}
           </div>
           {onViewAllClick && (
-            <div className="p-2 border-t border-border bg-card">
+            <div className="shrink-0 p-2 border-t border-border bg-card">
               <button
                 type="button"
                 onClick={() => { setIsOpen(false); onViewAllClick(); }}
@@ -777,7 +784,7 @@ interface TipsAndLinksProps {
 
 const TIPS = [
   "Viết câu ngắn, rõ ràng để chất lượng giọng đọc tốt hơn.",
-  "Điều chỉnh tốc độ và cao độ ở panel bên phải trước khi tạo.",
+  "Chọn giọng và điều chỉnh tốc độ, cao độ trước khi bấm tạo.",
   "Dùng Ctrl+Enter để tạo giọng nói nhanh.",
 ];
 
@@ -876,9 +883,9 @@ function RecentHistory({ onRefill, disabled }: RecentHistoryProps) {
         {recent.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between gap-3 p-3 glass-card border border-border rounded-xl"
+            className="flex items-center justify-between gap-2 sm:gap-3 p-3 glass-card border border-border rounded-xl min-w-0"
           >
-            <p className="text-xs text-muted-foreground line-clamp-1 flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground line-clamp-1 flex-1 min-w-0 truncate" title={item.text?.trim() || ""}>
               {item.text?.trim() || "(Không có văn bản)"}
             </p>
             <span className="text-[10px] text-muted-foreground/70 shrink-0">
@@ -1031,10 +1038,11 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
     return model?.name.replace(" (custom)", "") || "Unknown";
   }, [settings.voice]);
 
+  // Mobile: Văn bản → Chọn giọng + Âm thanh → Nút tạo → Mẹo, mẫu, lịch sử. XL: 2 cột (trái: văn bản + nút + mẹo/mẫu/lịch sử | phải: giọng + âm thanh).
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 md:gap-6 lg:gap-8 items-start">
-      {/* Editor Area - trên mobile/tablet: full width, trên xl: 8/12 cột */}
-      <div className="xl:col-span-8 md:col-span-1 space-y-4 md:space-y-6">
+    <div className="grid grid-cols-1 xl:grid-cols-12 xl:grid-rows-2 gap-4 md:gap-6 lg:gap-8 items-start">
+      {/* 1. Ô nhập văn bản — mobile: đầu; xl: cột trái hàng 1 */}
+      <div className="xl:col-span-8 xl:row-start-1 space-y-4 md:space-y-6">
         {isSuccess ? (
           <GenerationSuccess
             text={text}
@@ -1054,13 +1062,12 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
               maxLength={config.tts.maxTextLength}
               disabled={!isReady}
             />
-            
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
                 <div className="shrink-0 mt-0.5">
                   <AlertCircle className="w-5 h-5 text-red-400" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-red-400">{error}</p>
                   <button
                     onClick={() => {
@@ -1074,7 +1081,6 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
                 </div>
               </div>
             )}
-
             <GenerateButton
               disabled={!canGenerate}
               disabledReason={!canUseSelectedVoice ? "Giọng này chỉ nghe sample (cần Pro để tạo)" : undefined}
@@ -1083,24 +1089,12 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
               progress={progress}
               onClick={handleGenerate}
             />
-
-            <TipsAndLinks onViewAllVoices={onViewAllVoices} />
-
-            <SampleTextChips
-              onSelect={handleTextChange}
-              disabled={!isReady}
-            />
-
-            <RecentHistory
-              onRefill={handleTextChange}
-              disabled={!isReady}
-            />
           </>
         )}
       </div>
 
-      {/* Settings Area - trên mobile/tablet: full width bên dưới, trên xl: 4/12 cột bên phải */}
-      <div className="xl:col-span-4 md:col-span-1 space-y-4 md:space-y-6 xl:sticky xl:top-6">
+      {/* 2. Tùy chỉnh âm thanh + Chọn giọng — mobile: ngay dưới ô văn bản; xl: cột phải */}
+      <div className="xl:col-span-4 xl:row-start-1 xl:row-span-2 xl:sticky xl:top-6 space-y-4 md:space-y-6">
         <div className={cn(!isReady && "opacity-50 pointer-events-none")}>
           <AudioCustomization
             speed={settings.speed}
@@ -1110,7 +1104,6 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
             disabled={false}
           />
         </div>
-
         <VoiceSelection
           selectedVoice={settings.voice}
           onVoiceChange={handleVoiceChange}
@@ -1121,6 +1114,21 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
           onViewAllClick={onViewAllVoices}
         />
       </div>
+
+      {/* 3. Mẹo, mẫu, lịch sử — mobile: sau giọng/âm thanh; xl: cột trái hàng 2 */}
+      {!isSuccess && (
+        <div className="xl:col-span-8 xl:row-start-2 space-y-4 md:space-y-6">
+          <TipsAndLinks onViewAllVoices={onViewAllVoices} />
+          <SampleTextChips
+            onSelect={handleTextChange}
+            disabled={!isReady}
+          />
+          <RecentHistory
+            onRefill={handleTextChange}
+            disabled={!isReady}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -23,10 +23,13 @@ import { useAuthContext } from "@/components/AuthProvider";
 
 interface HeaderProps {
   title?: string;
+  /** Nội dung bên trái (vd: nút menu mobile) — hiển thị trong header để layout responsive đúng */
+  leftContent?: React.ReactNode;
 }
 
 export function Header({
   title = "Tạo giọng nói mới",
+  leftContent,
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -83,12 +86,15 @@ export function Header({
   const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <header className="h-16 border-b border-border glass-card flex items-center justify-between px-6 lg:px-8 sticky top-0 z-30">
-      <div className="flex items-center gap-4 flex-1">
-        <h1 className="text-lg font-bold text-foreground">{title}</h1>
+    <header className="h-14 sm:h-16 border-b border-border glass-card flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 sticky top-0 z-30">
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+        {leftContent}
+        <h1 className="text-base sm:text-lg font-bold text-foreground truncate min-w-0" title={title}>
+          {title}
+        </h1>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}

@@ -45,15 +45,16 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
     <>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
         className={cn(
-          "w-64 border-r border-border hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-50",
-          "transform transition-all duration-300 ease-out lg:translate-x-0",
+          "w-64 border-r border-border flex flex-col fixed top-0 left-0 bottom-0 z-50",
+          "transform transition-all duration-300 ease-out",
+          "md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
           "glass-card"
         )}

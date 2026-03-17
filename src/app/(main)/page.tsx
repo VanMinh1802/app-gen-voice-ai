@@ -78,25 +78,25 @@ function HomeContentInner() {
 
             {/* Main Area */}
             <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
-              {/* Header */}
+              {/* Header — nút menu gắn trong header để title không bị đè/tràn khi resize */}
               <Header
                 title={activeTab === "dashboard" ? "Tạo giọng nói mới" : 
                        activeTab === "voice_library" ? "Thư viện giọng" :
                        activeTab === "history" ? "Lịch sử" : "Cài đặt tài khoản"}
+                leftContent={
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="lg:hidden shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center text-foreground shadow-lg hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 border border-border transition-transform"
+                    aria-label="Mở menu"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                }
               />
 
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="fixed top-20 left-4 z-30 lg:hidden w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-foreground shadow-lg hover:scale-105 active:scale-95 border border-border"
-                aria-label="Mở menu"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-
-              {/* Main content */}
-              <main className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar pb-28 sm:pb-24">
-                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-screen-2xl">
+              {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
+              <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-28 sm:pb-24">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-screen-2xl min-h-0">
                   {activeTab === "dashboard" ? (
                     <MainContent 
                       key={refillText}
