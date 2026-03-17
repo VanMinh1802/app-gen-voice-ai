@@ -268,7 +268,7 @@ NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id
 # Secret: có thể dùng client-side (NEXT_PUBLIC_) hoặc server-only (GENATION_CLIENT_SECRET)
 GENATION_CLIENT_SECRET=your_client_secret
 # hoặc NEXT_PUBLIC_GENATION_CLIENT_SECRET=your_client_secret
-NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/api/auth/callback
+NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
 ### Security Considerations

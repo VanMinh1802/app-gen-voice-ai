@@ -17,7 +17,7 @@
 import { getCloudflareEnv } from "@/lib/cloudflare-env";
 
 /** Redirect path đăng ký trên G-Store; đổi thì phải cập nhật Redirect URIs trong G-Store. */
-export const GENATION_REDIRECT_PATH = "/api/v1/auth/callback";
+export const GENATION_REDIRECT_PATH = "/auth/callback";
 
 function defaultRedirectUri(): string {
   if (typeof window !== "undefined") {
