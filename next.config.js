@@ -1,5 +1,3 @@
-const webpack = require("webpack");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -36,13 +34,6 @@ const nextConfig = {
         net: false,
         tls: false,
         child_process: false,
-      };
-
-      // Use webpack alias to replace async_hooks with stub for Cloudflare Pages edge runtime
-      const asyncHooksPath = require.resolve("./src/app/api/v1/auth/async_hooks.js");
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        async_hooks: asyncHooksPath,
       };
     }
 
