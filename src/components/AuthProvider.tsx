@@ -6,13 +6,13 @@
 
 "use client";
 
-import { ReactNode, createContext, useContext } from "react";
-import { useAuth, useLicense, type AuthState, type AuthActions, type LicenseState } from "@/lib/hooks";
+import { ReactNode, createContext, useContext, Suspense } from "react";
+import { useAuth, useLicense, type AuthState, type AuthActions, type LicenseState, type LicenseActions } from "@/lib/hooks";
 
 /**
  * Combined auth + license context type
  */
-export interface AuthContextValue extends AuthState, AuthActions, LicenseState {
+export interface AuthContextValue extends AuthState, AuthActions, LicenseState, LicenseActions {
   canAccessPro: boolean;
 }
 
@@ -27,6 +27,17 @@ const AuthContext = createContext<AuthContextValue | null>(null);
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
+
+  return (
+    <Suspense fallback={<AuthContext.Provider value={getDefaultAuthContextValue()}><div className="min-h-screen flex items-center justify-center">Loading...</div></AuthContext.Provider>}>
+      <LicenseProvider auth={auth}>
+        {children}
+      </LicenseProvider>
+    </Suspense>
+  );
+}
+
+function LicenseProvider({ children, auth }: { children: ReactNode; auth: AuthState & AuthActions }) {
   const license = useLicense();
 
   // Computed: user has PRO access
@@ -43,6 +54,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+function getDefaultAuthContextValue(): AuthContextValue {
+  return {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    isConfigured: false,
+    error: null,
+    signIn: async () => {},
+    signOut: async () => {},
+    refreshSession: async () => {},
+    licenses: [],
+    activePlanCode: null,
+    hasProAccess: false,
+    isVerified: false,
+    refreshLicenses: async () => {},
+    checkPlan: async () => false,
+    checkProAccess: async () => false,
+    upgradeToPlan: () => {},
+    canAccessPro: false,
+  };
 }
 
 /**

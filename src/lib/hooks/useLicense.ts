@@ -16,7 +16,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   getLicenses,
@@ -122,6 +122,11 @@ export function isLicenseActiveForPlan(planCode: string, licenses: License[]): b
  * Requires useAuth to be set up first
  */
 export function useLicense(): UseLicenseReturn {
+  return useLicenseInner();
+}
+
+// Inner hook with search params (must be wrapped in Suspense)
+function useLicenseInner(): UseLicenseReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated: isAuth, isLoading: isAuthLoading } = useAuth();
