@@ -13,7 +13,7 @@ export const runtime = "edge";
 
 const FALLBACK_ORIGIN = "https://app-gen-voice-ai.pages.dev";
 
-export async function GET(request: Request): Promise<Response> {
+export function GET(request: Request): Response {
   const url = request.url || "";
   const qIndex = url.indexOf("?");
   const search = qIndex >= 0 ? url.slice(qIndex) : "";
