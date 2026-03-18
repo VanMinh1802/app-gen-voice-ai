@@ -2,9 +2,12 @@ import { useCallback, useRef, useEffect, useState } from "react";
 import { useTtsStore } from "../store";
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 import type { TtsWorkerOutgoingMessage, TtsHistoryItem } from "../types";
-import { CUSTOM_MODEL_PREFIX } from "@/config";
+import { CUSTOM_MODEL_PREFIX, config } from "@/config";
 import { getR2PublicUrl, loadR2Config } from "@/lib/config/r2Config";
 import { getVoiceSampleUrl } from "@/lib/piper/piperR2";
+import { getVoiceMetadata } from "@/config/voiceData";
+import { notifyGenerationComplete, notifyGenerationError } from "@/lib/storage/notifications";
+import { logger } from "@/lib/logger";
 
 /** Mẫu văn bản ngắn dùng cho preview giọng (không lưu lịch sử). */
 const PREVIEW_SAMPLE_TEXT = "Xin chào, đây là giọng đọc mẫu.";
@@ -79,6 +82,14 @@ export function useTtsGenerate() {
       setNowPlaying(historyItem);
       setStatus("playing");
       setProgress(100);
+
+      // Get voice name for notification
+      const voiceId = settings.voice.startsWith(CUSTOM_MODEL_PREFIX)
+        ? settings.voice.slice(CUSTOM_MODEL_PREFIX.length)
+        : settings.voice;
+      const voiceMeta = getVoiceMetadata(voiceId);
+      const voiceName = voiceMeta?.name || "Unknown";
+      notifyGenerationComplete(currentTextRef.current, voiceName);
     },
     [settings, setCurrentAudio, addToHistory, setNowPlaying, setStatus, setProgress]
   );
@@ -151,30 +162,37 @@ export function useTtsGenerate() {
               setPreviewingVoiceId(null);
               setError(toFriendlyErrorMessage(message.error));
               setStatus("error");
+              notifyGenerationError(toFriendlyErrorMessage(message.error));
               break;
           }
         };
 
         workerRef.current.onerror = () => {
-          setError("Không tải được công cụ TTS. Vui lòng tải lại trang.");
+          const errorMsg = "Không tải được công cụ TTS. Vui lòng tải lại trang.";
+          setError(errorMsg);
           setStatus("error");
-          setIsWorkerReady(true); // Hiện form + lỗi, không kẹt spinner
+          setIsWorkerReady(true);
+          notifyGenerationError(errorMsg);
         };
 
         // Nếu sau 12s vẫn chưa có workerReady (lỗi script/network), bỏ spinner
         fallbackTimeoutRef.current = window.setTimeout(() => {
           setIsWorkerReady((ready) => {
             if (ready) return ready;
-            setError("Khởi tạo quá lâu. Vui lòng tải lại trang.");
+            const errorMsg = "Khởi tạo quá lâu. Vui lòng tải lại trang.";
+            setError(errorMsg);
             setStatus("error");
+            notifyGenerationError(errorMsg);
             return true;
           });
         }, 12000);
       } catch (err) {
-        console.error("Failed to create worker:", err);
-        setError("Không tải được công cụ TTS. Vui lòng tải lại trang.");
+        logger.error("Failed to create worker:", err);
+        const errorMsg = "Không tải được công cụ TTS. Vui lòng tải lại trang.";
+        setError(errorMsg);
         setStatus("error");
         setIsWorkerReady(true);
+        notifyGenerationError(errorMsg);
       }
     };
 
@@ -248,7 +266,7 @@ export function useTtsGenerate() {
   const preloadModel = useCallback((voiceId?: string) => {
     // Preload a specific voice model (useful on app start)
     if (!workerRef.current || !isWorkerReady) {
-      console.warn("Worker not ready for preload");
+      logger.warn("Worker not ready for preload");
       return;
     }
     const targetVoice = voiceId || settings.voice;

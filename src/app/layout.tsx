@@ -1,8 +1,23 @@
 import type { Metadata } from "next";
+import { Be_Vietnam_Pro, Outfit } from "next/font/google";
 import { R2ConfigProvider } from "@/components/R2ConfigProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/AuthProvider";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-be-vietnam-pro",
+  display: "swap",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "GenVoice AI - Text to Speech",
@@ -36,14 +51,8 @@ export default function RootLayout({
             `.trim(),
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
-        />
       </head>
-      <body className="min-h-screen bg-background antialiased font-sans">
+      <body className={`${beVietnamPro.variable} ${outfit.variable} min-h-screen bg-background antialiased font-sans`}>
         <R2ConfigProvider>
           <ThemeProvider>
             <ToastProvider>

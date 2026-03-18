@@ -6,8 +6,8 @@
   :root {
     /* Base font size tăng lên cho toàn ứng dụng (~12% so với 16px) */
     font-size: 1.125rem;
-    --font-be-vietnam-pro: 'Be Vietnam Pro', sans-serif;
-    --font-outfit: 'Outfit', sans-serif;
+    --font-be-vietnam-pro: var(--font-be-vietnam-pro);
+    --font-outfit: var(--font-outfit);
 
     /* Commercial palette - Blue primary (trust, product-ready) */
     --background: 222 47% 11%;

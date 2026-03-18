@@ -9,6 +9,8 @@ import {
   clearHistory as clearFromDB,
   isIndexedDBAvailable,
 } from "@/lib/storage/history";
+import { revokeBlobUrl } from "@/lib/storage/blobUrl";
+import { logger } from "@/lib/logger";
 
 const HISTORY_STORAGE_KEY = "tts-history-migrated";
 const LS_HISTORY_KEY = config.storage.historyKey;
@@ -76,13 +78,11 @@ async function migrateLocalStorageHistory(): Promise<TtsHistoryItem[]> {
     localStorage.removeItem(LS_HISTORY_KEY);
     localStorage.setItem(HISTORY_STORAGE_KEY, "true");
     if (items.length > 0) {
-      console.log(
-        "Cleared legacy localStorage history (audio blobs were not stored; only new generations will appear in history)."
-      );
+      logger.debug("Cleared legacy localStorage history (audio blobs were not stored; only new generations will appear in history).");
     }
     return [];
   } catch (e) {
-    console.error("Migration failed:", e);
+    logger.error("Migration failed:", e);
     return [];
   }
 }
@@ -101,11 +101,16 @@ export const useTtsStore = create<TtsState>()(
 
       setProgress: (progress) => set({ progress }),
 
-      setCurrentAudio: (audio, url) =>
+      setCurrentAudio: (audio, url) => {
+        const state = get();
+        // Revoke old blob URL if exists
+        revokeBlobUrl(state.currentAudioUrl);
+        
         set({
           currentAudio: audio,
           currentAudioUrl: url,
-        }),
+        });
+      },
 
       setNowPlaying: (item) => set({ nowPlaying: item }),
 
@@ -118,12 +123,20 @@ export const useTtsStore = create<TtsState>()(
           try {
             await saveHistoryItem(item, audioBlob);
           } catch (e) {
-            console.error("Failed to save history to IndexedDB:", e);
+            logger.error("Failed to save history to IndexedDB:", e);
           }
         }
       },
 
       removeFromHistory: async (id) => {
+        const state = get();
+        const itemToRemove = state.history.find((item) => item.id === id);
+        
+        // Revoke blob URL if it's not currently playing
+        if (itemToRemove && itemToRemove.id !== state.nowPlaying?.id) {
+          revokeBlobUrl(itemToRemove.audioUrl);
+        }
+
         set((state) => ({
           history: state.history.filter((item) => item.id !== id),
           nowPlaying: state.nowPlaying?.id === id ? null : state.nowPlaying,
@@ -133,26 +146,37 @@ export const useTtsStore = create<TtsState>()(
           try {
             await deleteFromDB(id);
           } catch (e) {
-            console.error("Failed to delete history from IndexedDB:", e);
+            logger.error("Failed to delete history from IndexedDB:", e);
           }
         }
       },
 
       clearHistory: async () => {
-        set({ history: [], nowPlaying: null });
+        const state = get();
+        // Revoke all blob URLs in history
+        state.history.forEach((item) => revokeBlobUrl(item.audioUrl));
+        revokeBlobUrl(state.currentAudioUrl);
+        revokeBlobUrl(state.nowPlaying?.audioUrl);
+        
+        set({ history: [], nowPlaying: null, currentAudio: null, currentAudioUrl: null });
 
         if (isIndexedDBAvailable()) {
           try {
             await clearFromDB();
           } catch (e) {
-            console.error("Failed to clear history in IndexedDB:", e);
+            logger.error("Failed to clear history in IndexedDB:", e);
           }
         }
       },
 
       setError: (error) => set({ error, status: "error" }),
 
-      reset: () =>
+      reset: () => {
+        const state = get();
+        // Revoke blob URLs before resetting
+        revokeBlobUrl(state.currentAudioUrl);
+        revokeBlobUrl(state.nowPlaying?.audioUrl);
+        
         set({
           status: "idle",
           progress: 0,
@@ -160,7 +184,8 @@ export const useTtsStore = create<TtsState>()(
           currentAudioUrl: null,
           nowPlaying: null,
           error: null,
-        }),
+        });
+      },
 
       loadHistory: async () => {
         if (!isIndexedDBAvailable()) {
@@ -183,7 +208,7 @@ export const useTtsStore = create<TtsState>()(
             set({ isHistoryLoaded: true });
           }
         } catch (e) {
-          console.error("Failed to load history:", e);
+          logger.error("Failed to load history:", e);
           set({ isHistoryLoaded: true });
         }
       },

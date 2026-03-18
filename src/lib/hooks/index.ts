@@ -18,3 +18,5 @@ export {
 } from "./useLicense";
 export { useTheme } from "./useTheme";
 export { useLocale } from "./useLocale";
+export { useNotification, notify } from "./useNotification";
+export { useAudioPlayer } from "./useAudioPlayer";

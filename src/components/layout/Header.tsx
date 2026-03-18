@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuthContext } from "@/components/AuthProvider";
+import { useNotificationStore } from "@/lib/storage/notifications";
 
 interface HeaderProps {
   title?: string;
@@ -48,6 +49,9 @@ export function Header({
     error: authError 
   } = useAuthContext();
 
+  // Use notification store instead of hardcoded data
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
+
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
@@ -71,14 +75,6 @@ export function Header({
       return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [showNotifications, showUserMenu]);
-
-  const notifications = [
-    { id: 1, title: "Model mới đã sẵn sàng", desc: "Giọng Linh Lan đã được cập nhật", time: "2 phút trước", unread: true },
-    { id: 2, title: "Hoàn thành tạo audio", desc: "Bản tin buổi sáng đã sẵn sàng", time: "1 giờ trước", unread: true },
-    { id: 3, title: "Credit còn 250", desc: "Bạn còn 250 credits", time: "1 ngày trước", unread: false },
-  ];
-
-  const unreadCount = notifications.filter(n => n.unread).length;
 
   // Get user display info
   const userName = user?.name || user?.email?.split("@")[0] || "Khách";
@@ -137,38 +133,54 @@ export function Header({
                 )}
               </div>
               <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                {notifications.map((notif) => (
-                  <div 
-                    key={notif.id}
-                    className={cn(
-                      "p-4 border-b border-border/50 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer",
-                      notif.unread && "bg-primary/5"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                        notif.unread ? "bg-primary text-primary-foreground" : "bg-black/10 dark:bg-white/10 text-muted-foreground"
-                      )}>
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{notif.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{notif.desc}</p>
-                        <p className="text-[10px] text-muted-foreground/70 mt-1">{notif.time}</p>
-                      </div>
-                      {notif.unread && (
-                        <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1.5" />
-                      )}
-                    </div>
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm">
+                    Chưa có thông báo nào
                   </div>
-                ))}
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif.id}
+                      onClick={() => markAsRead(notif.id)}
+                      className={cn(
+                        "p-4 border-b border-border/50 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer",
+                        !notif.read && "bg-primary/5"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                          !notif.read ? "bg-primary text-primary-foreground" : "bg-black/10 dark:bg-white/10 text-muted-foreground"
+                        )}>
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{notif.title}</p>
+                          {notif.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.description}</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground/70 mt-1">
+                            {new Date(notif.timestamp).toLocaleString("vi-VN")}
+                          </p>
+                        </div>
+                        {!notif.read && (
+                          <div className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1.5" />
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="p-3 border-t border-border">
-                <button className="w-full text-center text-sm text-primary hover:text-primary/80 font-medium py-2 transition-colors">
-                  Xem tất cả thông báo
-                </button>
-              </div>
+              {notifications.length > 0 && (
+                <div className="p-3 border-t border-border">
+                  <button 
+                    onClick={() => markAllAsRead()}
+                    className="w-full text-center text-sm text-primary hover:text-primary/80 font-medium py-2 transition-colors"
+                  >
+                    Đánh dấu đã đọc
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -243,7 +255,6 @@ export function Header({
             ) : (
               <button 
                 onClick={async () => {
-                  console.log("[Auth] signIn clicked, isConfigured:", isConfigured);
                   // Client-side sign in: SDK lấy URL Genation rồi redirect (không qua /api/auth/signin)
                   await signIn();
                 }}

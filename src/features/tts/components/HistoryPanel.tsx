@@ -5,6 +5,7 @@ import { History, Ban, Plus, Download } from "lucide-react";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 import type { TtsHistoryItem } from "../types";
+import { logger } from "@/lib/logger";
 
 interface HistoryPanelProps {
   onRefill: (text: string) => void;
@@ -51,7 +52,7 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Download failed:", e);
+      logger.error("Download failed:", e);
     }
   }, []);
 
