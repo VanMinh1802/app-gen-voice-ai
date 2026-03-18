@@ -56,7 +56,7 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
 
       <aside
         className={cn(
-          "border-r border-border flex flex-col fixed top-0 left-0 bottom-0 z-50",
+          "relative overflow-visible border-r border-border flex flex-col fixed top-0 left-0 bottom-0 z-50",
           "transform transition-all duration-300 ease-out",
           "md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
@@ -64,8 +64,8 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
           collapsed ? "w-64 md:w-[4.5rem]" : "w-64"
         )}
       >
-        {/* Logo - bấm vào quay về Dashboard */}
-        <div className={cn("shrink-0", collapsed ? "p-3 md:px-2 md:py-4" : "p-6")}>
+        {/* Logo — header gọn, không kèm nút thu gọn */}
+        <div className={cn("shrink-0 border-b border-border/30", collapsed ? "p-3 md:px-2 md:py-3" : "p-6 pb-4")}>
           <button
             type="button"
             onClick={() => {
@@ -91,7 +91,7 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
               </div>
             </div>
             {!collapsed && (
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 text-left">
                 <span className="text-xl font-bold tracking-tight text-foreground">
                   GenVoice <span className="text-primary">AI</span>
                 </span>
@@ -101,8 +101,9 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
           </button>
         </div>
 
+        <div className="flex flex-1 flex-col min-h-0">
         {/* Navigation */}
-        <nav className={cn("flex-1 space-y-2 mt-2", collapsed ? "px-2 md:px-2" : "px-4")}>
+        <nav className={cn("shrink-0 space-y-2 mt-2", collapsed ? "px-2 md:px-2" : "px-4")}>
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             const isHovered = hoveredTab === item.id;
@@ -161,30 +162,7 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
           })}
         </nav>
 
-        {/* Nút thu gọn / mở rộng sidebar - chỉ desktop */}
-        {onCollapsedChange && (
-          <div className={cn("shrink-0 px-4 pb-2", collapsed && "md:px-2")}>
-            <button
-              type="button"
-              onClick={() => onCollapsedChange(!collapsed)}
-              className={cn(
-                "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors",
-                collapsed && "md:justify-center md:px-0"
-              )}
-              aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-              title={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-            >
-              {collapsed ? (
-                <ChevronRight className="w-5 h-5" />
-              ) : (
-                <>
-                  <ChevronLeft className="w-5 h-5" />
-                  <span className="text-sm font-medium">Thu gọn</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="flex-1 min-h-0 shrink-0" aria-hidden />
 
         {/* Plan Card - real license data */}
         <div className={cn("mt-auto shrink-0", collapsed ? "p-2 md:p-2" : "p-4")}>
@@ -248,6 +226,30 @@ export function Sidebar({ activeTab = "dashboard", onTabChange, isOpen = true, o
             )}
           </Link>
         </div>
+        </div>
+
+        {/* Chỉ mũi tên, nằm đúng mép phải sidebar (desktop) */}
+        {onCollapsedChange && (
+          <button
+            type="button"
+            onClick={() => onCollapsedChange(!collapsed)}
+            className={cn(
+              "hidden md:flex absolute top-1/2 left-full -translate-x-1/2 -translate-y-1/2 z-[60]",
+              "h-9 w-9 items-center justify-center rounded-2xl",
+              "bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-600/80",
+              "text-slate-700 dark:text-zinc-200 shadow-md shadow-slate-900/8",
+              "hover:bg-slate-50 dark:hover:bg-zinc-800 hover:border-slate-300 dark:hover:border-zinc-500 transition-colors active:scale-95"
+            )}
+            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            title={collapsed ? "Mở rộng" : "Thu gọn"}
+          >
+            {collapsed ? (
+              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2.5} />
+            ) : (
+              <ChevronLeft className="w-[18px] h-[18px]" strokeWidth={2.5} />
+            )}
+          </button>
+        )}
       </aside>
     </>
   );

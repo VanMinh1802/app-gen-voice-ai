@@ -1,7 +1,8 @@
 import type { TtsHistoryItem } from "@/features/tts/types";
 
 const DB_NAME = "tts-audio-db";
-const DB_VERSION = 2;
+/** Must never decrease: browser rejects open() if version < stored version (e.g. was 3 after presets branch). */
+const DB_VERSION = 4;
 const STORE_NAME = "audio-history";
 
 /** Record stored in IndexedDB: metadata + audio Blob (blob URLs are not persisted). */
