@@ -8,7 +8,7 @@
 
 export const runtime = "edge";
 
-import { getR2FolderForVoice } from "@/config";
+import { getR2FolderForVoice, getModelFileName } from "@/config";
 import { getCloudflareEnv } from "@/lib/cloudflare-env";
 
 const R2_BUCKET_VAR = "VIETVOICE_MODELS";
@@ -24,6 +24,7 @@ const ALLOWED_VOICE_IDS = [
   "minhquang",
   "mytam",
   "mytam2",
+  "namminh",
   "ngocngan",
   "ngochuyen",
 ] as const;
@@ -151,7 +152,8 @@ export async function GET(
     if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
       return jsonResponse({ error: "Invalid file" }, 400);
     }
-    const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json"];
+    const modelFileName = getModelFileName(voiceId);
+    const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json", `${modelFileName}.onnx`, `${modelFileName}.onnx.json`];
     if (!allowedFiles.includes(file)) {
       return jsonResponse({ error: "Invalid file name" }, 400);
     }

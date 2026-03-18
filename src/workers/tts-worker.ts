@@ -182,7 +182,15 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
           const custom = await initCustomSession(effectiveVoice);
           sendProgress(40);
           const lengthScale = 1 / speed;
-          float32Audio = await custom.predict(text, { lengthScale });
+          // Pass onProgress callback to update progress in real-time
+          float32Audio = await custom.predict(text, { 
+            lengthScale,
+            onProgress: (predictProgress) => {
+              // Map predict progress (0-100) to overall progress (40-90)
+              const mappedProgress = 40 + Math.round((predictProgress * 50) / 100);
+              sendProgress(mappedProgress);
+            }
+          });
           sampleRate = custom.sampleRate;
         } else {
           const session = await initSession(effectiveVoice);

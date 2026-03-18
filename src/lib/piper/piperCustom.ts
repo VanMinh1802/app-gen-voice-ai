@@ -29,7 +29,7 @@ export interface PiperPhonemizePaths {
 }
 
 export interface PiperCustomSession {
-  predict(text: string, options?: { speakerId?: number; lengthScale?: number }): Promise<Float32Array>;
+  predict(text: string, options?: { speakerId?: number; lengthScale?: number; onProgress?: (progress: number) => void }): Promise<Float32Array>;
   sampleRate: number;
 }
 
@@ -227,25 +227,34 @@ export async function loadCustomPiper(
 
   async function predict(
     text: string,
-    options?: { speakerId?: number; lengthScale?: number }
+    options?: { speakerId?: number; lengthScale?: number; onProgress?: (progress: number) => void }
   ): Promise<Float32Array> {
     const trimmed = text.trim();
     if (!trimmed) return new Float32Array(0);
 
     const lengthScale = 1 / (options?.lengthScale ?? lengthScaleDefault);
     const speakerId = options?.speakerId ?? 0;
+    const onProgress = options?.onProgress;
 
     // Use chunking for long text to avoid memory issues
     const chunks = splitTextIntoChunks(trimmed, 500);
     
     if (chunks.length === 1) {
       // Single chunk - process normally
+      onProgress?.(50); // Starting inference
       return processSingleChunk(chunks[0], lengthScale, speakerId);
     }
     
     // Multiple chunks - process each and concatenate
     const audioChunks: Float32Array[] = [];
-    for (const chunk of chunks) {
+    const totalChunks = chunks.length;
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      // Progress: 40-80% based on chunk progress
+      const chunkProgress = 40 + Math.round((i / totalChunks) * 40);
+      onProgress?.(chunkProgress);
+      
       const audioChunk = await processSingleChunk(chunk, lengthScale, speakerId);
       audioChunks.push(audioChunk);
     }
@@ -259,6 +268,7 @@ export async function loadCustomPiper(
       offset += chunk.length;
     }
     
+    onProgress?.(90); // Almost done
     return result;
   }
 

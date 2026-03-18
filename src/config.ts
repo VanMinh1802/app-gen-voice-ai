@@ -4,10 +4,21 @@ export const CUSTOM_MODEL_PREFIX = "custom:";
 /** Map voiceId (app) → tên thư mục R2 khi khác nhau (vd: mytam2 → mytam) */
 export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
   mytam2: "mytam",
+  /** R2 folder: naminh (1 m) — must match bucket path vi/naminh_giong_tram/ */
+  namminh: "naminh_giong_tram",
+};
+
+/** Map voiceId (app) → tên file .onnx khi khác với voiceId (vd: namminh → namminh_tram) */
+export const VOICE_ID_TO_MODEL_FILE: Record<string, string> = {
+  namminh: "namminh_tram",
 };
 
 export function getR2FolderForVoice(voiceId: string): string {
   return VOICE_ID_TO_R2_FOLDER[voiceId] ?? voiceId;
+}
+
+export function getModelFileName(voiceId: string): string {
+  return VOICE_ID_TO_MODEL_FILE[voiceId] ?? `${voiceId}.onnx`;
 }
 
 /** Voice IDs must match PATH_MAP in @mintplex-labs/piper-tts-web (HuggingFace diffusionstudio/piper-voices) */
@@ -43,6 +54,7 @@ export const config = {
     "minhkhang",
     "minhquang",
     "mytam2",
+    "namminh",
     "ngocngan",
     "ngochuyen",
   ] as string[],
@@ -50,6 +62,7 @@ export const config = {
   customModels: [
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
     { id: "ngocngan", name: "Ngọc Ngạn (custom)" },
+    { id: "namminh", name: "Nam Minh (custom)" },
     { id: "banmai", name: "Ban Mai (custom)" },
     { id: "manhdung", name: "Mạnh Dũng (custom)" },
     { id: "minhquang", name: "Minh Quang (custom)" },

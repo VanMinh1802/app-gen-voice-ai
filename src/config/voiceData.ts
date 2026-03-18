@@ -37,6 +37,15 @@ export const voiceMetadata: VoiceMetadata[] = [
     avatarColor: "#ec4899"
   },
   { 
+    id: "namminh", 
+    name: "Nam Minh", 
+    region: "Miền Bắc", 
+    gender: "Nam", 
+    style: "Trầm ấm", 
+    description: "Giọng nam trầm ấm, uy tín, phù hợp nội dung doanh nghiệp và tài chính.",
+    avatarColor: "#3b82f6"
+  },
+  { 
     id: "banmai", 
     name: "Ban Mai", 
     region: "Miền Bắc", 
