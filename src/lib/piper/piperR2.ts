@@ -191,7 +191,8 @@ async function loadFromArrayBuffer(
   }
 
   async function runPiperPhonemize(text: string): Promise<number[] | null> {
-    const timeoutMs = 15000;
+    // Increase timeout for long text (2000+ characters can take longer to process)
+    const timeoutMs = 60000;
     try {
       const phonemizeChunkUrl =
         "https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/dist/piper-o91UDS6e.js";
@@ -244,6 +245,51 @@ async function loadFromArrayBuffer(
     }
   }
 
+  /**
+   * Split text into chunks (by sentences or paragraphs) for processing.
+   * Each chunk is processed separately and concatenated.
+   */
+  function splitTextIntoChunks(text: string, maxChunkSize: number = 500): string[] {
+    // Split by common sentence endings first
+    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+    
+    const chunks: string[] = [];
+    let currentChunk = "";
+    
+    for (const sentence of sentences) {
+      if (currentChunk.length + sentence.length <= maxChunkSize) {
+        currentChunk += sentence;
+      } else {
+        if (currentChunk) {
+          chunks.push(currentChunk.trim());
+        }
+        // If a single sentence is longer than maxChunkSize, split it by words
+        if (sentence.length > maxChunkSize) {
+          const words = sentence.split(/\s+/);
+          currentChunk = "";
+          for (const word of words) {
+            if (currentChunk.length + word.length <= maxChunkSize) {
+              currentChunk += word + " ";
+            } else {
+              if (currentChunk) {
+                chunks.push(currentChunk.trim());
+              }
+              currentChunk = word + " ";
+            }
+          }
+        } else {
+          currentChunk = sentence;
+        }
+      }
+    }
+    
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+    
+    return chunks;
+  }
+
   async function predict(
     text: string,
     options?: { speakerId?: number; lengthScale?: number }
@@ -254,14 +300,49 @@ async function loadFromArrayBuffer(
     const lengthScale = 1 / (options?.lengthScale ?? lengthScaleDefault);
     const speakerId = options?.speakerId ?? 0;
 
+    // Use chunking for long text to avoid memory issues
+    const chunks = splitTextIntoChunks(trimmed, 500);
+    
+    if (chunks.length === 1) {
+      // Single chunk - process normally
+      return processSingleChunk(chunks[0], lengthScale, speakerId);
+    }
+    
+    // Multiple chunks - process each and concatenate
+    const audioChunks: Float32Array[] = [];
+    for (const chunk of chunks) {
+      const audioChunk = await processSingleChunk(chunk, lengthScale, speakerId);
+      audioChunks.push(audioChunk);
+    }
+    
+    // Concatenate all chunks
+    const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Float32Array(totalLength);
+    let offset = 0;
+    for (const chunk of audioChunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    return result;
+  }
+
+  /**
+   * Process a single chunk of text through the TTS model.
+   */
+  async function processSingleChunk(
+    textChunk: string,
+    lengthScale: number,
+    speakerId: number
+  ): Promise<Float32Array> {
     let phonemeIds: number[];
 
     if (phonemeType === "text") {
-      const normalized = trimmed.normalize("NFD");
+      const normalized = textChunk.normalize("NFD");
       phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
     } else if (phonemeType === "espeak") {
       const { normalizeVietnamese } = await import("@/lib/text-processing/vietnameseNormalizer");
-      const preprocessed = normalizeVietnamese(trimmed);
+      const preprocessed = normalizeVietnamese(textChunk);
       const wasmIds = await runPiperPhonemize(preprocessed);
       if (wasmIds && wasmIds.length > 0) {
         phonemeIds = wasmIds;
@@ -270,7 +351,7 @@ async function loadFromArrayBuffer(
         phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
       }
     } else {
-      const normalized = trimmed.normalize("NFD");
+      const normalized = textChunk.normalize("NFD");
       phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
     }
 
