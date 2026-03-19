@@ -17,6 +17,7 @@ const ALLOWED_VOICE_IDS = [
   "anhkhoi",
   "banmai",
   "chieuthanh",
+  "hoaimy_goc",
   "lacphi",
   "maiphuong",
   "manhdung",
@@ -25,6 +26,7 @@ const ALLOWED_VOICE_IDS = [
   "mytam",
   "mytam2",
   "namminh",
+  "namminh_goc",
   "ngocngan",
   "ngochuyen",
 ] as const;

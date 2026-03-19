@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { config } from "@/config";
 import type { TtsSettings, TtsStatus, TtsHistoryItem } from "./types";
 import {
@@ -11,6 +11,24 @@ import {
 } from "@/lib/storage/history";
 import { revokeBlobUrl } from "@/lib/storage/blobUrl";
 import { logger } from "@/lib/logger";
+
+/** Session-only storage for inputText — survives tab-switching / navigation but clears on browser close */
+function createSessionStorage() {
+  return {
+    getItem: (name: string): string | null => {
+      if (typeof sessionStorage === "undefined") return null;
+      return sessionStorage.getItem(name);
+    },
+    setItem: (name: string, value: string): void => {
+      if (typeof sessionStorage === "undefined") return;
+      sessionStorage.setItem(name, value);
+    },
+    removeItem: (name: string): void => {
+      if (typeof sessionStorage === "undefined") return;
+      sessionStorage.removeItem(name);
+    },
+  };
+}
 
 const HISTORY_STORAGE_KEY = "tts-history-migrated";
 const LS_HISTORY_KEY = config.storage.historyKey;
@@ -35,6 +53,8 @@ interface TtsState {
   streamingDuration: number;
   /** Whether gapless streaming playback is paused by the user (stop/resume audio without affecting generation) */
   pausedStreaming: boolean;
+  /** Input text persisted in sessionStorage — survives tab-switching / navigation but clears on browser close */
+  inputText: string;
 
   setSettings: (settings: Partial<TtsSettings>) => void;
   setStatus: (status: TtsStatus) => void;
@@ -46,6 +66,8 @@ interface TtsState {
   pauseStreaming: () => void;
   resumeStreaming: () => void;
   setPausedStreaming: (paused: boolean) => void;
+  setInputText: (text: string) => void;
+  clearInputText: () => void;
   addToHistory: (item: TtsHistoryItem, audioBlob: Blob) => void;
   removeFromHistory: (id: string) => void;
   clearHistory: () => void;
@@ -77,6 +99,7 @@ const initialState = {
   streamingCurrentTime: 0,
   streamingDuration: 0,
   pausedStreaming: false,
+  inputText: "",
 };
 
 /** Clears legacy history from localStorage; old items had only blob URLs (no audio blob) so they are not saved to IDB. */
@@ -141,6 +164,8 @@ export const useTtsStore = create<TtsState>()(
       pauseStreaming: () => set({ pausedStreaming: true }),
       resumeStreaming: () => set({ pausedStreaming: false }),
       setPausedStreaming: (paused) => set({ pausedStreaming: paused }),
+      setInputText: (text: string) => set({ inputText: text }),
+      clearInputText: () => set({ inputText: "" }),
 
       addToHistory: async (item, audioBlob) => {
         const state = get();
@@ -247,7 +272,8 @@ export const useTtsStore = create<TtsState>()(
     }),
     {
       name: config.storage.settingsKey,
-      partialize: (state) => ({ settings: state.settings }),
+      storage: createJSONStorage(() => createSessionStorage()),
+      partialize: (state) => ({ settings: state.settings, inputText: state.inputText }),
     }
   )
 );

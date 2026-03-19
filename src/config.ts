@@ -8,7 +8,7 @@ export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
   namminh: "naminh_giong_tram",
 };
 
-/** Map voiceId (app) → tên file .onnx khi khác với voiceId (vd: namminh → namminh_tram) */
+/** Map voiceId (app) → tên file (không đuôi .onnx) khi khác với voiceId (vd: namminh → namminh_tram) */
 export const VOICE_ID_TO_MODEL_FILE: Record<string, string> = {
   namminh: "namminh_tram",
 };
@@ -17,8 +17,9 @@ export function getR2FolderForVoice(voiceId: string): string {
   return VOICE_ID_TO_R2_FOLDER[voiceId] ?? voiceId;
 }
 
+/** Trả về tên file gốc (không có .onnx); piperR2 sẽ tự nối .onnx / .onnx.json */
 export function getModelFileName(voiceId: string): string {
-  return VOICE_ID_TO_MODEL_FILE[voiceId] ?? `${voiceId}.onnx`;
+  return VOICE_ID_TO_MODEL_FILE[voiceId] ?? voiceId;
 }
 
 /** Voice IDs must match PATH_MAP in @mintplex-labs/piper-tts-web (HuggingFace diffusionstudio/piper-voices) */
@@ -59,6 +60,7 @@ export const config = {
     "anhkhoi",
     "banmai",
     "chieuthanh",
+    "hoaimy_goc",
     "lacphi",
     "manhdung",
     "maiphuong",
@@ -66,6 +68,7 @@ export const config = {
     "minhquang",
     "mytam2",
     "namminh",
+    "namminh_goc",
     "ngocngan",
     "ngochuyen",
   ] as string[],
@@ -74,6 +77,8 @@ export const config = {
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
     { id: "ngocngan", name: "Ngọc Ngạn (custom)" },
     { id: "namminh", name: "Nam Minh (custom)" },
+    { id: "namminh_goc", name: "Nam Minh Gốc (custom)" },
+    { id: "hoaimy_goc", name: "Hoài My Gốc (custom)" },
     { id: "banmai", name: "Ban Mai (custom)" },
     { id: "manhdung", name: "Mạnh Dũng (custom)" },
     { id: "minhquang", name: "Minh Quang (custom)" },

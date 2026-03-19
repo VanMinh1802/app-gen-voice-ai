@@ -793,22 +793,30 @@ export function GenerationSuccess({ text, voiceName, duration: durationProp, onC
           Điều khiển đầy đủ (tốc độ, âm lượng, tải file) ở thanh phát nhạc dưới cùng màn hình.
         </p>
 
-        <div className="flex flex-wrap justify-end gap-2 sm:gap-3 pt-2 border-t border-border">
-          <button
-            type="button"
-            onClick={onClear}
-            className="px-5 py-2.5 rounded-lg border border-border text-muted-foreground font-medium hover:bg-muted/50 hover:text-foreground transition-colors text-sm"
-          >
-            Xóa hết
-          </button>
-          <button
-            type="button"
-            onClick={onRegenerate}
-            className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 text-sm shadow-sm"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Tạo lại
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground">
+            Tạo lượt mới để nhập văn bản khác • Tạo lại để phát lại với cùng nội dung
+          </p>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={onClear}
+              className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 text-sm shadow-sm"
+              aria-label="Thoát về màn nhập văn bản, tạo lượt mới"
+            >
+              <Sparkles className="w-4 h-4" />
+              Tạo lượt mới
+            </button>
+            <button
+              type="button"
+              onClick={onRegenerate}
+              className="px-5 py-2.5 rounded-lg border border-border text-muted-foreground font-medium hover:bg-muted/50 hover:text-foreground transition-colors text-sm flex items-center gap-2"
+              aria-label="Tạo lại với văn bản này hoặc thoát về form nếu đã xóa"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Tạo lại
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -946,24 +954,18 @@ function RecentHistory({ onRefill, disabled }: RecentHistoryProps) {
 
 // Main Content
 interface MainContentProps {
-  onGenerate?: (text: string, voice: string) => void;
-  initialText?: string;
   onViewAllVoices?: () => void;
+  /** Text từ parent — lifted state để không bị mất khi chuyển tab */
+  text: string;
+  onTextChange: (text: string) => void;
+  onTextClear: () => void;
 }
 
-export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: MainContentProps) {
-  const [text, setText] = useState(initialText);
+export function MainContent({ onViewAllVoices, text, onTextChange, onTextClear }: MainContentProps) {
   const { settings, status, progress, error, generate, stop, previewVoice, previewingVoiceId, isReady, currentAudioUrl, nowPlaying } = useTts();
-  const { setSettings: setStoreSettings, setError } = useTtsStore();
+  const { setSettings: setStoreSettings, setError, reset: resetStore } = useTtsStore();
   const { activePlanCode, canAccessPro } = useAuthContext();
   const [textError, setTextError] = useState<string | null>(null);
-
-  // Sync with initialText when it changes (from History refill)
-  useEffect(() => {
-    if (initialText) {
-      setText(initialText);
-    }
-  }, [initialText]);
 
   const isGenerating = status === "generating";
   const isPreviewing = status === "previewing";
@@ -986,13 +988,13 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
     canUseSelectedVoice;
 
   const handleTextChange = useCallback((newText: string) => {
-    setText(newText);
+    onTextChange(newText);
     if (newText && !isTextValid(newText, config.tts.maxTextLength)) {
       setTextError(`Văn bản vượt quá ${config.tts.maxTextLength} ký tự`);
     } else {
       setTextError(null);
     }
-  }, []);
+  }, [onTextChange]);
 
   const handleVoiceChange = useCallback((voiceId: VoiceId) => {
     setStoreSettings({ voice: voiceId, model: voiceId });
@@ -1006,19 +1008,26 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
     setStoreSettings({ pitch });
   }, [setStoreSettings]);
 
+  /** Hủy đang tạo — chỉ dừng worker, giữ nguyên text để sửa lại và thử lại */
   const handleCancel = useCallback(() => {
     stop();
-    setText("");
+    // stop() đã gọi resetStore() bên trong
   }, [stop]);
 
+  /** Thoát màn kết quả, về form nhập văn bản để tạo lượt mới (luôn có thể bấm) */
   const handleClear = useCallback(() => {
-    setText("");
-  }, []);
+    resetStore();
+    onTextClear();
+  }, [resetStore, onTextClear]);
 
+  /** Tạo lại với văn bản hiện tại; nếu đã xóa hết văn bản thì thoát về form nhập mới (tránh đơ) */
   const handleRegenerate = useCallback(() => {
-    if (!text.trim()) return;
-    generate(text);
-  }, [text, generate]);
+    if (text.trim()) {
+      generate(text);
+    } else {
+      handleClear();
+    }
+  }, [text, generate, handleClear]);
 
   const isSuccess = status === "playing" && currentAudioUrl !== null;
 
@@ -1029,8 +1038,7 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
       return;
     }
     generate(text);
-    onGenerate?.(text, settings.voice);
-  }, [text, generate, settings.voice, onGenerate, canUseSelectedVoice, setError]);
+  }, [text, generate, canUseSelectedVoice, setError]);
 
   // Keyboard shortcut: Ctrl+Enter to generate
   useEffect(() => {
@@ -1050,15 +1058,15 @@ export function MainContent({ onGenerate, initialText = "", onViewAllVoices }: M
     const params = new URLSearchParams(window.location.search);
     const urlText = params.get("text");
     const urlVoice = params.get("voice");
-    
-    if (urlText) setText(urlText);
+
+    if (urlText) onTextChange(urlText);
     if (urlVoice) {
       const exists = config.customModels.some((m) => `${CUSTOM_MODEL_PREFIX}${m.id}` === urlVoice);
       if (exists) {
         setStoreSettings({ voice: urlVoice as VoiceId, model: urlVoice as VoiceId });
       }
     }
-  }, [setStoreSettings]);
+  }, [onTextChange, setStoreSettings]);
 
   // If user is on FREE (or not logged in) and currently selected voice is locked, fallback to a free-allowed default.
   useEffect(() => {

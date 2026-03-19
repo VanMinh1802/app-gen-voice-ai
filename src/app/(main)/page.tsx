@@ -21,7 +21,8 @@ function HomeContentInner() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
   const [refillText, setRefillText] = useState("");
-  const { currentAudioUrl, loadHistory } = useTtsStore();
+  /** inputText đã được persist vào sessionStorage qua Zustand store — không cần local state */
+  const { currentAudioUrl, loadHistory, inputText, setInputText, clearInputText } = useTtsStore();
   const { toasts, removeToast, addToast } = useToast();
   const [playerVisible, setPlayerVisible] = useState(true);
 
@@ -57,12 +58,21 @@ function HomeContentInner() {
 
   const handleRefillFromHistory = useCallback((text: string) => {
     setRefillText(text);
+    setInputText(text);
     setActiveTab("dashboard");
-  }, []);
+  }, [setInputText]);
 
   const handleCreateNewFromHistory = useCallback(() => {
     setActiveTab("dashboard");
   }, []);
+
+  const handleTextChange = useCallback((text: string) => {
+    setInputText(text);
+  }, [setInputText]);
+
+  const handleTextClear = useCallback(() => {
+    clearInputText();
+  }, [clearInputText]);
 
   return (
     <>
@@ -105,9 +115,10 @@ function HomeContentInner() {
               <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-28 sm:pb-24">
                 <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-screen-2xl min-h-0">
                   {activeTab === "dashboard" ? (
-                    <MainContent 
-                      key={refillText}
-                      initialText={refillText}
+                    <MainContent
+                      text={inputText}
+                      onTextChange={handleTextChange}
+                      onTextClear={handleTextClear}
                       onViewAllVoices={() => setActiveTab("voice_library")}
                     />
                   ) : activeTab === "voice_library" ? (
