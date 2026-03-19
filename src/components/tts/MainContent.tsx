@@ -692,81 +692,119 @@ interface GenerationSuccessProps {
   onRegenerate: () => void;
 }
 
-export function GenerationSuccess({ text, voiceName, duration, onClear, onRegenerate }: GenerationSuccessProps) {
-  // Format duration to mm:ss
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+function formatTime(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
 
-  // Thanh sóng – animation đặt inline để chắc chắn chạy (tránh bị CSS khác ghi đè)
+export function GenerationSuccess({ text, voiceName, duration: durationProp, onClear, onRegenerate }: GenerationSuccessProps) {
+  const { togglePlay } = useTts();
+  const {
+    status,
+    streamingDuration,
+    streamingCurrentTime,
+    pausedStreaming,
+    nowPlaying,
+  } = useTtsStore();
+
+  // Use live duration (streaming or final); fallback to prop
+  const totalDuration = streamingDuration > 0 ? streamingDuration : (nowPlaying?.duration ?? durationProp);
+  const currentTime = streamingDuration > 0 ? streamingCurrentTime : 0;
+  const isPlaying = status === "playing" && !pausedStreaming;
+
+  // Waveform bars – pulse when playing (chỉ dùng shorthand animation để tránh conflict với animationDelay khi re-render)
   const waveformBars = Array.from({ length: 24 }, (_, i) => (
     <div
       key={i}
-      className="waveform-bar"
+      className="waveform-bar rounded-sm bg-primary/40"
       style={{
-        height: `${10 + (i % 5) * 4}px`,
-        animation: "gen-voice-waveform-pulse 1.2s ease-in-out infinite",
-        animationDelay: `${i * 0.05}s`,
+        height: `${8 + (i % 4) * 3}px`,
+        animation: isPlaying ? `gen-voice-waveform-pulse 1.2s ease-in-out ${i * 0.04}s infinite` : "none",
+        opacity: isPlaying ? 1 : 0.6,
       }}
     />
   ));
 
+  const progressPercent = totalDuration > 0 ? Math.min(100, (currentTime / totalDuration) * 100) : 0;
+
   return (
-    <div className="space-y-6">
-      {/* Success Alert */}
-      <div className="animate-in fade-in slide-in-from-top-4 duration-500 flex items-center justify-between p-4 rounded-xl border border-green-500/30 bg-green-500/10 text-green-400">
-        <div className="flex items-center gap-3">
-          <span className="bg-green-500 text-foreground rounded-full p-1 flex items-center justify-center">
-            <Check className="w-4 h-4" />
-          </span>
-          <div>
-            <p className="text-sm font-bold">Tạo giọng nói thành công!</p>
-            <p className="text-xs opacity-80">Bản tin của bạn đã sẵn sàng để nghe và tải về.</p>
-          </div>
+    <div className="space-y-5">
+      {/* Success – compact, không chiếm quá nhiều chú ý */}
+      <div className="animate-in fade-in duration-300 flex items-center gap-3 px-4 py-3 rounded-xl border border-green-500/20 bg-green-500/5">
+        <Check className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-green-700 dark:text-green-300">Tạo giọng nói thành công!</p>
+          <p className="text-xs text-muted-foreground truncate">Bản tin đã sẵn sàng để nghe và tải ở thanh dưới màn hình.</p>
         </div>
       </div>
 
-      {/* Result Area - Readonly Text */}
-      <div className="bg-card rounded-xl p-8 border border-primary/10 shadow-sm flex flex-col min-h-[400px]">
-        <div className="flex items-center justify-between mb-4">
+      {/* Result: text + inline player + actions */}
+      <div className="bg-card rounded-xl p-6 sm:p-8 border border-border shadow-sm flex flex-col min-h-[360px]">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Văn bản nội dung</h3>
-          <span className="text-xs font-medium text-muted-foreground">{text.length} / 5000 ký tự</span>
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">{text.length} / 5000 ký tự</span>
         </div>
         <textarea
           value={text}
           readOnly
-          className="flex-1 w-full p-5 rounded-xl bg-background border border-primary/5 text-foreground resize-none focus:ring-1 focus:ring-primary outline-none transition-all text-sm leading-relaxed mb-6"
+          className="flex-1 min-h-[120px] w-full p-4 rounded-lg bg-muted/30 border border-border text-foreground resize-none focus:ring-2 focus:ring-primary/20 outline-none text-sm leading-relaxed mb-5"
           placeholder="Nhập văn bản của bạn tại đây..."
         />
-        
-        {/* Mini Audio Player Preview - waveform có class wrapper để animation luôn chạy */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-background/50 border border-primary/5 mb-6">
-          <div className="size-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shrink-0">
-            <Play className="w-7 h-7" />
-          </div>
+
+        {/* Inline player – đồng bộ với thanh dưới, có nút phát/tạm dừng thật */}
+        <div
+          className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 border border-border"
+          aria-label="Phát bản ghi âm"
+        >
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="size-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:opacity-90 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            aria-label={isPlaying ? "Tạm dừng" : "Phát"}
+          >
+            {isPlaying ? (
+              <Pause className="w-6 h-6" />
+            ) : (
+              <Play className="w-6 h-6 ml-0.5" />
+            )}
+          </button>
           <div className="flex-1 min-w-0">
-            <div className="gen-voice-waveform flex items-end gap-0.5 h-8 mb-1">
+            <div className="flex items-end gap-0.5 h-6 mb-2">
               {waveformBars}
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatDuration(duration)}</span>
-              <span>Giọng {voiceName}</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                {formatTime(currentTime)} / {formatTime(totalDuration)}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">Giọng {voiceName}</span>
             </div>
+            {totalDuration > 0 && (
+              <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary/70 transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            )}
           </div>
         </div>
+        <p className="text-[11px] text-muted-foreground mt-2 mb-4">
+          Điều khiển đầy đủ (tốc độ, âm lượng, tải file) ở thanh phát nhạc dưới cùng màn hình.
+        </p>
 
-        <div className="flex justify-end gap-3">
-          <button 
+        <div className="flex flex-wrap justify-end gap-2 sm:gap-3 pt-2 border-t border-border">
+          <button
+            type="button"
             onClick={onClear}
-            className="px-6 py-2.5 rounded-lg border border-primary/20 text-muted-foreground font-semibold hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-colors text-sm"
+            className="px-5 py-2.5 rounded-lg border border-border text-muted-foreground font-medium hover:bg-muted/50 hover:text-foreground transition-colors text-sm"
           >
             Xóa hết
           </button>
-          <button 
+          <button
+            type="button"
             onClick={onRegenerate}
-            className="px-8 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2 text-sm"
+            className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 text-sm shadow-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Tạo lại

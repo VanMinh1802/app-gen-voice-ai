@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTtsStore } from "@/features/tts/store";
+import { useTts } from "@/features/tts/context/TtsContext";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 
 interface AudioPlayerProps {
@@ -28,21 +29,34 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const { 
-    currentAudioUrl, 
-    status, 
-    settings, 
-    setStatus, 
+  const {
+    currentAudioUrl,
+    status,
+    settings,
+    setStatus,
     setSettings,
     setCurrentAudio,
     currentAudio,
     nowPlaying,
     history,
     setNowPlaying,
+    streamingState,
+    setStreamingState,
+    streamingCurrentTime,
+    streamingDuration,
+    pausedStreaming,
+    pauseStreaming,
+    resumeStreaming,
   } = useTtsStore();
-  
+  const { gaplessPlayer } = useTts();
+
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  /** Gapless streaming: use Web Audio progress; otherwise use <audio> element */
+  const isGaplessStreaming = streamingDuration > 0;
+  const displayCurrentTime = isGaplessStreaming ? streamingCurrentTime : currentTime;
+  const displayDuration = isGaplessStreaming ? streamingDuration : duration;
   const [volume, setVolume] = useState(settings.volume);
   const [isMuted, setIsMuted] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
@@ -66,26 +80,15 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
       if (!isDragging) setCurrentTime(audio.currentTime);
     };
     const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => {
-      if (isLooping) {
-        audio.currentTime = 0;
-        audio.play();
-      } else {
-        setStatus("idle");
-        setCurrentTime(0);
-      }
-    };
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
-    audio.addEventListener("ended", handleEnded);
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      audio.removeEventListener("ended", handleEnded);
     };
-  }, [setStatus, isLooping, isDragging]);
+  }, [isDragging]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -93,15 +96,48 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     }
   }, [volume, isMuted]);
 
+  /**
+   * Auto-play logic:
+   * - Gapless streaming: sound comes from Web Audio, do not play <audio> element
+   * - Non-streaming: auto-play when status === "playing"
+   */
   useEffect(() => {
-    if (!audioRef.current || !currentAudioUrl) return;
+    const audio = audioRef.current;
+    if (!audio || !currentAudioUrl) return;
+    if (streamingDuration > 0) return; // Gapless mode – playback is via Web Audio
 
-    if (status === "playing") {
-      audioRef.current.play().catch(() => setStatus("idle"));
-    } else {
-      audioRef.current.pause();
+    if (status === "playing" && streamingState === "idle") {
+      audio.play().catch(() => setStatus("idle"));
     }
-  }, [status, currentAudioUrl, setStatus]);
+  }, [status, currentAudioUrl, setStatus, streamingState, streamingDuration]);
+
+  /**
+   * When a chunk ends during non-gapless streaming, notify the hook to queue the next chunk.
+   * (Gapless mode uses its own tick — <audio> element's ended event is not relevant.)
+   */
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      // Only handle non-gapless streaming; gapless ends via Web Audio tick
+      if (streamingDuration > 0) return;
+      if (streamingState === "playing" || streamingState === "buffering") {
+        setStreamingState("buffering");
+        return;
+      }
+      if (isLooping) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (streamingState === "idle") {
+        setStatus("idle");
+        setCurrentTime(0);
+      }
+    };
+
+    audio.addEventListener("ended", handleEnded);
+    return () => audio.removeEventListener("ended", handleEnded);
+  }, [streamingState, streamingDuration, isLooping, setStatus, setStreamingState]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -118,12 +154,29 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
   }, [currentAudioUrl, nowPlaying, history, setNowPlaying]);
 
   const togglePlay = useCallback(() => {
+    if (streamingDuration > 0) {
+      // Gapless streaming: pause / resume — generation keeps running in worker
+      if (pausedStreaming) {
+        gaplessPlayer.current?.resume();
+        resumeStreaming();
+        setStatus("playing");
+      } else {
+        gaplessPlayer.current?.pause();
+        pauseStreaming();
+      }
+      return;
+    }
+
+    // Non-gapless: existing behaviour
     if (status === "playing") {
       setStatus("idle");
     } else {
+      if (streamingState !== "idle") {
+        setStreamingState("playing");
+      }
       setStatus("playing");
     }
-  }, [status, setStatus]);
+  }, [status, setStatus, streamingState, setStreamingState, streamingDuration, pausedStreaming, pauseStreaming, resumeStreaming, gaplessPlayer]);
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
@@ -133,24 +186,35 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     }
   }, []);
 
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressRef.current || !duration) return;
-    const rect = progressRef.current.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const newTime = percent * duration;
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  }, [duration]);
+  const handleProgressClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!progressRef.current || !displayDuration) return;
+      if (isGaplessStreaming) return; // Gapless: cannot seek
+      const rect = progressRef.current.getBoundingClientRect();
+      const percent = (e.clientX - rect.left) / rect.width;
+      const newTime = percent * displayDuration;
+      if (audioRef.current) {
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+      }
+    },
+    [displayDuration, isGaplessStreaming]
+  );
 
-  const handleSkip = useCallback((seconds: number) => {
-    if (audioRef.current) {
-      const newTime = Math.max(0, Math.min(duration, audioRef.current.currentTime + seconds));
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
-  }, [duration]);
+  const handleSkip = useCallback(
+    (seconds: number) => {
+      if (isGaplessStreaming) return; // Gapless: cannot seek
+      if (audioRef.current) {
+        const newTime = Math.max(
+          0,
+          Math.min(displayDuration, audioRef.current.currentTime + seconds)
+        );
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+      }
+    },
+    [displayDuration, isGaplessStreaming]
+  );
 
   /** Index of nowPlaying in history, or -1 */
   const currentIndex = nowPlaying && history.length > 0
@@ -238,7 +302,8 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
 
   if (!currentAudioUrl || !isVisible) return null;
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progressPercent =
+    displayDuration > 0 ? (displayCurrentTime / displayDuration) * 100 : 0;
   const voiceIdForDisplay = nowPlaying?.voice ?? settings.voice;
   const title =
     (nowPlaying?.text ?? "").trim().slice(0, 48) ||
@@ -296,9 +361,9 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <button
               onClick={togglePlay}
               className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40"
-              aria-label={status === "playing" ? "Tạm dừng" : "Phát"}
+              aria-label={status === "playing" && !pausedStreaming ? "Tạm dừng" : "Phát"}
             >
-              {status === "playing" ? (
+              {status === "playing" && !pausedStreaming ? (
                 <Pause className="w-6 h-6 sm:w-7 sm:h-7" />
               ) : (
                 <Play className="w-6 h-6 sm:w-7 sm:h-7 ml-1" />
@@ -325,7 +390,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
 
           <div className="w-full flex items-center gap-3 sm:gap-4">
             <span className="text-[10px] font-mono font-bold text-muted-foreground w-10 text-right">
-              {formatTime(currentTime)}
+              {formatTime(displayCurrentTime)}
             </span>
             <div 
               ref={progressRef}
@@ -348,9 +413,9 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               <input
                 type="range"
                 min={0}
-                max={duration || 0}
+                max={displayDuration || 0}
                 step={0.1}
-                value={currentTime}
+                value={displayCurrentTime}
                 onChange={handleSeek}
                 onMouseDown={() => setIsDragging(true)}
                 onMouseUp={() => setIsDragging(false)}
@@ -359,7 +424,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               />
             </div>
             <span className="text-[10px] font-mono font-bold text-muted-foreground w-10">
-              {formatTime(duration)}
+              {formatTime(displayDuration)}
             </span>
           </div>
         </div>

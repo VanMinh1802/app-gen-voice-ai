@@ -15,6 +15,9 @@ import { logger } from "@/lib/logger";
 const HISTORY_STORAGE_KEY = "tts-history-migrated";
 const LS_HISTORY_KEY = config.storage.historyKey;
 
+/** Streaming-specific state to manage chunk playback separately from status */
+export type StreamingState = "idle" | "buffering" | "playing";
+
 interface TtsState {
   settings: TtsSettings;
   status: TtsStatus;
@@ -25,12 +28,24 @@ interface TtsState {
   history: TtsHistoryItem[];
   error: string | null;
   isHistoryLoaded: boolean;
+  /** Separate streaming state from generic status */
+  streamingState: StreamingState;
+  /** Gapless streaming: current playback time and total duration (from Web Audio) */
+  streamingCurrentTime: number;
+  streamingDuration: number;
+  /** Whether gapless streaming playback is paused by the user (stop/resume audio without affecting generation) */
+  pausedStreaming: boolean;
 
   setSettings: (settings: Partial<TtsSettings>) => void;
   setStatus: (status: TtsStatus) => void;
   setProgress: (progress: number) => void;
   setCurrentAudio: (audio: Blob | null, url: string | null) => void;
   setNowPlaying: (item: TtsHistoryItem | null) => void;
+  setStreamingState: (state: StreamingState) => void;
+  setStreamingProgress: (currentTime: number, duration: number) => void;
+  pauseStreaming: () => void;
+  resumeStreaming: () => void;
+  setPausedStreaming: (paused: boolean) => void;
   addToHistory: (item: TtsHistoryItem, audioBlob: Blob) => void;
   removeFromHistory: (id: string) => void;
   clearHistory: () => void;
@@ -58,6 +73,10 @@ const initialState = {
   history: [] as TtsHistoryItem[],
   error: null,
   isHistoryLoaded: false,
+  streamingState: "idle" as StreamingState,
+  streamingCurrentTime: 0,
+  streamingDuration: 0,
+  pausedStreaming: false,
 };
 
 /** Clears legacy history from localStorage; old items had only blob URLs (no audio blob) so they are not saved to IDB. */
@@ -113,6 +132,15 @@ export const useTtsStore = create<TtsState>()(
       },
 
       setNowPlaying: (item) => set({ nowPlaying: item }),
+
+      setStreamingState: (state) => set({ streamingState: state }),
+
+      setStreamingProgress: (currentTime, duration) =>
+        set({ streamingCurrentTime: currentTime, streamingDuration: duration }),
+
+      pauseStreaming: () => set({ pausedStreaming: true }),
+      resumeStreaming: () => set({ pausedStreaming: false }),
+      setPausedStreaming: (paused) => set({ pausedStreaming: paused }),
 
       addToHistory: async (item, audioBlob) => {
         const state = get();
@@ -176,7 +204,7 @@ export const useTtsStore = create<TtsState>()(
         // Revoke blob URLs before resetting
         revokeBlobUrl(state.currentAudioUrl);
         revokeBlobUrl(state.nowPlaying?.audioUrl);
-        
+
         set({
           status: "idle",
           progress: 0,
@@ -184,6 +212,10 @@ export const useTtsStore = create<TtsState>()(
           currentAudioUrl: null,
           nowPlaying: null,
           error: null,
+          streamingState: "idle",
+          streamingCurrentTime: 0,
+          streamingDuration: 0,
+          pausedStreaming: false,
         });
       },
 

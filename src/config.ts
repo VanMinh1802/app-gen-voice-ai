@@ -35,6 +35,17 @@ export const config = {
     customModelBaseUrl: "/api/models",
   },
   /**
+   * Streaming settings for TTS playback
+   */
+  streaming: {
+    /** Minimum number of chunks to trigger streaming mode */
+    minChunksForStreaming: 2,
+    /** Approximate chars per chunk */
+    charsPerChunk: 500,
+    /** Buffer this many chunks before starting playback to prevent gaps */
+    bufferChunks: 2,
+  },
+  /**
    * Free plan: only these 2 voices can be used for generation.
    * Others are previewable via sample, but generation requires Pro.
    */
@@ -93,3 +104,7 @@ export const popularVoiceIds: string[] = [
 export type VoiceId =
   | (typeof config.voices)[number]["id"]
   | `custom:${string}`;
+
+/** Calculate minimum text length for streaming: minChunks * charsPerChunk */
+export const STREAMING_THRESHOLD_CHARS =
+  config.streaming.minChunksForStreaming * config.streaming.charsPerChunk;

@@ -2,6 +2,7 @@ import { TtsSession, type VoiceId } from "@mintplex-labs/piper-tts-web";
 import type {
   TtsWorkerMessage,
   TtsWorkerOutgoingMessage,
+  TtsWorkerChunk,
   TtsRequest,
 } from "@/features/tts/types";
 import { CUSTOM_MODEL_PREFIX, config } from "@/config";
@@ -9,6 +10,7 @@ import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
 import type { PiperCustomSession } from "@/lib/piper/piperCustom";
 import { loadPiperWithCache } from "@/lib/piper/piperR2";
 import { pitchShift } from "@/lib/audio/pitchShift";
+import { STREAMING_THRESHOLD_CHARS } from "@/config";
 
 /** Prefer same-origin /onnx/ so .mjs is served with correct MIME (avoids blob fetch issues in worker). */
 const ONNX_WASM_BASE =
@@ -28,6 +30,9 @@ let customSession: PiperCustomSession | null = null;
 let customSessionVoiceId: string | null = null;
 /** R2 public URL từ main thread (worker bundle có thể không có NEXT_PUBLIC_*) */
 let r2PublicUrlFromMain: string = "";
+
+/** Cancel flag for stopping mid-generation */
+let isCancelled = false;
 
 function isCustomVoice(voiceId: string): boolean {
   return voiceId.startsWith(CUSTOM_MODEL_PREFIX);
@@ -91,7 +96,30 @@ function sendProgress(progress: number) {
   self.postMessage(message);
 }
 
-function sendComplete(audio: Float32Array, sampleRate: number = 24000) {
+function sendChunk(audio: Float32Array, index: number, sampleRate: number = 24000) {
+  const wavBuffer = float32ToWav(audio, sampleRate);
+  const message: TtsWorkerChunk = {
+    type: "chunk",
+    audio: wavBuffer,
+    index,
+    isStreaming: true,
+  };
+  self.postMessage(message, { transfer: [wavBuffer] });
+}
+
+function shouldUseStreaming(textLength: number): boolean {
+  return textLength >= STREAMING_THRESHOLD_CHARS;
+}
+
+function splitIntoChunks(text: string): string[] {
+  const chunks: string[] = [];
+  for (let i = 0; i < text.length; i += config.streaming.charsPerChunk) {
+    chunks.push(text.slice(i, i + config.streaming.charsPerChunk));
+  }
+  return chunks;
+}
+
+function sendComplete(audio: Float32Array, sampleRate: number = 24000, wasStreaming?: boolean) {
   const wavBuffer = float32ToWav(audio, sampleRate);
   const duration = audio.length / sampleRate;
 
@@ -99,6 +127,7 @@ function sendComplete(audio: Float32Array, sampleRate: number = 24000) {
     type: "complete",
     audio: wavBuffer,
     duration,
+    wasStreaming,
   };
   self.postMessage(message, { transfer: [wavBuffer] });
 }
@@ -154,6 +183,17 @@ function float32ToWav(float32Array: Float32Array, sampleRate: number): ArrayBuff
   return buffer;
 }
 
+function concatenateFloat32Arrays(arrays: Float32Array[]): Float32Array {
+  const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+  const result = new Float32Array(totalLength);
+  let offset = 0;
+  for (const arr of arrays) {
+    result.set(arr, offset);
+    offset += arr.length;
+  }
+  return result;
+}
+
 self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
   const { type, payload } = event.data;
 
@@ -174,39 +214,100 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         }
 
         sendProgress(10);
+        isCancelled = false;
 
-        let float32Audio: Float32Array;
-        let sampleRate: number;
+        const useStreaming = shouldUseStreaming(text.length);
+        const chunks = splitIntoChunks(text);
 
-        if (isCustomVoice(effectiveVoice)) {
-          const custom = await initCustomSession(effectiveVoice);
-          sendProgress(40);
-          const lengthScale = 1 / speed;
-          // Pass onProgress callback to update progress in real-time
-          float32Audio = await custom.predict(text, { 
-            lengthScale,
-            onProgress: (predictProgress) => {
-              // Map predict progress (0-100) to overall progress (40-90)
-              const mappedProgress = 40 + Math.round((predictProgress * 50) / 100);
-              sendProgress(mappedProgress);
+        if (useStreaming && chunks.length >= config.streaming.minChunksForStreaming) {
+          // Streaming mode: process chunks and send each as it completes
+          const allAudio: Float32Array[] = [];
+          let sampleRate = 24000;
+
+          if (isCustomVoice(effectiveVoice)) {
+            const custom = await initCustomSession(effectiveVoice);
+            sendProgress(20);
+            sampleRate = custom.sampleRate;
+            const lengthScale = 1 / speed;
+
+            for (let i = 0; i < chunks.length; i++) {
+              if (isCancelled) return;
+
+              const chunkAudio = await custom.predict(chunks[i], { lengthScale });
+              allAudio.push(chunkAudio);
+
+              if (!isCancelled) {
+                sendChunk(chunkAudio, i, sampleRate);
+                const progress = 20 + Math.round(((i + 1) / chunks.length) * 60);
+                sendProgress(progress);
+              }
             }
-          });
-          sampleRate = custom.sampleRate;
+          } else {
+            const session = await initSession(effectiveVoice);
+            sendProgress(20);
+
+            for (let i = 0; i < chunks.length; i++) {
+              if (isCancelled) return;
+
+              const audioBlob = await session.predict(chunks[i]);
+              const chunkAudio = await blobToFloat32Array(audioBlob);
+              allAudio.push(chunkAudio);
+
+              if (!isCancelled) {
+                sendChunk(chunkAudio, i, sampleRate);
+                const progress = 20 + Math.round(((i + 1) / chunks.length) * 60);
+                sendProgress(progress);
+              }
+            }
+          }
+
+          if (isCancelled) return;
+
+          // Apply pitch shift to all chunks if needed
+          if (pitch !== 0 && Number.isFinite(pitch)) {
+            const clampedPitch = Math.max(-12, Math.min(12, pitch));
+            for (let i = 0; i < allAudio.length; i++) {
+              allAudio[i] = pitchShift(allAudio[i], clampedPitch);
+            }
+          }
+
+          // Concatenate all chunks for full audio (for history)
+          const fullAudio = concatenateFloat32Arrays(allAudio);
+          sendProgress(95);
+          sendComplete(fullAudio, sampleRate, true);
         } else {
-          const session = await initSession(effectiveVoice);
-          sendProgress(40);
-          const audioBlob = await session.predict(text);
-          float32Audio = await blobToFloat32Array(audioBlob);
-          sampleRate = 24000;
-        }
+          // Fallback mode: process all at once (existing behavior)
+          let float32Audio: Float32Array;
+          let sampleRate: number;
 
-        if (pitch !== 0 && Number.isFinite(pitch)) {
-          const clampedPitch = Math.max(-12, Math.min(12, pitch));
-          float32Audio = pitchShift(float32Audio, clampedPitch);
-        }
+          if (isCustomVoice(effectiveVoice)) {
+            const custom = await initCustomSession(effectiveVoice);
+            sendProgress(40);
+            const lengthScale = 1 / speed;
+            float32Audio = await custom.predict(text, {
+              lengthScale,
+              onProgress: (predictProgress) => {
+                const mappedProgress = 40 + Math.round((predictProgress * 50) / 100);
+                sendProgress(mappedProgress);
+              }
+            });
+            sampleRate = custom.sampleRate;
+          } else {
+            const session = await initSession(effectiveVoice);
+            sendProgress(40);
+            const audioBlob = await session.predict(text);
+            float32Audio = await blobToFloat32Array(audioBlob);
+            sampleRate = 24000;
+          }
 
-        sendProgress(95);
-        sendComplete(float32Audio, sampleRate);
+          if (pitch !== 0 && Number.isFinite(pitch)) {
+            const clampedPitch = Math.max(-12, Math.min(12, pitch));
+            float32Audio = pitchShift(float32Audio, clampedPitch);
+          }
+
+          sendProgress(95);
+          sendComplete(float32Audio, sampleRate, false);
+        }
 
         break;
       }
@@ -251,6 +352,7 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         ttsSession = null;
         customSession = null;
         customSessionVoiceId = null;
+        isCancelled = true;
         break;
       }
 

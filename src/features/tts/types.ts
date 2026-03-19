@@ -37,7 +37,7 @@ export interface TtsSettings {
   normalizeText: boolean;
 }
 
-export type TtsStatus = "idle" | "loading" | "generating" | "previewing" | "playing" | "error";
+export type TtsStatus = "idle" | "loading" | "generating" | "previewing" | "playing" | "error" | "streaming-ended";
 
 export interface TtsHistoryItem {
   id: string;
@@ -60,10 +60,18 @@ export interface TtsWorkerProgress {
   progress: number;
 }
 
+export interface TtsWorkerChunk {
+  type: "chunk";
+  audio: ArrayBuffer;
+  index: number;
+  isStreaming: boolean;
+}
+
 export interface TtsWorkerComplete {
   type: "complete";
   audio: ArrayBuffer;
   duration: number;
+  wasStreaming?: boolean;
 }
 
 export interface TtsWorkerError {
@@ -77,6 +85,7 @@ export interface TtsWorkerReady {
 
 export type TtsWorkerOutgoingMessage =
   | TtsWorkerProgress
+  | TtsWorkerChunk
   | TtsWorkerComplete
   | TtsWorkerError
   | TtsWorkerReady;
