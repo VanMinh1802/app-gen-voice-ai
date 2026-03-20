@@ -42,8 +42,6 @@ A browser-based Text-to-Speech and Speech Recognition application powered by Pip
 This project is built on top of Piper TTS and fine-tuned using a custom dataset to generate realistic voices.
 Please see the Training Video here: https://www.youtube.com/watch?v=WgvBOljtNvE
 
-
-
 ### 🔹 Base Model
 
 - **Based on Piper (English checkpoint)**
@@ -53,6 +51,7 @@ Please see the Training Video here: https://www.youtube.com/watch?v=WgvBOljtNvE
 ### 🔹 Fine-Tuning Process
 
 **Dataset:**
+
 - Dataset size: ~1,000 audio samples
 - Voices: Multiple famous celebrity voices
 - Training method: Fine-tuning on existing Piper English checkpoint
@@ -60,18 +59,21 @@ Please see the Training Video here: https://www.youtube.com/watch?v=WgvBOljtNvE
 - **Download training datasets**: [View Datasets on Google Drive](https://drive.google.com/drive/folders/1NwVRepCQ4HgOfTn4BR9pbYJOF2KkvG4h?usp=sharing)
 
 Available datasets include:
+
 - Vietnamese celebrity voices (Mỹ Tâm, Ngọc Ngân, Trấn Thành, Việt Thảo)
 - Multi-speaker datasets
 - Various dataset sizes (200, 1000+ samples)
 - English voice datasets
 
 **Audio Preparation:**
+
 - Cleaned and normalized audio
 - Matched text–audio pairs
 - Consistent sample rate
 - Noise removed
 
 **What the Model Learns:**
+
 - Voice tone
 - Accent
 - Speech rhythm
@@ -119,12 +121,12 @@ Pre-trained Vietnamese TTS models are available for download:
 4. **vietthao3886** (~60.6 MB)
    - Files: `vietthao3886.onnx` + `vietthao3886.onnx.json`
    - Description: Vietnamese celebrity voice (Việt Thảo)
-     
 5. **New Voices**: Mỹ Tâm, Trấn Thành, Ngọc Huyền (review phim), Oryx (giọng nam siêu trầm)
 
 ### Model File Structure
 
 Each TTS model requires **two files** with the same base name:
+
 - `{model-name}.onnx` - The ONNX model file (binary)
 - `{model-name}.onnx.json` - The model configuration file (JSON)
 
@@ -265,7 +267,7 @@ The application includes comprehensive Vietnamese text processing that handles:
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Step 1: Install Dependencies
@@ -280,6 +282,7 @@ npm install phonemizer-1.2.2.tgz
 1. **Download models from Google Drive**: [View Available Models](https://drive.google.com/drive/folders/1f_pCpvgqfvO4fdNKM7WS4zTuXC0HBskL?usp=drive_link)
 
 2. **Create the models directory** (if it doesn't exist):
+
    ```bash
    mkdir -p public/tts-model/vi
    ```
@@ -315,6 +318,7 @@ npm run dev
 The application will be available at `http://localhost:5173` (or the port shown in the terminal).
 
 The development server automatically:
+
 - Serves **Vietnamese** TTS models from `public/tts-model/vi/` (list: `/api/models`, files: `/api/model/{name}`)
 - Serves **English/Indonesian** TTS models from `public/tts-model/en/` and `public/tts-model/id/` (list: `/api/piper/{lang}/models`, files: `/api/model/piper/{lang}/{name}`)
 - Serves **ASR** models from `public/asr-model/` (list: `/api/asr/models`, files: `/api/model/asr/{model}/{name}`)
@@ -365,18 +369,21 @@ The Cloudflare Pages Functions discover and serve models by prefix.
 ### Wrangler Configuration
 
 The `wrangler.toml` file configures:
+
 - Pages build output directory
 - R2 bucket binding (`piper` → `tts-bucket`)
 
 ### Application Configuration
 
 `src/config.json` controls runtime behavior:
+
 - `debug` – Enable/disable debug logging
 - `UnlimitedRomanNumerals` – When `false`, only Roman numerals I–XXX are converted; when `true`, all valid Roman numerals are converted
 
 ### TTS Model Format
 
 TTS models must be in Piper TTS ONNX format with:
+
 - `.onnx` file containing the ONNX model
 - `.onnx.json` file containing voice configuration (phoneme_id_map, audio settings, etc.)
 

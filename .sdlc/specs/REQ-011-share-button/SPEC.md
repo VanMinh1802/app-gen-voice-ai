@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-011                                               |
-| **Feature Name**   | Share Button                                          |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P2 (Medium)                                           |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.1.0                                               |
+| Field              | Value            |
+| ------------------ | ---------------- |
+| **Feature ID**     | REQ-011          |
+| **Feature Name**   | Share Button     |
+| **Status**         | ✅ Completed     |
+| **Priority**       | P2 (Medium)      |
+| **Owner**          | Development Team |
+| **Created**        | 2026-03-10       |
+| **Target Release** | v1.1.0           |
 
 ---
 
@@ -48,8 +48,8 @@ Users need to share the app URL with others.
 
 ### Files Created
 
-| File | Description |
-| ---- | ----------- |
+| File                             | Description            |
+| -------------------------------- | ---------------------- |
 | `src/components/ShareButton.tsx` | Share button component |
 
 ---

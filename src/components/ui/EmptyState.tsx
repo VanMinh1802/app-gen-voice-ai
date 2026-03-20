@@ -32,7 +32,7 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center py-16 px-8 text-center",
-        className
+        className,
       )}
     >
       {/* Icon container with subtle background */}

@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   User,
   CreditCard,
   SlidersHorizontal,
   Shield,
-  Pencil,
-  Check,
   Lock,
   ShieldAlert,
   Trash2,
@@ -23,8 +21,12 @@ import {
   Sparkles,
   Info,
   Loader2,
+  ExternalLink,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
@@ -35,11 +37,28 @@ import { useToast } from "@/components/ui/Toast";
 type SettingsTab = "personal" | "subscription" | "customization" | "security";
 
 function detectGender(voiceId: string): "male" | "female" {
-  const maleKeywords = ["nam", "hung", "quang", "thanh", "khoi", "dung", "duy", "minh", "anh", "hoang", "phong", "son", "hieu"];
-  return maleKeywords.some((kw) => voiceId.toLowerCase().includes(kw)) ? "male" : "female";
+  const maleKeywords = [
+    "nam",
+    "hung",
+    "quang",
+    "thanh",
+    "khoi",
+    "dung",
+    "duy",
+    "minh",
+    "anh",
+    "hoang",
+    "phong",
+    "son",
+    "hieu",
+  ];
+  return maleKeywords.some((kw) => voiceId.toLowerCase().includes(kw))
+    ? "male"
+    : "female";
 }
 
-const GENATION_ACCOUNT_URL = process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
+const GENATION_ACCOUNT_URL =
+  process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
 
 export function VoiceSettings() {
   const { settings, setSettings } = useTtsStore();
@@ -53,20 +72,9 @@ export function VoiceSettings() {
   } = useAuthContext();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<SettingsTab>("personal");
-
-  // Form state (Thông tin cá nhân) — khởi tạo từ user
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("Việt Nam");
-
-  useEffect(() => {
-    setFullName(user?.name ?? "");
-    setEmail(user?.email ?? "");
-  }, [user?.name, user?.email]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Customization state
-  const [language, setLanguage] = useState("vi");
   const { theme, setTheme } = useTheme();
   const darkMode = theme === "dark";
   const [notifications, setNotifications] = useState(true);
@@ -83,48 +91,47 @@ export function VoiceSettings() {
         model: voiceId as typeof settings.model,
       });
     },
-    [setSettings, settings]
+    [setSettings, settings],
   );
-  const handleSpeedChange = useCallback((v: number) => setSettings({ speed: v }), [setSettings]);
-  const handlePitchChange = useCallback((v: number) => setSettings({ pitch: v }), [setSettings]);
-  const handleVolumeChange = useCallback((v: number) => setSettings({ volume: v }), [setSettings]);
-  const handleNormalizeToggle = useCallback((v: boolean) => setSettings({ normalizeText: v }), [setSettings]);
-
-  const handleCancelPersonal = useCallback(() => {
-    setFullName(user?.name ?? "");
-    setEmail(user?.email ?? "");
-    setPhone("");
-    setLocation("Việt Nam");
-  }, [user?.name, user?.email]);
-
-  const handleSavePersonal = useCallback(() => {
-    addToast({
-      type: "info",
-      message: "Cập nhật hồ sơ được quản lý qua tài khoản Genation. Vui lòng truy cập genation.ai để thay đổi thông tin.",
-      duration: 6000,
-    });
-    if (typeof window !== "undefined") {
-      window.open(GENATION_ACCOUNT_URL, "_blank");
-    }
-  }, [addToast]);
+  const handleSpeedChange = useCallback(
+    (v: number) => setSettings({ speed: v }),
+    [setSettings],
+  );
+  const handlePitchChange = useCallback(
+    (v: number) => setSettings({ pitch: v }),
+    [setSettings],
+  );
+  const handleVolumeChange = useCallback(
+    (v: number) => setSettings({ volume: v }),
+    [setSettings],
+  );
+  const handleNormalizeToggle = useCallback(
+    (v: boolean) => setSettings({ normalizeText: v }),
+    [setSettings],
+  );
 
   const handleSecurityAction = useCallback(
     (action: "password" | "2fa" | "delete") => {
       const messages: Record<typeof action, string> = {
         password: "Đổi mật khẩu: quản lý tại tài khoản Genation.",
         "2fa": "Xác thực 2 yếu tố: quản lý tại tài khoản Genation.",
-        delete: "Xóa tài khoản: liên hệ hoặc quản lý tại genation.ai.",
+        delete: "",
       };
+      if (action === "delete") {
+        setShowDeleteDialog(true);
+        return;
+      }
       addToast({ type: "info", message: messages[action], duration: 5000 });
       if (typeof window !== "undefined") {
         window.open(GENATION_ACCOUNT_URL, "_blank");
       }
     },
-    [addToast]
+    [addToast],
   );
 
   const planInfo = activePlanCode
-    ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) ?? (isProPlanCode(activePlanCode) ? PLAN_ACCESS.PRO : PLAN_ACCESS.FREE)
+    ? (Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode) ??
+      (isProPlanCode(activePlanCode) ? PLAN_ACCESS.PRO : PLAN_ACCESS.FREE))
     : PLAN_ACCESS.FREE;
   const planName = planInfo?.name ?? "Miễn phí";
   const activeLicense = licenses.find((l) => l.status === "active");
@@ -141,8 +148,12 @@ export function VoiceSettings() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-foreground tracking-tight">Cài đặt tài khoản</h1>
-        <p className="text-muted-foreground mt-1">Quản lý thông tin cá nhân và tùy chỉnh trải nghiệm của bạn.</p>
+        <h1 className="text-3xl font-black text-foreground tracking-tight">
+          Cài đặt tài khoản
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Quản lý thông tin cá nhân và tùy chỉnh trải nghiệm của bạn.
+        </p>
       </div>
 
       {/* Tabs */}
@@ -157,7 +168,7 @@ export function VoiceSettings() {
                 "flex items-center gap-2 font-semibold transition-all border-b-2 px-1 -mb-4",
                 activeTab === tab.id
                   ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="w-4 h-4" />
@@ -173,73 +184,64 @@ export function VoiceSettings() {
         {activeTab === "personal" && (
           <div className="bg-card border border-primary/10 rounded-xl p-6">
             {!isAuthenticated ? (
-              <p className="text-muted-foreground text-sm py-4">
-                Đăng nhập để xem và cập nhật thông tin cá nhân. Hồ sơ được quản lý qua tài khoản Genation.
-              </p>
+              <div className="flex items-start gap-4">
+                <div className="w-20 h-20 rounded-full border-4 border-primary/10 bg-muted flex items-center justify-center text-foreground text-3xl font-bold shrink-0">
+                  ?
+                </div>
+                <div className="flex-1">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Đăng nhập để xem thông tin cá nhân. Hồ sơ được quản lý qua
+                    tài khoản Genation.
+                  </p>
+                  <Link
+                    href="/login"
+                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all"
+                  >
+                    Đăng nhập
+                  </Link>
+                </div>
+              </div>
             ) : (
               <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-                <div className="relative group">
-                  <div className="size-32 rounded-full border-4 border-primary/10 overflow-hidden bg-muted flex items-center justify-center text-foreground text-4xl font-bold">
-                    {(fullName || email).charAt(0).toUpperCase() || "?"}
+                <div className="relative">
+                  <div className="size-32 rounded-full border-4 border-primary/10 overflow-hidden bg-muted flex items-center justify-center text-foreground text-4xl font-bold shrink-0">
+                    {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleSavePersonal}
-                    className="absolute bottom-1 right-1 size-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground border-2 border-card hover:scale-110 transition-transform"
-                    aria-label="Đổi avatar"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground border-2 border-card">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
                 </div>
                 <div className="flex-1 space-y-4 w-full">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Họ và tên</label>
-                      <input
-                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Từ tài khoản Genation"
-                      />
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Họ và tên
+                      </label>
+                      <p className="px-4 py-2 bg-muted/30 border border-border rounded-lg text-foreground text-sm">
+                        {user?.name || "—"}
+                      </p>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</label>
-                      <input
-                        type="email"
-                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Từ tài khoản Genation"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Số điện thoại</label>
-                      <input
-                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Tùy chọn"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vị trí</label>
-                      <select
-                        className="w-full bg-background border border-primary/10 rounded-lg px-4 py-2 text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                      >
-                        <option>Việt Nam</option>
-                        <option>Hoa Kỳ</option>
-                        <option>Khác</option>
-                      </select>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Email
+                      </label>
+                      <p className="px-4 py-2 bg-muted/30 border border-border rounded-lg text-foreground text-sm truncate">
+                        {user?.email || "—"}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={handleCancelPersonal} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Hủy
-                    </button>
-                    <button type="button" onClick={handleSavePersonal} className="px-6 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all">
-                      Lưu thay đổi
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          window.open(GENATION_ACCOUNT_URL, "_blank");
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all"
+                    >
+                      Chỉnh sửa tại Genation
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -253,11 +255,15 @@ export function VoiceSettings() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-card border border-primary/10 rounded-xl p-6">
               {!isAuthenticated ? (
-                <p className="text-muted-foreground text-sm py-4">Đăng nhập để xem gói đăng ký hiện tại.</p>
+                <p className="text-muted-foreground text-sm py-4">
+                  Đăng nhập để xem gói đăng ký hiện tại.
+                </p>
               ) : isLicenseLoading ? (
                 <div className="flex items-center gap-2 py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">Đang tải thông tin gói...</span>
+                  <span className="text-sm text-muted-foreground">
+                    Đang tải thông tin gói...
+                  </span>
                 </div>
               ) : (
                 <>
@@ -272,23 +278,35 @@ export function VoiceSettings() {
                         )}
                       </h3>
                       <p className="text-muted-foreground text-sm mt-1">
-                        Bạn đang sử dụng gói <span className="text-foreground font-bold">{planName}</span>
+                        Bạn đang sử dụng gói{" "}
+                        <span className="text-foreground font-bold">
+                          {planName}
+                        </span>
                         {isProPlanCode(activePlanCode) && " (Cá nhân)"}
                       </p>
                     </div>
-                    {hasActiveLicense && (
+                    {hasActiveLicense ? (
                       <button
                         type="button"
                         onClick={() => upgradeToPlan("PRO")}
                         className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all"
                       >
-                        Gia hạn
+                        Nâng cấp Pro
                       </button>
+                    ) : (
+                      <Link
+                        href="/pricing"
+                        className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all inline-block"
+                      >
+                        Nâng cấp
+                      </Link>
                     )}
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Chu kỳ thanh toán</span>
+                      <span className="text-muted-foreground">
+                        Chu kỳ thanh toán
+                      </span>
                       <span className="text-foreground font-medium">
                         {expiresAt
                           ? `Hết hạn: ${new Date(expiresAt).toLocaleDateString("vi-VN")}`
@@ -300,9 +318,13 @@ export function VoiceSettings() {
                     <div className="h-px bg-primary/10" />
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Quyền sử dụng giọng</span>
+                        <span className="text-muted-foreground">
+                          Quyền sử dụng giọng
+                        </span>
                         <span className="text-foreground font-medium">
-                          {isProPlanCode(activePlanCode) ? "Tất cả giọng Pro" : "2 giọng (Miễn phí)"}
+                          {isProPlanCode(activePlanCode)
+                            ? "Tất cả giọng Pro"
+                            : "2 giọng (Miễn phí)"}
                         </span>
                       </div>
                       {isProPlanCode(activePlanCode) && (
@@ -317,9 +339,12 @@ export function VoiceSettings() {
             </div>
             <div className="bg-card/95 border border-primary/15 rounded-xl p-6 flex flex-col justify-between shadow-sm">
               <div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Nâng cấp Pro</h3>
+                <h3 className="text-lg font-bold text-foreground mb-2">
+                  Nâng cấp Pro
+                </h3>
                 <p className="text-foreground/85 text-sm leading-relaxed">
-                  Mở khóa tất cả giọng nói, chất lượng cao và tùy chỉnh tốc độ/âm lượng.
+                  Mở khóa tất cả giọng nói, chất lượng cao và tùy chỉnh tốc
+                  độ/âm lượng.
                 </p>
                 <ul className="mt-4 space-y-2">
                   <li className="flex items-center gap-2 text-sm text-foreground/90">
@@ -347,31 +372,43 @@ export function VoiceSettings() {
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-card border border-primary/10 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-foreground mb-6">Tùy chỉnh giao diện</h3>
+                <h3 className="text-lg font-bold text-foreground mb-6">
+                  Tùy chỉnh giao diện
+                </h3>
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Globe className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Ngôn ngữ hiển thị</p>
-                        <p className="text-xs text-muted-foreground">Tiếng Việt</p>
+                  {/* Hidden: i18n not implemented yet */}
+                  {false && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Globe className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            Ngôn ngữ hiển thị
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Tiếng Việt
+                          </p>
+                        </div>
                       </div>
+                      <select
+                        className="bg-background border border-primary/10 rounded-lg text-xs text-foreground px-2 py-1"
+                        value="vi"
+                      >
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="en">English</option>
+                      </select>
                     </div>
-                    <select
-                      className="bg-background border border-primary/10 rounded-lg text-xs text-foreground px-2 py-1"
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                    >
-                      <option value="vi">Tiếng Việt</option>
-                      <option value="en">English</option>
-                    </select>
-                  </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Moon className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium text-foreground">Chế độ tối</p>
-                        <p className="text-xs text-muted-foreground">Giảm mỏi mắt ban đêm</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Chế độ tối
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Giảm mỏi mắt ban đêm
+                        </p>
                       </div>
                     </div>
                     <button
@@ -380,13 +417,13 @@ export function VoiceSettings() {
                       onClick={() => setTheme(darkMode ? "light" : "dark")}
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                        darkMode ? "bg-primary" : "bg-muted"
+                        darkMode ? "bg-primary" : "bg-muted",
                       )}
                     >
                       <span
                         className={cn(
                           "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
-                          darkMode && "translate-x-5"
+                          darkMode && "translate-x-5",
                         )}
                       />
                     </button>
@@ -395,8 +432,12 @@ export function VoiceSettings() {
                     <div className="flex items-center gap-3">
                       <Bell className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium text-foreground">Thông báo đẩy</p>
-                        <p className="text-xs text-muted-foreground">Cập nhật tiến độ xử lý</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Thông báo đẩy
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Cập nhật tiến độ xử lý
+                        </p>
                       </div>
                     </div>
                     <button
@@ -405,13 +446,13 @@ export function VoiceSettings() {
                       onClick={() => setNotifications(!notifications)}
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                        notifications ? "bg-primary" : "bg-muted"
+                        notifications ? "bg-primary" : "bg-muted",
                       )}
                     >
                       <span
                         className={cn(
                           "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
-                          notifications && "translate-x-5"
+                          notifications && "translate-x-5",
                         )}
                       />
                     </button>
@@ -430,17 +471,31 @@ export function VoiceSettings() {
                     .map((voice) => {
                       const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}`;
                       const isSelected = settings.voice === voiceId;
-                      const isLockedForPlan = !canUseVoiceForPlan({ planCode: activePlanCode, voiceId: voice.id });
+                      const isLockedForPlan = !canUseVoiceForPlan({
+                        planCode: activePlanCode,
+                        voiceId: voice.id,
+                      });
                       const gender = detectGender(voice.id);
-                      const initials = voice.name.replace(" (custom)", "").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-                      const avatarBg = gender === "female" ? "from-pink-500 to-pink-400" : "from-blue-500 to-blue-400";
+                      const initials = voice.name
+                        .replace(" (custom)", "")
+                        .split(" ")
+                        .map((n) => n[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+                      const avatarBg =
+                        gender === "female"
+                          ? "from-pink-500 to-pink-400"
+                          : "from-blue-500 to-blue-400";
                       return (
                         <label
                           key={voiceId}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                            isSelected ? "border-primary bg-primary/10" : "border-primary/10 hover:border-primary/30",
-                            isLockedForPlan && "opacity-60 cursor-not-allowed"
+                            isSelected
+                              ? "border-primary bg-primary/10"
+                              : "border-primary/10 hover:border-primary/30",
+                            isLockedForPlan && "opacity-60 cursor-not-allowed",
                           )}
                         >
                           <input
@@ -453,22 +508,37 @@ export function VoiceSettings() {
                             }}
                             className="sr-only"
                           />
-                          <div className={cn("w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-primary-foreground font-bold text-sm", avatarBg)}>
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-primary-foreground font-bold text-sm",
+                              avatarBg,
+                            )}
+                          >
                             {initials}
                           </div>
                           <span className="text-sm font-medium text-foreground flex-1">
                             {voice.name.replace(" (custom)", "")}
-                            {isLockedForPlan && <span className="ml-2 text-[10px] font-bold text-primary/80">Pro</span>}
+                            {isLockedForPlan && (
+                              <span className="ml-2 text-[10px] font-bold text-primary/80">
+                                Pro
+                              </span>
+                            )}
                           </span>
-                          {isSelected && <Check className="w-5 h-5 text-primary" />}
+                          {isSelected && (
+                            <Check className="w-5 h-5 text-primary" />
+                          )}
                         </label>
                       );
                     })}
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2"><Gauge className="w-4 h-4" /> Tốc độ</span>
-                    <span className="text-foreground font-medium">{speedValue.toFixed(1)}x</span>
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <Gauge className="w-4 h-4" /> Tốc độ
+                    </span>
+                    <span className="text-foreground font-medium">
+                      {speedValue.toFixed(1)}x
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -476,12 +546,18 @@ export function VoiceSettings() {
                     max="2"
                     step="0.1"
                     value={speedValue}
-                    onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleSpeedChange(parseFloat(e.target.value))
+                    }
                     className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2"><Waves className="w-4 h-4" /> Cao độ</span>
-                    <span className="text-foreground font-medium">{pitchValue > 0 ? `+${pitchValue}` : pitchValue}</span>
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <Waves className="w-4 h-4" /> Cao độ
+                    </span>
+                    <span className="text-foreground font-medium">
+                      {pitchValue > 0 ? `+${pitchValue}` : pitchValue}
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -489,12 +565,21 @@ export function VoiceSettings() {
                     max="12"
                     step="1"
                     value={pitchValue}
-                    onChange={(e) => handlePitchChange(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handlePitchChange(parseInt(e.target.value))
+                    }
                     className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
+                  <p className="text-[10px] text-muted-foreground/70 -mt-1">
+                    Âm = thấp hơn, Dương = cao hơn
+                  </p>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2"><Volume2 className="w-4 h-4" /> Âm lượng</span>
-                    <span className="text-foreground font-medium">{Math.round(volumeValue * 100)}%</span>
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <Volume2 className="w-4 h-4" /> Âm lượng
+                    </span>
+                    <span className="text-foreground font-medium">
+                      {Math.round(volumeValue * 100)}%
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -502,14 +587,18 @@ export function VoiceSettings() {
                     max="1"
                     step="0.1"
                     value={volumeValue}
-                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleVolumeChange(parseFloat(e.target.value))
+                    }
                     className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   />
                 </div>
                 <label className="flex items-center justify-between mt-4 p-3 rounded-lg bg-background/50 border border-primary/5">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-foreground">Chuẩn hóa văn bản</span>
+                    <span className="text-sm text-foreground">
+                      Chuẩn hóa văn bản
+                    </span>
                   </div>
                   <button
                     role="switch"
@@ -517,10 +606,15 @@ export function VoiceSettings() {
                     onClick={() => handleNormalizeToggle(!normalizeTextValue)}
                     className={cn(
                       "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                      normalizeTextValue ? "bg-primary" : "bg-muted"
+                      normalizeTextValue ? "bg-primary" : "bg-muted",
                     )}
                   >
-                    <span className={cn("absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform", normalizeTextValue && "translate-x-5")} />
+                    <span
+                      className={cn(
+                        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                        normalizeTextValue && "translate-x-5",
+                      )}
+                    />
                   </button>
                 </label>
               </div>
@@ -531,9 +625,12 @@ export function VoiceSettings() {
         {/* Bảo mật */}
         {activeTab === "security" && (
           <div className="bg-card border border-primary/10 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-foreground mb-6">Bảo mật tài khoản</h3>
+            <h3 className="text-lg font-bold text-foreground mb-6">
+              Bảo mật tài khoản
+            </h3>
             <p className="text-muted-foreground text-sm mb-4">
-              Đổi mật khẩu, xác thực 2 yếu tố và xóa tài khoản được quản lý tại tài khoản Genation. Bấm vào từng mục để mở trang quản lý.
+              Đổi mật khẩu, xác thực 2 yếu tố và xóa tài khoản được quản lý tại
+              tài khoản Genation. Bấm vào từng mục để mở trang quản lý.
             </p>
             <div className="space-y-4">
               <button
@@ -543,7 +640,9 @@ export function VoiceSettings() {
               >
                 <div className="flex items-center gap-3">
                   <Lock className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  <span className="text-sm font-medium text-foreground">Đổi mật khẩu</span>
+                  <span className="text-sm font-medium text-foreground">
+                    Đổi mật khẩu
+                  </span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
@@ -555,8 +654,12 @@ export function VoiceSettings() {
                 <div className="flex items-center gap-3">
                   <ShieldAlert className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   <div className="text-left">
-                    <span className="text-sm font-medium text-foreground block">Xác thực 2 yếu tố (2FA)</span>
-                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">Chưa kích hoạt</span>
+                    <span className="text-sm font-medium text-foreground block">
+                      Xác thực 2 yếu tố (2FA)
+                    </span>
+                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">
+                      Chưa kích hoạt
+                    </span>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -568,7 +671,9 @@ export function VoiceSettings() {
               >
                 <div className="flex items-center gap-3">
                   <Trash2 className="w-5 h-5 text-muted-foreground group-hover:text-red-500 transition-colors" />
-                  <span className="text-sm font-medium text-foreground">Xóa tài khoản</span>
+                  <span className="text-sm font-medium text-foreground">
+                    Xóa tài khoản
+                  </span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
@@ -581,13 +686,34 @@ export function VoiceSettings() {
           <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Ứng dụng sử dụng <span className="text-primary font-medium">Piper TTS</span> để chuyển văn bản thành giọng nói.
-              Tất cả xử lý diễn ra trực tiếp trên trình duyệt — không có âm thanh nào được gửi đến máy chủ.
+              Ứng dụng sử dụng{" "}
+              <span className="text-primary font-medium">Piper TTS</span> để
+              chuyển văn bản thành giọng nói. Tất cả xử lý diễn ra trực tiếp
+              trên trình duyệt — không có âm thanh nào được gửi đến máy chủ.
             </p>
-            <p className="text-[10px] text-muted-foreground mt-2">Phiên bản 1.0.0 • Text-to-Speech cho tiếng Việt</p>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Phiên bản 1.0.0 • Text-to-Speech cho tiếng Việt
+            </p>
           </div>
         </div>
       </section>
+
+      {/* Delete account confirmation dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Xóa tài khoản"
+        description="Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn."
+        confirmLabel="Xóa tài khoản"
+        cancelLabel="Hủy"
+        destructive
+        onConfirm={() => {
+          setShowDeleteDialog(false);
+          if (typeof window !== "undefined") {
+            window.open(GENATION_ACCOUNT_URL, "_blank");
+          }
+        }}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </div>
   );
 }

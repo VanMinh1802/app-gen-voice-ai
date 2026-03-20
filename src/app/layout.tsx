@@ -52,13 +52,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${beVietnamPro.variable} ${outfit.variable} min-h-screen bg-background antialiased font-sans`} suppressHydrationWarning>
+      <body
+        className={`${beVietnamPro.variable} ${outfit.variable} min-h-screen bg-background antialiased font-sans`}
+        suppressHydrationWarning
+      >
         <R2ConfigProvider>
           <ThemeProvider>
             <ToastProvider>
-              <AuthProvider>
-                {children}
-              </AuthProvider>
+              <AuthProvider>{children}</AuthProvider>
             </ToastProvider>
           </ThemeProvider>
         </R2ConfigProvider>

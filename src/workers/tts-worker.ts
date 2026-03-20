@@ -17,7 +17,8 @@ const ONNX_WASM_BASE =
   typeof location !== "undefined"
     ? `${location.origin}/onnx/`
     : "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/";
-const PIPER_WASM_BASE = "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
+const PIPER_WASM_BASE =
+  "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
 
 const WASM_PATHS = {
   onnxWasm: ONNX_WASM_BASE,
@@ -72,9 +73,9 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
   const directUrl = R2_PUBLIC_URL || r2PublicUrlFromMain;
   const baseUrl = directUrl
     ? `${directUrl.replace(/\/$/, "")}/vi`
-    : (typeof location !== "undefined"
-        ? `${location.origin}/api/models`
-        : "/api/models");
+    : typeof location !== "undefined"
+      ? `${location.origin}/api/models`
+      : "/api/models";
 
   const { session, fromCache } = await loadPiperWithCache({
     voiceId: modelName,
@@ -87,7 +88,9 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
 
   customSession = session;
   customSessionVoiceId = voiceId;
-  console.log(`[worker] Loaded custom model ${modelName} from ${fromCache ? "cache" : "R2"} (baseUrl: ${baseUrl})`);
+  console.log(
+    `[worker] Loaded custom model ${modelName} from ${fromCache ? "cache" : "R2"} (baseUrl: ${baseUrl})`,
+  );
   return customSession;
 }
 
@@ -96,7 +99,11 @@ function sendProgress(progress: number) {
   self.postMessage(message);
 }
 
-function sendChunk(audio: Float32Array, index: number, sampleRate: number = 24000) {
+function sendChunk(
+  audio: Float32Array,
+  index: number,
+  sampleRate: number = 24000,
+) {
   const wavBuffer = float32ToWav(audio, sampleRate);
   const message: TtsWorkerChunk = {
     type: "chunk",
@@ -119,7 +126,11 @@ function splitIntoChunks(text: string): string[] {
   return chunks;
 }
 
-function sendComplete(audio: Float32Array, sampleRate: number = 24000, wasStreaming?: boolean) {
+function sendComplete(
+  audio: Float32Array,
+  sampleRate: number = 24000,
+  wasStreaming?: boolean,
+) {
   const wavBuffer = float32ToWav(audio, sampleRate);
   const duration = audio.length / sampleRate;
 
@@ -137,7 +148,10 @@ function sendError(error: string) {
   self.postMessage(message);
 }
 
-function float32ToWav(float32Array: Float32Array, sampleRate: number): ArrayBuffer {
+function float32ToWav(
+  float32Array: Float32Array,
+  sampleRate: number,
+): ArrayBuffer {
   const numChannels = 1;
   const bitsPerSample = 16;
   const bytesPerSample = bitsPerSample / 8;
@@ -219,7 +233,10 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
         const useStreaming = shouldUseStreaming(text.length);
         const chunks = splitIntoChunks(text);
 
-        if (useStreaming && chunks.length >= config.streaming.minChunksForStreaming) {
+        if (
+          useStreaming &&
+          chunks.length >= config.streaming.minChunksForStreaming
+        ) {
           // Streaming mode: process chunks and send each as it completes
           const allAudio: Float32Array[] = [];
           let sampleRate = 24000;
@@ -233,12 +250,15 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
             for (let i = 0; i < chunks.length; i++) {
               if (isCancelled) return;
 
-              const chunkAudio = await custom.predict(chunks[i], { lengthScale });
+              const chunkAudio = await custom.predict(chunks[i], {
+                lengthScale,
+              });
               allAudio.push(chunkAudio);
 
               if (!isCancelled) {
                 sendChunk(chunkAudio, i, sampleRate);
-                const progress = 20 + Math.round(((i + 1) / chunks.length) * 60);
+                const progress =
+                  20 + Math.round(((i + 1) / chunks.length) * 60);
                 sendProgress(progress);
               }
             }
@@ -255,7 +275,8 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
 
               if (!isCancelled) {
                 sendChunk(chunkAudio, i, sampleRate);
-                const progress = 20 + Math.round(((i + 1) / chunks.length) * 60);
+                const progress =
+                  20 + Math.round(((i + 1) / chunks.length) * 60);
                 sendProgress(progress);
               }
             }
@@ -287,9 +308,10 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
             float32Audio = await custom.predict(text, {
               lengthScale,
               onProgress: (predictProgress) => {
-                const mappedProgress = 40 + Math.round((predictProgress * 50) / 100);
+                const mappedProgress =
+                  40 + Math.round((predictProgress * 50) / 100);
                 sendProgress(mappedProgress);
-              }
+              },
             });
             sampleRate = custom.sampleRate;
           } else {
@@ -377,7 +399,7 @@ function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
     view.getUint8(0),
     view.getUint8(1),
     view.getUint8(2),
-    view.getUint8(3)
+    view.getUint8(3),
   );
 
   if (riff !== "RIFF") {
@@ -395,7 +417,7 @@ function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
       view.getUint8(offset),
       view.getUint8(offset + 1),
       view.getUint8(offset + 2),
-      view.getUint8(offset + 3)
+      view.getUint8(offset + 3),
     );
     const chunkSize = view.getUint32(offset + 4, true);
 

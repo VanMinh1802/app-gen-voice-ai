@@ -1,6 +1,6 @@
 /**
  * Header Component
- * 
+ *
  * Main header with navigation, user menu, and notifications.
  * Integrated with Genation authentication.
  */
@@ -8,14 +8,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Bell, 
-  LogOut, 
+import {
+  Bell,
+  LogOut,
   ChevronDown,
   Sparkles,
   Sun,
   Moon,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
@@ -35,22 +35,23 @@ export function Header({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  
+
   // Use auth context
-  const { 
-    user, 
-    isLoading, 
-    isAuthenticated, 
+  const {
+    user,
+    isLoading,
+    isAuthenticated,
     isConfigured,
-    activePlanCode, 
+    activePlanCode,
     canAccessPro,
     signIn,
     signOut,
-    error: authError 
+    error: authError,
   } = useAuthContext();
 
   // Use notification store instead of hardcoded data
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotificationStore();
 
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -69,7 +70,7 @@ export function Header({
       setShowNotifications(false);
       setShowUserMenu(false);
     };
-    
+
     if (showNotifications || showUserMenu) {
       document.addEventListener("click", handleClickOutside);
       return () => document.removeEventListener("click", handleClickOutside);
@@ -85,17 +86,24 @@ export function Header({
     <header className="h-14 sm:h-16 border-b border-border glass-card flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 sticky top-0 z-30">
       <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
         {leftContent}
-        <h1 className="text-base sm:text-lg font-bold text-foreground truncate min-w-0" title={title}>
+        <h1
+          className="text-base sm:text-lg font-bold text-foreground truncate min-w-0"
+          title={title}
+        >
           {title}
         </h1>
       </div>
-      
+
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
-          aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+          aria-label={
+            theme === "dark"
+              ? "Chuyển sang chế độ sáng"
+              : "Chuyển sang chế độ tối"
+          }
         >
           {theme === "dark" ? (
             <Sun className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -106,7 +114,7 @@ export function Header({
 
         {/* Notifications */}
         <div className="relative">
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               setShowNotifications(!showNotifications);
@@ -139,25 +147,33 @@ export function Header({
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div 
+                    <div
                       key={notif.id}
                       onClick={() => markAsRead(notif.id)}
                       className={cn(
                         "p-4 border-b border-border/50 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer",
-                        !notif.read && "bg-primary/5"
+                        !notif.read && "bg-primary/5",
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                          !notif.read ? "bg-primary text-primary-foreground" : "bg-black/10 dark:bg-white/10 text-muted-foreground"
-                        )}>
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                            !notif.read
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-black/10 dark:bg-white/10 text-muted-foreground",
+                          )}
+                        >
                           <Sparkles className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{notif.title}</p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {notif.title}
+                          </p>
                           {notif.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notif.description}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                              {notif.description}
+                            </p>
                           )}
                           <p className="text-[10px] text-muted-foreground/70 mt-1">
                             {new Date(notif.timestamp).toLocaleString("vi-VN")}
@@ -173,7 +189,7 @@ export function Header({
               </div>
               {notifications.length > 0 && (
                 <div className="p-3 border-t border-border">
-                  <button 
+                  <button
                     onClick={() => markAllAsRead()}
                     className="w-full text-center text-sm text-primary hover:text-primary/80 font-medium py-2 transition-colors"
                   >
@@ -188,7 +204,7 @@ export function Header({
         {/* User Menu - Authenticated */}
         {isAuthenticated ? (
           <div className="relative ml-2">
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowUserMenu(!showUserMenu);
@@ -205,21 +221,25 @@ export function Header({
                   <p className="text-[10px] text-amber-500 font-medium">PRO</p>
                 )}
               </div>
-              <ChevronDown className={cn(
-                "w-4 h-4 text-muted-foreground transition-transform hidden sm:block",
-                showUserMenu && "rotate-180"
-              )} />
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 text-muted-foreground transition-transform hidden sm:block",
+                  showUserMenu && "rotate-180",
+                )}
+              />
             </button>
 
             {/* User Menu Dropdown */}
             {showUserMenu && (
               <div className="absolute right-0 top-full mt-2 w-56 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
                 <div className="p-3 border-b border-border">
-                  <p className="text-sm font-bold text-foreground">{userName}</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {userName}
+                  </p>
                   <p className="text-xs text-muted-foreground">{userEmail}</p>
                 </div>
                 <div className="p-2 border-t border-border">
-                  <button 
+                  <button
                     onClick={handleSignOut}
                     disabled={isSigningOut}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition-colors text-red-400 hover:text-red-300 text-left disabled:opacity-50"
@@ -253,7 +273,7 @@ export function Header({
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <button 
+              <button
                 onClick={async () => {
                   // Client-side sign in: SDK lấy URL Genation rồi redirect (không qua /api/auth/signin)
                   await signIn();

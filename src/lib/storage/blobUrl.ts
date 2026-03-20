@@ -21,12 +21,12 @@ export function createBlobUrl(blob: Blob): string {
  */
 export function revokeBlobUrl(url: string | null | undefined): void {
   if (!url || !url.startsWith("blob:")) return;
-  
+
   try {
     URL.revokeObjectURL(url);
     activeBlobUrls.delete(url);
-    } catch (e) {
-      logger.warn("Failed to revoke blob URL:", url);
+  } catch (e) {
+    logger.warn("Failed to revoke blob URL:", url);
   }
 }
 

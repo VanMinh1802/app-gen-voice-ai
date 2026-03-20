@@ -8,9 +8,16 @@ const CF_REQUEST_CONTEXT = Symbol.for("__cloudflare-request-context__");
 
 export function getCloudflareEnv(): Record<string, unknown> | null {
   try {
-    const ctx = (globalThis as unknown as Record<symbol, unknown>)[CF_REQUEST_CONTEXT];
-    const env = ctx && typeof ctx === "object" && (ctx as { env?: Record<string, unknown> }).env;
-    return env && typeof env === "object" ? (env as Record<string, unknown>) : null;
+    const ctx = (globalThis as unknown as Record<symbol, unknown>)[
+      CF_REQUEST_CONTEXT
+    ];
+    const env =
+      ctx &&
+      typeof ctx === "object" &&
+      (ctx as { env?: Record<string, unknown> }).env;
+    return env && typeof env === "object"
+      ? (env as Record<string, unknown>)
+      : null;
   } catch {
     return null;
   }

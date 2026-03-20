@@ -14,15 +14,18 @@ export interface AppNotification {
 interface NotificationState {
   notifications: AppNotification[];
   unreadCount: number;
-  
-  addNotification: (notification: Omit<AppNotification, "id" | "timestamp" | "read">) => void;
+
+  addNotification: (
+    notification: Omit<AppNotification, "id" | "timestamp" | "read">,
+  ) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
   clearAll: () => void;
 }
 
-const generateId = () => `notif-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+const generateId = () =>
+  `notif-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export const useNotificationStore = create<NotificationState>()(
   persist(
@@ -51,7 +54,7 @@ export const useNotificationStore = create<NotificationState>()(
 
           return {
             notifications: state.notifications.map((n) =>
-              n.id === id ? { ...n, read: true } : n
+              n.id === id ? { ...n, read: true } : n,
             ),
             unreadCount: Math.max(0, state.unreadCount - 1),
           };
@@ -70,9 +73,10 @@ export const useNotificationStore = create<NotificationState>()(
           const notification = state.notifications.find((n) => n.id === id);
           return {
             notifications: state.notifications.filter((n) => n.id !== id),
-            unreadCount: notification && !notification.read
-              ? Math.max(0, state.unreadCount - 1)
-              : state.unreadCount,
+            unreadCount:
+              notification && !notification.read
+                ? Math.max(0, state.unreadCount - 1)
+                : state.unreadCount,
           };
         });
       },
@@ -83,8 +87,8 @@ export const useNotificationStore = create<NotificationState>()(
     }),
     {
       name: "genvoice-notifications",
-    }
-  )
+    },
+  ),
 );
 
 /**

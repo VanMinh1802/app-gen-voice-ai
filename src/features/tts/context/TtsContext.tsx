@@ -14,11 +14,7 @@ const TtsContext = createContext<TtsContextValue | null>(null);
  */
 export function TtsProvider({ children }: { children: React.ReactNode }) {
   const value = useTtsGenerate();
-  return (
-    <TtsContext.Provider value={value}>
-      {children}
-    </TtsContext.Provider>
-  );
+  return <TtsContext.Provider value={value}>{children}</TtsContext.Provider>;
 }
 
 export function useTts(): TtsContextValue {

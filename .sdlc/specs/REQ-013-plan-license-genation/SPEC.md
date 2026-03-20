@@ -2,16 +2,16 @@
 
 ## 📋 Metadata
 
-| Field | Value |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID** | REQ-013 |
-| **Feature Name** | Plan & License Management with Genation SDK |
-| **Status** | ✅ Completed |
-| **Priority** | P0 (High) |
-| **Owner** | Development Team |
-| **Created** | 2026-03-16 |
-| **Last Updated** | 2026-03-17 |
-| **Target Release** | v1.2.0 |
+| Field              | Value                                       |
+| ------------------ | ------------------------------------------- |
+| **Feature ID**     | REQ-013                                     |
+| **Feature Name**   | Plan & License Management with Genation SDK |
+| **Status**         | ✅ Completed                                |
+| **Priority**       | P0 (High)                                   |
+| **Owner**          | Development Team                            |
+| **Created**        | 2026-03-16                                  |
+| **Last Updated**   | 2026-03-17                                  |
+| **Target Release** | v1.2.0                                      |
 
 ---
 
@@ -20,6 +20,7 @@
 ### Problem Statement
 
 Users need to purchase plans to access premium features. Currently, there is no way to:
+
 1. Display available plans and pricing to users
 2. Integrate with Genation store for payments
 3. Check user plan status and activate features accordingly
@@ -62,15 +63,15 @@ flowchart TD
     AuthAPI -->|5. Return session| SDK
     SDK -->|6. Session token| AuthHook
     AuthHook -->|7. Auth state| AuthProvider
-    
+
     UI -->|8. Get license| LicenseHook
     LicenseHook -->|9. Fetch licenses| SDK
     SDK -->|10. License data| LicenseHook
     LicenseHook -->|11. Plan info| UI
-    
+
     Store -->|A. Purchase plan| AuthAPI
     AuthAPI -->|B. Update license| SDK
-    
+
     PlanConfig -->|C. Feature config| LicenseHook
 ```
 
@@ -84,6 +85,7 @@ flowchart TD
 ### Plan Code Handling
 
 Genation returns various plan codes depending on subscription type:
+
 - `"PRO"` - Pro tier (exact match)
 - `"PRO_1_Month"` - Pro monthly subscription
 - `"PRO_1_Year"` - Pro yearly subscription
@@ -154,12 +156,12 @@ The app normalizes all `"PRO_*"` codes to `"PRO"` for consistent feature gating.
 
 ### Architecture
 
-| Layer | Implementation |
-|-------|---------------|
-| Auth | Genation OAuth 2.1 with PKCE |
-| License | Genation SDK `getLicenses()` |
-| State | React Context (AuthProvider) + Suspense boundary |
-| Config | `PLAN_ACCESS` constant |
+| Layer   | Implementation                                   |
+| ------- | ------------------------------------------------ |
+| Auth    | Genation OAuth 2.1 with PKCE                     |
+| License | Genation SDK `getLicenses()`                     |
+| State   | React Context (AuthProvider) + Suspense boundary |
+| Config  | `PLAN_ACCESS` constant                           |
 
 ### Files Structure
 
@@ -268,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 ## ✅ Definition of Done
 
 ### Authentication
+
 - [x] useAuth hook implemented
 - [x] OAuth flow with Genation
 - [x] Session persistence
@@ -275,19 +278,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 - [x] Client-side callback page (/auth/callback)
 
 ### License Management
+
 - [x] useLicense hook implemented
 - [x] Fetch licenses from SDK
 - [x] Check active plan
 - [x] Plan feature configuration
-- [x] Handle "PRO_*" plan codes (PRO_1_Month, PRO_1_Year)
+- [x] Handle "PRO\_\*" plan codes (PRO_1_Month, PRO_1_Year)
 - [x] Suspense boundary for useSearchParams
 
 ### UI Updates
+
 - [x] Sidebar shows real plan data (not hardcoded)
 - [x] Pricing page created
 - [x] Plan upgrade flow
 
 ### Integration
+
 - [x] Connect sidebar to useLicense
 - [x] Add "Mua plan" link to Genation store
 - [x] Handle OAuth callback after purchase (client-side)
@@ -298,12 +304,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 ## 🔗 Dependencies
 
 ### Internal
+
 - Genation SDK (`@genation/sdk`)
 - Auth hooks (`useAuth`, `useLicense`)
 - PLAN_ACCESS configuration
 - isProPlanCode utility
 
 ### External
+
 - Genation OAuth endpoint
 - Genation Store (external)
 
@@ -312,12 +320,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 ## 📝 Notes
 
 ### Genation SDK Setup Required
+
 1. Create app in Genation developer portal
 2. Get `GENATION_CLIENT_ID` and `GENATION_CLIENT_SECRET`
 3. Configure redirect URI
 4. Set environment variables in `.env.local`
 
 ### Environment Variables
+
 ```
 NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id
 # Secret: có thể dùng client-side (NEXT_PUBLIC_) hoặc server-only (GENATION_CLIENT_SECRET)
@@ -328,6 +338,7 @@ NEXT_PUBLIC_GENATION_STORE_URL=https://genation.ai
 ```
 
 ### Security Considerations
+
 - **Client secret**: Theo quyết định sản phẩm, secret có thể để client-side (`NEXT_PUBLIC_GENATION_CLIENT_SECRET`). Config hỗ trợ cả hai.
 - Validate license on server-side cho thao tác quan trọng (nếu cần).
 - Sanitize user input before TTS processing.
@@ -335,12 +346,14 @@ NEXT_PUBLIC_GENATION_STORE_URL=https://genation.ai
 ### Technical Notes
 
 #### OAuth Callback Implementation
+
 - **Approach**: Client-side callback page (`/auth/callback`) instead of API route
 - **Reason**: Avoids `async_hooks` module error on Cloudflare Pages Edge runtime
 - **Flow**: Genation OAuth → redirect to `/auth/callback?code=...&state=...` → client-side `handleCallback()`
 - **Redirect URI**: Must be configured in Genation Dashboard as `/auth/callback` (not `/api/v1/auth/callback`)
 
 #### Post-Purchase Flow
+
 1. User purchases on Genation Store
 2. Genation redirects to app: `https://app.com/?signed_in=true`
 3. useLicense detects `signed_in=true` in URL
@@ -348,7 +361,9 @@ NEXT_PUBLIC_GENATION_STORE_URL=https://genation.ai
 5. Cleans up URL with `router.replace("/", { scroll: false })`
 
 #### Plan Code Normalization
+
 Genation returns various plan codes for Pro tier:
+
 - `"PRO"` - Direct Pro
 - `"PRO_1_Month"` - Monthly subscription
 - `"PRO_1_Year"` - Yearly subscription
@@ -356,6 +371,7 @@ Genation returns various plan codes for Pro tier:
 All are normalized to `"PRO"` in `getActivePlanCode()` for consistent app logic.
 
 #### Environment Variables
+
 ```
 # Development
 NEXT_PUBLIC_GENATION_CLIENT_ID=your_client_id

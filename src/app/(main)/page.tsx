@@ -1,16 +1,25 @@
 "use client";
 
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Header, Sidebar } from "@/components/layout";
 import { MainContent, AudioPlayer, VoiceLibrary } from "@/components/tts";
-import { ToastContainer, ToastProvider, useToast, GlobalToastListener, toast } from "@/components/ui/Toast";
+import {
+  ToastContainer,
+  ToastProvider,
+  useToast,
+  GlobalToastListener,
+  toast,
+} from "@/components/ui/Toast";
 import { TtsProvider } from "@/features/tts/context/TtsContext";
 import { useTtsStore } from "@/features/tts/store";
+import { useTts } from "@/features/tts/context/TtsContext";
 import { HistoryPanel } from "@/features/tts/components/HistoryPanel";
 import { VoiceSettings } from "@/features/tts/components/VoiceSettings";
+import { useAuth } from "@/lib/hooks";
+import type { VoiceId } from "@/config";
 
 type SidebarTab = "dashboard" | "voice_library" | "history" | "settings";
 
@@ -21,14 +30,50 @@ function HomeContentInner() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("dashboard");
   const [refillText, setRefillText] = useState("");
-  /** inputText đã được persist vào sessionStorage qua Zustand store — không cần local state */
-  const { currentAudioUrl, loadHistory, inputText, setInputText, clearInputText } = useTtsStore();
+  /** inputText được persist vào sessionStorage qua Zustand store — không cần local state */
+  const {
+    currentAudioUrl,
+    loadHistory,
+    inputText,
+    setInputText,
+    clearInputText,
+    setSettings,
+    setCurrentUserId,
+    currentUserId,
+  } = useTtsStore();
+  const { pauseAudio } = useTts();
   const { toasts, removeToast, addToast } = useToast();
   const [playerVisible, setPlayerVisible] = useState(true);
 
+  // Get auth state
+  const { user, isAuthenticated } = useAuth();
+  const prevUserIdRef = useRef<string | null>(null);
+
+  // Set userId and reload history when auth state changes
   useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+    const userId = isAuthenticated && user?.sub ? user.sub : null;
+
+    // Only reload if user changed
+    if (userId !== prevUserIdRef.current) {
+      prevUserIdRef.current = userId;
+      setCurrentUserId(userId);
+
+      // If user changed (login/logout), reload history to get only user's history
+      if (
+        userId !== currentUserId ||
+        (userId === null && currentUserId !== null)
+      ) {
+        loadHistory();
+      }
+    }
+  }, [user, isAuthenticated, currentUserId, setCurrentUserId, loadHistory]);
+
+  // Initial load
+  useEffect(() => {
+    if (!currentUserId) {
+      loadHistory();
+    }
+  }, [loadHistory, currentUserId]);
 
   // Show toast when redirected back with auth_error (e.g. 400 invalid client credentials)
   useEffect(() => {
@@ -37,11 +82,14 @@ function HomeContentInner() {
     const decoded = message ? decodeURIComponent(message) : "Lỗi đăng nhập";
     toast("error", decoded, 8000);
     const lower = decoded.toLowerCase();
-    if (lower.includes("invalid") && (lower.includes("credential") || lower.includes("client"))) {
+    if (
+      lower.includes("invalid") &&
+      (lower.includes("credential") || lower.includes("client"))
+    ) {
       toast(
         "info",
         "Chạy local: thêm NEXT_PUBLIC_GENATION_CLIENT_SECRET vào .env.local (cùng giá trị với GENATION_CLIENT_SECRET), rồi restart npm run dev. Xem docs/cloudflare-pages-env.md.",
-        12000
+        12000,
       );
     }
     router.replace("/", { scroll: false });
@@ -56,19 +104,34 @@ function HomeContentInner() {
     setSidebarOpen(false);
   }, []);
 
-  const handleRefillFromHistory = useCallback((text: string) => {
-    setRefillText(text);
-    setInputText(text);
-    setActiveTab("dashboard");
-  }, [setInputText]);
+  const handleRefillFromHistory = useCallback(
+    (text: string, voice?: string, speed?: number) => {
+      // H-2: Pause any playing audio before refilling text
+      pauseAudio();
+      // H-9: Preserve voice and speed from history item
+      if (voice) {
+        setSettings({ voice: voice as VoiceId });
+      }
+      if (speed !== undefined) {
+        setSettings({ speed });
+      }
+      setRefillText(text);
+      setInputText(text);
+      setActiveTab("dashboard");
+    },
+    [pauseAudio, setInputText, setSettings],
+  );
 
   const handleCreateNewFromHistory = useCallback(() => {
     setActiveTab("dashboard");
   }, []);
 
-  const handleTextChange = useCallback((text: string) => {
-    setInputText(text);
-  }, [setInputText]);
+  const handleTextChange = useCallback(
+    (text: string) => {
+      setInputText(text);
+    },
+    [setInputText],
+  );
 
   const handleTextClear = useCallback(() => {
     clearInputText();
@@ -77,74 +140,84 @@ function HomeContentInner() {
   return (
     <>
       <GlobalToastListener addToast={addToast} />
-      <TtsProvider>
-        <div className="flex h-screen flex-col overflow-hidden">
-          <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar */}
-            <Sidebar 
-              activeTab={activeTab} 
-              onTabChange={handleTabChange}
-              isOpen={sidebarOpen} 
-              onClose={handleCloseSidebar}
-              collapsed={sidebarCollapsed}
-              onCollapsedChange={setSidebarCollapsed}
+      <div className="flex h-screen flex-col overflow-hidden">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <Sidebar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            isOpen={sidebarOpen}
+            onClose={handleCloseSidebar}
+            collapsed={sidebarCollapsed}
+            onCollapsedChange={setSidebarCollapsed}
+          />
+
+          {/* Main Area - margin trái theo trạng thái thu gọn sidebar */}
+          <div
+            className={cn(
+              "flex-1 flex flex-col overflow-hidden",
+              sidebarCollapsed ? "lg:ml-[4.5rem]" : "lg:ml-64",
+            )}
+          >
+            {/* Header — nút menu gần trong header để title không bị đè/tràn khi resize */}
+            <Header
+              title={
+                activeTab === "dashboard"
+                  ? "Tạo giọng nói mới"
+                  : activeTab === "voice_library"
+                    ? "Thư viện giọng"
+                    : activeTab === "history"
+                      ? "Lịch sử"
+                      : "Cài đặt tài khoản"
+              }
+              leftContent={
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center text-foreground shadow-lg hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 border border-border transition-transform"
+                  aria-label="Mở menu"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              }
             />
 
-            {/* Main Area - margin trái theo trạng thái thu gọn sidebar */}
-            <div className={cn(
-              "flex-1 flex flex-col overflow-hidden",
-              sidebarCollapsed ? "lg:ml-[4.5rem]" : "lg:ml-64"
-            )}>
-              {/* Header — nút menu gắn trong header để title không bị đè/tràn khi resize */}
-              <Header
-                title={activeTab === "dashboard" ? "Tạo giọng nói mới" : 
-                       activeTab === "voice_library" ? "Thư viện giọng" :
-                       activeTab === "history" ? "Lịch sử" : "Cài đặt tài khoản"}
-                leftContent={
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="lg:hidden shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl glass-card flex items-center justify-center text-foreground shadow-lg hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 border border-border transition-transform"
-                    aria-label="Mở menu"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </button>
-                }
+            {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
+            <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-28 sm:pb-24">
+              <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-screen-2xl min-h-0">
+                {activeTab === "dashboard" ? (
+                  <MainContent
+                    text={inputText}
+                    onTextChange={handleTextChange}
+                    onTextClear={handleTextClear}
+                    onViewAllVoices={() => setActiveTab("voice_library")}
+                    onViewHistory={() => setActiveTab("history")}
+                  />
+                ) : activeTab === "voice_library" ? (
+                  <VoiceLibrary />
+                ) : activeTab === "history" ? (
+                  <HistoryPanel
+                    onRefill={handleRefillFromHistory}
+                    onCreateNew={handleCreateNewFromHistory}
+                  />
+                ) : activeTab === "settings" ? (
+                  <VoiceSettings />
+                ) : null}
+              </div>
+            </main>
+
+            {/* Audio Player */}
+            {currentAudioUrl && (
+              <AudioPlayer
+                isVisible={playerVisible}
+                onClose={() => setPlayerVisible(false)}
               />
-
-              {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
-              <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-28 sm:pb-24">
-                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-screen-2xl min-h-0">
-                  {activeTab === "dashboard" ? (
-                    <MainContent
-                      text={inputText}
-                      onTextChange={handleTextChange}
-                      onTextClear={handleTextClear}
-                      onViewAllVoices={() => setActiveTab("voice_library")}
-                    />
-                  ) : activeTab === "voice_library" ? (
-                    <VoiceLibrary />
-                  ) : activeTab === "history" ? (
-                    <HistoryPanel onRefill={handleRefillFromHistory} onCreateNew={handleCreateNewFromHistory} />
-                  ) : activeTab === "settings" ? (
-                    <VoiceSettings />
-                  ) : null}
-                </div>
-              </main>
-
-              {/* Audio Player */}
-              {currentAudioUrl && (
-                <AudioPlayer
-                  isVisible={playerVisible}
-                  onClose={() => setPlayerVisible(false)}
-                />
-              )}
-            </div>
+            )}
           </div>
-
-          {/* Toast notifications */}
-          <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div>
-      </TtsProvider>
+
+        {/* Toast notifications */}
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+      </div>
     </>
   );
 }
@@ -153,7 +226,9 @@ export default function HomePage() {
   return (
     <ToastProvider>
       <Suspense fallback={<LoadingFallback />}>
-        <HomeContentInner />
+        <TtsProvider>
+          <HomeContentInner />
+        </TtsProvider>
       </Suspense>
     </ToastProvider>
   );

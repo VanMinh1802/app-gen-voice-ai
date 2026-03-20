@@ -124,13 +124,15 @@ function numberToWords(numStr: string): string {
     return result + " " + numberToWords(String(remainder));
   }
 
-  return numStr.split("").map((d) => DIGITS[d] || d).join(" ");
+  return numStr
+    .split("")
+    .map((d) => DIGITS[d] || d)
+    .join(" ");
 }
 
 function removeThousandSeparators(text: string): string {
-  return text.replace(
-    /(\d{1,3}(?:\.\d{3})+)(?=\s|$|[^\d.,])/g,
-    (match) => match.replace(/\./g, "")
+  return text.replace(/(\d{1,3}(?:\.\d{3})+)(?=\s|$|[^\d.,])/g, (match) =>
+    match.replace(/\./g, ""),
   );
 }
 
@@ -139,11 +141,9 @@ function convertDecimal(text: string): string {
     /(\d+),(\d+)(?=\s|$|[^\d,])/g,
     (match, integerPart, decimalPart) => {
       const integerWords = numberToWords(integerPart);
-      const decimalWords = numberToWords(
-        decimalPart.replace(/^0+/, "") || "0"
-      );
+      const decimalWords = numberToWords(decimalPart.replace(/^0+/, "") || "0");
       return `${integerWords} phẩy ${decimalWords}`;
-    }
+    },
   );
 }
 
@@ -152,16 +152,11 @@ function convertPercentage(text: string): string {
     return `${numberToWords(num1)} đến ${numberToWords(num2)} phần trăm`;
   });
 
-  text = text.replace(
-    /(\d+),(\d+)\s*%/g,
-    (match, integerPart, decimalPart) => {
-      const integerWords = numberToWords(integerPart);
-      const decimalWords = numberToWords(
-        decimalPart.replace(/^0+/, "") || "0"
-      );
-      return `${integerWords} phẩy ${decimalWords} phần trăm`;
-    }
-  );
+  text = text.replace(/(\d+),(\d+)\s*%/g, (match, integerPart, decimalPart) => {
+    const integerWords = numberToWords(integerPart);
+    const decimalWords = numberToWords(decimalPart.replace(/^0+/, "") || "0");
+    return `${integerWords} phẩy ${decimalWords} phần trăm`;
+  });
 
   text = text.replace(/(\d+)\s*%/g, (match, num) => {
     return numberToWords(num) + " phần trăm";
@@ -176,10 +171,7 @@ function convertCurrency(text: string): string {
     return numberToWords(cleanNum) + " đồng";
   }
 
-  text = text.replace(
-    /(\d+(?:,\d+)?)\s*(?:đồng|VND|vnđ)\b/gi,
-    replaceVND
-  );
+  text = text.replace(/(\d+(?:,\d+)?)\s*(?:đồng|VND|vnđ)\b/gi, replaceVND);
   text = text.replace(/(\d+(?:,\d+)?)đ(?![a-zà-ỹ])/gi, replaceVND);
 
   function replaceUSD(_match: string, num: string): string {
@@ -188,10 +180,7 @@ function convertCurrency(text: string): string {
   }
 
   text = text.replace(/\$\s*(\d+(?:,\d+)?)/g, replaceUSD);
-  text = text.replace(
-    /(\d+(?:,\d+)?)\s*(?:USD|\$)/gi,
-    replaceUSD
-  );
+  text = text.replace(/(\d+(?:,\d+)?)\s*(?:USD|\$)/gi, replaceUSD);
 
   return text;
 }
@@ -257,9 +246,7 @@ function convertRangesWithUnitsAndCurrency(text: string): string {
 
   const currencyUnits = ["đồng", "VND", "vnđ", "đ", "USD", "$"];
 
-  const allUnits = Array.from(
-    new Set([...measurementUnits, ...currencyUnits])
-  );
+  const allUnits = Array.from(new Set([...measurementUnits, ...currencyUnits]));
   if (allUnits.length === 0) return text;
 
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -272,7 +259,7 @@ function convertRangesWithUnitsAndCurrency(text: string): string {
 
   const rangeRegex = new RegExp(
     `(\\d+)\\s*[-–—]\\s*(\\d+)\\s*(${unitPattern})\\b`,
-    "gi"
+    "gi",
   );
   text = text.replace(rangeRegex, (match, num1, num2, unit) => {
     const unitLower = unit.toLowerCase();
@@ -282,7 +269,7 @@ function convertRangesWithUnitsAndCurrency(text: string): string {
 
   const fractionRegex = new RegExp(
     `(\\d+)\\s*[\\/:]\\s*(\\d+)\\s*(${unitPattern})\\b`,
-    "gi"
+    "gi",
   );
   text = text.replace(fractionRegex, (match, num1, num2, unit) => {
     const unitLower = unit.toLowerCase();
@@ -294,25 +281,31 @@ function convertRangesWithUnitsAndCurrency(text: string): string {
 }
 
 function convertTime(text: string): string {
-  text = text.replace(/(\d{1,2}):(\d{2})(?::(\d{2}))?/g, (match, hour, minute, second) => {
-    let result = numberToWords(hour) + " giờ";
-    if (minute) {
-      result += " " + numberToWords(minute) + " phút";
-    }
-    if (second) {
-      result += " " + numberToWords(second) + " giây";
-    }
-    return result;
-  });
+  text = text.replace(
+    /(\d{1,2}):(\d{2})(?::(\d{2}))?/g,
+    (match, hour, minute, second) => {
+      let result = numberToWords(hour) + " giờ";
+      if (minute) {
+        result += " " + numberToWords(minute) + " phút";
+      }
+      if (second) {
+        result += " " + numberToWords(second) + " giây";
+      }
+      return result;
+    },
+  );
 
-  text = text.replace(/(\d{1,2})h(\d{2})(?![a-zà-ỹ])/gi, (match, hour, minute) => {
-    const h = parseInt(hour, 10);
-    const m = parseInt(minute, 10);
-    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-      return numberToWords(hour) + " giờ " + numberToWords(minute);
-    }
-    return match;
-  });
+  text = text.replace(
+    /(\d{1,2})h(\d{2})(?![a-zà-ỹ])/gi,
+    (match, hour, minute) => {
+      const h = parseInt(hour, 10);
+      const m = parseInt(minute, 10);
+      if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+        return numberToWords(hour) + " giờ " + numberToWords(minute);
+      }
+      return match;
+    },
+  );
 
   text = text.replace(/(\d{1,2})h(?![a-zà-ỹ\d])/gi, (match, hour) => {
     const h = parseInt(hour, 10);
@@ -390,14 +383,26 @@ function isValidRomanNumeral(roman: string): boolean {
   if (/VV|LL|DD/.test(upperRoman)) return false;
 
   const invalidSubtractive = /I[^VX]|X[^LC]|C[^DM]|[VLD][IVXLCDM]/;
-  const romanMap: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+  const romanMap: Record<string, number> = {
+    I: 1,
+    V: 5,
+    X: 10,
+    L: 50,
+    C: 100,
+    D: 500,
+    M: 1000,
+  };
   for (let i = 0; i < upperRoman.length - 1; i++) {
     const current = upperRoman[i];
     const next = upperRoman[i + 1];
     const currentVal = romanMap[current];
     const nextVal = romanMap[next];
 
-    if (currentVal !== undefined && nextVal !== undefined && currentVal < nextVal) {
+    if (
+      currentVal !== undefined &&
+      nextVal !== undefined &&
+      currentVal < nextVal
+    ) {
       const validPairs: Record<string, string[]> = {
         I: ["V", "X"],
         X: ["L", "C"],
@@ -424,13 +429,20 @@ function convertRomanNumerals(text: string, config?: NormalizerConfig): string {
 
   return text.replace(
     romanNumeralRegex,
-    (match: string, before: string, roman: string, offset: number, fullText: string) => {
+    (
+      match: string,
+      before: string,
+      roman: string,
+      offset: number,
+      fullText: string,
+    ) => {
       if (before && /[\wà-ỹ]/.test(before)) {
         return match;
       }
 
       const afterIndex = offset + match.length;
-      const afterChar = afterIndex < fullText.length ? fullText[afterIndex] : "";
+      const afterChar =
+        afterIndex < fullText.length ? fullText[afterIndex] : "";
 
       if (afterChar && /[\wà-ỹ]/.test(afterChar)) {
         return match;
@@ -453,7 +465,7 @@ function convertRomanNumerals(text: string, config?: NormalizerConfig): string {
       }
 
       return before + String(arabic);
-    }
+    },
   );
 }
 
@@ -478,7 +490,7 @@ function convertDate(text: string): string {
     (match, day1, day2, month, year) => {
       if (isValidDate(day1, month, year) && isValidDate(day2, month, year)) {
         let result = `ngày ${numberToWords(day1)} đến ${numberToWords(
-          day2
+          day2,
         )} tháng ${numberToWords(month)}`;
         if (year) {
           result += ` năm ${numberToWords(year)}`;
@@ -486,7 +498,7 @@ function convertDate(text: string): string {
         return result;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -498,7 +510,7 @@ function convertDate(text: string): string {
       }
       if (isValidDate(day1, month, year) && isValidDate(day2, month, year)) {
         let result = `${numberToWords(day1)} đến ${numberToWords(
-          day2
+          day2,
         )} tháng ${numberToWords(month)}`;
         if (year) {
           result += ` năm ${numberToWords(year)}`;
@@ -506,7 +518,7 @@ function convertDate(text: string): string {
         return result;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -519,11 +531,11 @@ function convertDate(text: string): string {
         parseInt(year, 10) <= 9999
       ) {
         return `tháng ${numberToWords(month1)} đến tháng ${numberToWords(
-          month2
+          month2,
         )} năm ${numberToWords(year)}`;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -531,11 +543,11 @@ function convertDate(text: string): string {
     (match, prefix, day, month, year) => {
       if (isValidDate(day, month, year)) {
         return `${prefix} ngày ${numberToWords(day)} tháng ${numberToWords(
-          month
+          month,
         )} năm ${numberToWords(year)}`;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -543,11 +555,11 @@ function convertDate(text: string): string {
     (match, day, month, year) => {
       if (isValidDate(day, month, year)) {
         return `ngày ${numberToWords(day)} tháng ${numberToWords(
-          month
+          month,
         )} năm ${numberToWords(year)}`;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -566,7 +578,7 @@ function convertDate(text: string): string {
         return `tháng ${numberToWords(month)} năm ${numberToWords(year)}`;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(
@@ -580,7 +592,7 @@ function convertDate(text: string): string {
         return `${numberToWords(day)} tháng ${numberToWords(month)}`;
       }
       return match;
-    }
+    },
   );
 
   text = text.replace(/(\d+)\s*tháng\s*(\d+)/g, (match, day, month) => {
@@ -635,7 +647,7 @@ function convertOrdinal(text: string): string {
         return prefix + " " + ordinalMap[num];
       }
       return prefix + " " + numberToWords(num);
-    }
+    },
   );
 }
 
@@ -779,7 +791,7 @@ function cleanWhitespace(text: string): string {
  */
 export function normalizeVietnamese(
   text: string,
-  config?: NormalizerConfig
+  config?: NormalizerConfig,
 ): string {
   if (!text || typeof text !== "string") {
     return "";

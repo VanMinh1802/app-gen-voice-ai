@@ -1,12 +1,19 @@
 import { useCallback, useRef, useEffect, useState } from "react";
 import { useTtsStore } from "../store";
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
-import type { TtsWorkerOutgoingMessage, TtsHistoryItem, TtsWorkerChunk } from "../types";
+import type {
+  TtsWorkerOutgoingMessage,
+  TtsHistoryItem,
+  TtsWorkerChunk,
+} from "../types";
 import { CUSTOM_MODEL_PREFIX, config } from "@/config";
 import { getR2PublicUrl, loadR2Config } from "@/lib/config/r2Config";
 import { getVoiceSampleUrl } from "@/lib/piper/piperR2";
 import { getVoiceMetadata } from "@/config/voiceData";
-import { notifyGenerationComplete, notifyGenerationError } from "@/lib/storage/notifications";
+import {
+  notifyGenerationComplete,
+  notifyGenerationError,
+} from "@/lib/storage/notifications";
 import { logger } from "@/lib/logger";
 import { GaplessStreamingPlayer } from "@/lib/audio/gaplessStreamingPlayer";
 
@@ -18,7 +25,9 @@ export function useTtsGenerate() {
   const fallbackTimeoutRef = useRef<number | null>(null);
   const currentTextRef = useRef<string>("");
   const [isWorkerReady, setIsWorkerReady] = useState(false);
-  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(null);
+  const [previewingVoiceId, setPreviewingVoiceId] = useState<string | null>(
+    null,
+  );
 
   const {
     settings,
@@ -30,9 +39,11 @@ export function useTtsGenerate() {
     error,
     nowPlaying,
     setStatus,
+    setPlaybackStatus,
     setProgress,
     setCurrentAudio,
     setNowPlaying,
+    setPreviewItem,
     addToHistory,
     setError,
     reset,
@@ -43,7 +54,9 @@ export function useTtsGenerate() {
     setPausedStreaming,
   } = useTtsStore();
 
-  const handleAudioCompleteRef = useRef<((audioArrayBuffer: ArrayBuffer, duration: number) => void) | null>(null);
+  const handleAudioCompleteRef = useRef<
+    ((audioArrayBuffer: ArrayBuffer, duration: number) => void) | null
+  >(null);
   const isPreviewRef = useRef(false);
   const previewVoiceIdRef = useRef<string>("");
 
@@ -51,7 +64,10 @@ export function useTtsGenerate() {
   const chunkQueueRef = useRef<ArrayBuffer[]>([]);
   const isStreamingRef = useRef(false);
   const isCancelledRef = useRef(false);
-  const pendingFullAudioRef = useRef<{ buffer: ArrayBuffer; duration: number } | null>(null);
+  const pendingFullAudioRef = useRef<{
+    buffer: ArrayBuffer;
+    duration: number;
+  } | null>(null);
   const onStreamingEndedRef = useRef<(() => void) | null>(null);
   /** Guard: only one playNextStreamingChunk per buffering transition (avoids double-pop in Strict Mode) */
   const isLoadingNextChunkRef = useRef(false);
@@ -78,8 +94,10 @@ export function useTtsGenerate() {
           duration,
           createdAt: Date.now(),
         };
-        setNowPlaying(previewItem);
+        setPreviewItem(previewItem);
+        setCurrentAudio(null, audioUrl);
         setStatus("playing");
+        setPlaybackStatus("playing");
         setProgress(100);
         return;
       }
@@ -97,6 +115,7 @@ export function useTtsGenerate() {
       addToHistory(historyItem, audioBlob);
       setNowPlaying(historyItem);
       setStatus("playing");
+      setPlaybackStatus("playing");
       setProgress(100);
 
       // Get voice name for notification
@@ -107,7 +126,16 @@ export function useTtsGenerate() {
       const voiceName = voiceMeta?.name || "Unknown";
       notifyGenerationComplete(currentTextRef.current, voiceName);
     },
-    [settings, setCurrentAudio, addToHistory, setNowPlaying, setStatus, setProgress]
+    [
+      settings,
+      setCurrentAudio,
+      addToHistory,
+      setNowPlaying,
+      setPreviewItem,
+      setPlaybackStatus,
+      setStatus,
+      setProgress,
+    ],
   );
 
   handleAudioCompleteRef.current = handleAudioComplete;
@@ -141,8 +169,9 @@ export function useTtsGenerate() {
             createdAt: Date.now(),
           };
           setCurrentAudio(audioBlob, audioUrl);
-          setNowPlaying(previewItem);
+          setPreviewItem(previewItem);
           setStatus("playing");
+          setPlaybackStatus("playing");
           setProgress(100);
         } else {
           const historyItem: TtsHistoryItem = {
@@ -158,6 +187,7 @@ export function useTtsGenerate() {
           setCurrentAudio(audioBlob, audioUrl);
           setNowPlaying(historyItem);
           setStatus("playing");
+          setPlaybackStatus("playing");
           setProgress(100);
           addToHistory(historyItem, audioBlob);
           const voiceId = settings.voice.startsWith(CUSTOM_MODEL_PREFIX)
@@ -185,7 +215,9 @@ export function useTtsGenerate() {
 
     const item: TtsHistoryItem = {
       id: `streaming-${Date.now()}`,
-      text: currentTextRef.current.slice(0, 80) + (currentTextRef.current.length > 80 ? "…" : ""),
+      text:
+        currentTextRef.current.slice(0, 80) +
+        (currentTextRef.current.length > 80 ? "…" : ""),
       model: settings.model,
       voice: settings.voice,
       speed: settings.speed,
@@ -200,12 +232,27 @@ export function useTtsGenerate() {
     setStreamingState("playing");
     setStatus("playing");
     isLoadingNextChunkRef.current = false;
-  }, [settings, setCurrentAudio, setNowPlaying, setStatus, setProgress, setStreamingState, addToHistory]);
+  }, [
+    settings,
+    setCurrentAudio,
+    setNowPlaying,
+    setPreviewItem,
+    setPlaybackStatus,
+    setStatus,
+    setProgress,
+    setStreamingState,
+    addToHistory,
+  ]);
 
   /** Sync volume to gapless player when settings change during streaming */
   useEffect(() => {
     gaplessPlayerRef.current?.setVolume(settings.volume);
   }, [settings.volume]);
+
+  /** Sync playback rate to gapless player when speed changes during streaming */
+  useEffect(() => {
+    gaplessPlayerRef.current?.setPlaybackRate(settings.speed);
+  }, [settings.speed]);
 
   /**
    * Respond to AudioPlayer's "chunk ended" signal (streamingState = "buffering").
@@ -220,61 +267,79 @@ export function useTtsGenerate() {
   }, [streamingState, playNextStreamingChunk]);
 
   /** Called when gapless playback has finished (all chunks played) or when queue was empty on complete */
-  const finalizeStreaming = useCallback((fullAudioBuffer: ArrayBuffer, duration: number) => {
-    if (isCancelledRef.current) return;
+  const finalizeStreaming = useCallback(
+    (fullAudioBuffer: ArrayBuffer, duration: number) => {
+      if (isCancelledRef.current) return;
 
-    const audioBlob = new Blob([fullAudioBuffer], { type: "audio/wav" });
-    const audioUrl = URL.createObjectURL(audioBlob);
+      const audioBlob = new Blob([fullAudioBuffer], { type: "audio/wav" });
+      const audioUrl = URL.createObjectURL(audioBlob);
 
-    if (isPreviewRef.current) {
-      isPreviewRef.current = false;
-      setPreviewingVoiceId(null);
-      const voiceId = previewVoiceIdRef.current;
-      const previewItem: TtsHistoryItem = {
-        id: crypto.randomUUID(),
-        text: PREVIEW_SAMPLE_TEXT,
-        model: voiceId,
-        voice: voiceId,
-        speed: settings.speed,
-        audioUrl,
-        duration,
-        createdAt: Date.now(),
-      };
-      setCurrentAudio(audioBlob, audioUrl);
-      setNowPlaying(previewItem);
-      setStatus("playing");
-      setProgress(100);
-    } else {
-      const historyItem: TtsHistoryItem = {
-        id: crypto.randomUUID(),
-        text: currentTextRef.current,
-        model: settings.model,
-        voice: settings.voice,
-        speed: settings.speed,
-        audioUrl,
-        duration,
-        createdAt: Date.now(),
-      };
-      setCurrentAudio(audioBlob, audioUrl);
-      setNowPlaying(historyItem);
-      setStatus("playing");
-      addToHistory(historyItem, audioBlob);
-      const voiceId = settings.voice.startsWith(CUSTOM_MODEL_PREFIX)
-        ? settings.voice.slice(CUSTOM_MODEL_PREFIX.length)
-        : settings.voice;
-      const voiceMeta = getVoiceMetadata(voiceId);
-      const voiceName = voiceMeta?.name || "Unknown";
-      notifyGenerationComplete(currentTextRef.current, voiceName);
-    }
+      if (isPreviewRef.current) {
+        isPreviewRef.current = false;
+        setPreviewingVoiceId(null);
+        const voiceId = previewVoiceIdRef.current;
+        const previewItem: TtsHistoryItem = {
+          id: crypto.randomUUID(),
+          text: PREVIEW_SAMPLE_TEXT,
+          model: voiceId,
+          voice: voiceId,
+          speed: settings.speed,
+          audioUrl,
+          duration,
+          createdAt: Date.now(),
+        };
+        setCurrentAudio(audioBlob, audioUrl);
+        setPreviewItem(previewItem);
+        setStatus("playing");
+        setPlaybackStatus("playing");
+        setProgress(100);
+      } else {
+        const historyItem: TtsHistoryItem = {
+          id: crypto.randomUUID(),
+          text: currentTextRef.current,
+          model: settings.model,
+          voice: settings.voice,
+          speed: settings.speed,
+          audioUrl,
+          duration,
+          createdAt: Date.now(),
+        };
+        setCurrentAudio(audioBlob, audioUrl);
+        setNowPlaying(historyItem);
+        setStatus("playing");
+        setPlaybackStatus("playing");
+        addToHistory(historyItem, audioBlob);
+        const voiceId = settings.voice.startsWith(CUSTOM_MODEL_PREFIX)
+          ? settings.voice.slice(CUSTOM_MODEL_PREFIX.length)
+          : settings.voice;
+        const voiceMeta = getVoiceMetadata(voiceId);
+        const voiceName = voiceMeta?.name || "Unknown";
+        notifyGenerationComplete(currentTextRef.current, voiceName);
+      }
 
-    setStreamingState("idle");
-    isStreamingRef.current = false;
-    pendingFullAudioRef.current = null;
-    setStreamingProgress(0, 0);
-    setPausedStreaming(false);
-    gaplessPlayerRef.current?.stop();
-    gaplessPlayerRef.current = null;
-  }, [settings, setCurrentAudio, setNowPlaying, setStatus, setProgress, setStreamingState, setStreamingProgress, setPausedStreaming, addToHistory]);
+      setStreamingState("idle");
+      isStreamingRef.current = false;
+      pendingFullAudioRef.current = null;
+      setStreamingProgress(0, 0);
+      setPausedStreaming(false);
+      setPlaybackStatus("idle");
+      gaplessPlayerRef.current?.stop();
+      gaplessPlayerRef.current = null;
+    },
+    [
+      settings,
+      setCurrentAudio,
+      setNowPlaying,
+      setPreviewItem,
+      setStatus,
+      setPlaybackStatus,
+      setProgress,
+      setStreamingState,
+      setStreamingProgress,
+      setPausedStreaming,
+      addToHistory,
+    ],
+  );
 
   useEffect(() => {
     onStreamingEndedRef.current = () => {
@@ -303,7 +368,9 @@ export function useTtsGenerate() {
         const audioUrl = URL.createObjectURL(audioBlob);
         const item: TtsHistoryItem = {
           id: `streaming-${Date.now()}`,
-          text: currentTextRef.current.slice(0, 80) + (currentTextRef.current.length > 80 ? "…" : ""),
+          text:
+            currentTextRef.current.slice(0, 80) +
+            (currentTextRef.current.length > 80 ? "…" : ""),
           model: settings.model,
           voice: settings.voice,
           speed: settings.speed,
@@ -330,7 +397,7 @@ export function useTtsGenerate() {
       setStatus,
       setStreamingState,
       setStreamingProgress,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -340,10 +407,12 @@ export function useTtsGenerate() {
       try {
         workerRef.current = new Worker(
           new URL("@/workers/tts-worker.ts", import.meta.url),
-          { type: "module" }
+          { type: "module" },
         );
 
-        workerRef.current.onmessage = (event: MessageEvent<TtsWorkerOutgoingMessage>) => {
+        workerRef.current.onmessage = (
+          event: MessageEvent<TtsWorkerOutgoingMessage>,
+        ) => {
           const message = event.data;
 
           switch (message.type) {
@@ -387,19 +456,30 @@ export function useTtsGenerate() {
               break;
             case "chunk":
               void handleChunkMessage(message as TtsWorkerChunk).catch((e) =>
-                logger.error("handleChunkMessage failed", e)
+                logger.error("handleChunkMessage failed", e),
               );
               break;
             case "complete":
               // loadModel gửi complete với audio rỗng, duration 0 — bỏ qua
               if (message.audio.byteLength > 0 && message.duration > 0) {
                 if (isStreamingRef.current) {
-                  // Gapless: wait for playback to finish, then finalize in onStreamEnded
-                  pendingFullAudioRef.current = { buffer: message.audio, duration: message.duration };
+                  // Save to history immediately when generation completes — do NOT wait for playback
+                  handleAudioCompleteRef.current?.(
+                    message.audio,
+                    message.duration,
+                  );
+                  // Continue gapless playback until audio finishes (markComplete keeps player alive)
+                  pendingFullAudioRef.current = {
+                    buffer: message.audio,
+                    duration: message.duration,
+                  };
                   setProgress(100);
                   gaplessPlayerRef.current?.markComplete();
                 } else {
-                  handleAudioCompleteRef.current?.(message.audio, message.duration);
+                  handleAudioCompleteRef.current?.(
+                    message.audio,
+                    message.duration,
+                  );
                 }
               }
               break;
@@ -511,7 +591,17 @@ export function useTtsGenerate() {
         },
       });
     },
-    [isWorkerReady, settings, setError, reset, setStatus, setProgress, setStreamingState, setStreamingProgress, setPausedStreaming]
+    [
+      isWorkerReady,
+      settings,
+      setError,
+      reset,
+      setStatus,
+      setProgress,
+      setStreamingState,
+      setStreamingProgress,
+      setPausedStreaming,
+    ],
   );
 
   const stop = useCallback(() => {
@@ -542,24 +632,31 @@ export function useTtsGenerate() {
     }
   }, []);
 
-  const preloadModel = useCallback((voiceId?: string) => {
-    // Preload a specific voice model (useful on app start)
-    if (!workerRef.current || !isWorkerReady) {
-      logger.warn("Worker not ready for preload");
-      return;
-    }
-    const targetVoice = voiceId || settings.voice;
-    workerRef.current.postMessage({
-      type: "loadModel",
-      payload: { voice: targetVoice },
-    });
-  }, [isWorkerReady, settings.voice]);
+  const preloadModel = useCallback(
+    (voiceId?: string) => {
+      // Preload a specific voice model (useful on app start)
+      if (!workerRef.current || !isWorkerReady) {
+        logger.warn("Worker not ready for preload");
+        return;
+      }
+      const targetVoice = voiceId || settings.voice;
+      workerRef.current.postMessage({
+        type: "loadModel",
+        payload: { voice: targetVoice },
+      });
+    },
+    [isWorkerReady, settings.voice],
+  );
 
   /** Preview voice: plays sample.wav from R2 when available, else generates TTS with sample text. */
   const previewVoice = useCallback(
     async (voiceId: string, sampleText: string = PREVIEW_SAMPLE_TEXT) => {
-      const normalizedId = voiceId.startsWith(CUSTOM_MODEL_PREFIX) ? voiceId : `${CUSTOM_MODEL_PREFIX}${voiceId}`;
-      const modelName = normalizedId.startsWith(CUSTOM_MODEL_PREFIX) ? normalizedId.slice(CUSTOM_MODEL_PREFIX.length) : normalizedId;
+      const normalizedId = voiceId.startsWith(CUSTOM_MODEL_PREFIX)
+        ? voiceId
+        : `${CUSTOM_MODEL_PREFIX}${voiceId}`;
+      const modelName = normalizedId.startsWith(CUSTOM_MODEL_PREFIX)
+        ? normalizedId.slice(CUSTOM_MODEL_PREFIX.length)
+        : normalizedId;
 
       // Ưu tiên phát sample.wav từ R2 cho custom voice (nhanh, không cần generate)
       const sampleUrl = getVoiceSampleUrl(modelName);
@@ -570,7 +667,11 @@ export function useTtsGenerate() {
           const arrayBuffer = await blob.arrayBuffer();
           let duration = 0;
           try {
-            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const ctx = new (
+              window.AudioContext ||
+              (window as unknown as { webkitAudioContext: typeof AudioContext })
+                .webkitAudioContext
+            )();
             const buf = await ctx.decodeAudioData(arrayBuffer.slice(0));
             duration = buf.duration;
           } catch {
@@ -603,7 +704,9 @@ export function useTtsGenerate() {
         setError("TTS chưa sẵn sàng. Vui lòng thử lại sau.");
         return;
       }
-      const textToGenerate = settings.normalizeText ? normalizeVietnamese(sampleText) : sampleText;
+      const textToGenerate = settings.normalizeText
+        ? normalizeVietnamese(sampleText)
+        : sampleText;
       isPreviewRef.current = true;
       previewVoiceIdRef.current = normalizedId;
       setPreviewingVoiceId(normalizedId);
@@ -621,7 +724,16 @@ export function useTtsGenerate() {
         },
       });
     },
-    [isWorkerReady, settings, setError, reset, setStatus, setProgress, setCurrentAudio, setNowPlaying]
+    [
+      isWorkerReady,
+      settings,
+      setError,
+      reset,
+      setStatus,
+      setProgress,
+      setCurrentAudio,
+      setNowPlaying,
+    ],
   );
 
   /** Toggle play/pause (used by AudioPlayer and GenerationSuccess inline control) */
@@ -633,19 +745,34 @@ export function useTtsGenerate() {
         gaplessPlayerRef.current?.resume();
         useTtsStore.getState().resumeStreaming();
         setStatus("playing");
+        setPlaybackStatus("playing");
       } else {
         gaplessPlayerRef.current?.pause();
         useTtsStore.getState().pauseStreaming();
+        setPlaybackStatus("paused");
       }
       return;
     }
     if (state.status === "playing") {
       setStatus("idle");
+      setPlaybackStatus("idle");
     } else {
       useTtsStore.getState().setStreamingState("playing");
       setStatus("playing");
+      setPlaybackStatus("playing");
     }
-  }, [setStatus]);
+  }, [setStatus, setPlaybackStatus]);
+
+  /** Pause any active audio (gapless or HTMLAudio) — used when refill or play new track */
+  const pauseAudio = useCallback(() => {
+    const { streamingDuration, pausedStreaming } = useTtsStore.getState();
+    if (streamingDuration > 0) {
+      gaplessPlayerRef.current?.pause();
+      useTtsStore.getState().pauseStreaming();
+    }
+    useTtsStore.getState().setStatus("idle");
+    useTtsStore.getState().setPlaybackStatus("idle");
+  }, []);
 
   return {
     settings,
@@ -658,6 +785,7 @@ export function useTtsGenerate() {
     generate,
     stop,
     togglePlay,
+    pauseAudio,
     terminateWorker,
     preloadModel,
     previewVoice,

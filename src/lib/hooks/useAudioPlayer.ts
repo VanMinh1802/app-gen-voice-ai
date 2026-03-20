@@ -31,12 +31,14 @@ interface UseAudioPlayerReturn {
  * Web Audio API hook for enhanced audio playback
  * Provides better control over audio processing than HTMLAudioElement alone
  */
-export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPlayerReturn {
+export function useAudioPlayer(
+  options: UseAudioPlayerOptions = {},
+): UseAudioPlayerReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
-  
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -47,7 +49,9 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPla
   // Initialize AudioContext
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
     }
     return audioContextRef.current;
   }, []);
@@ -56,7 +60,7 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPla
   const connectAudioSource = useCallback(() => {
     const audio = audioRef.current;
     const ctx = getAudioContext();
-    
+
     if (!audio || !ctx) return null;
 
     // Disconnect previous source if exists
@@ -89,73 +93,76 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPla
   }, [getAudioContext]);
 
   // Load audio URL
-  const loadAudio = useCallback((url: string) => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = "metadata";
-    }
+  const loadAudio = useCallback(
+    (url: string) => {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        audioRef.current.preload = "metadata";
+      }
 
-    const audio = audioRef.current;
-    
-    // Set up event listeners
-    const onLoadedMetadata = () => {
-      setDuration(audio.duration);
-      setIsLoading(false);
-      options.onLoaded?.(audio.duration);
-    };
+      const audio = audioRef.current;
 
-    const onTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
-      options.onTimeUpdate?.(audio.currentTime);
-    };
+      // Set up event listeners
+      const onLoadedMetadata = () => {
+        setDuration(audio.duration);
+        setIsLoading(false);
+        options.onLoaded?.(audio.duration);
+      };
 
-    const onEnded = () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
-      options.onEnded?.();
-    };
+      const onTimeUpdate = () => {
+        setCurrentTime(audio.currentTime);
+        options.onTimeUpdate?.(audio.currentTime);
+      };
 
-    const onError = () => {
-      setIsLoading(false);
-      options.onError?.(new Error("Failed to load audio"));
-    };
+      const onEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+        options.onEnded?.();
+      };
 
-    const onCanPlay = () => {
-      setIsLoading(false);
-    };
+      const onError = () => {
+        setIsLoading(false);
+        options.onError?.(new Error("Failed to load audio"));
+      };
 
-    const onWaiting = () => {
+      const onCanPlay = () => {
+        setIsLoading(false);
+      };
+
+      const onWaiting = () => {
+        setIsLoading(true);
+      };
+
+      // Clean up old listeners
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("waiting", onWaiting);
+
+      // Add new listeners
+      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      audio.addEventListener("timeupdate", onTimeUpdate);
+      audio.addEventListener("ended", onEnded);
+      audio.addEventListener("error", onError);
+      audio.addEventListener("canplay", onCanPlay);
+      audio.addEventListener("waiting", onWaiting);
+
+      // Load the audio
+      audio.src = url;
+      audio.load();
       setIsLoading(true);
-    };
-
-    // Clean up old listeners
-    audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-    audio.removeEventListener("timeupdate", onTimeUpdate);
-    audio.removeEventListener("ended", onEnded);
-    audio.removeEventListener("error", onError);
-    audio.removeEventListener("canplay", onCanPlay);
-    audio.removeEventListener("waiting", onWaiting);
-
-    // Add new listeners
-    audio.addEventListener("loadedmetadata", onLoadedMetadata);
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("ended", onEnded);
-    audio.addEventListener("error", onError);
-    audio.addEventListener("canplay", onCanPlay);
-    audio.addEventListener("waiting", onWaiting);
-
-    // Load the audio
-    audio.src = url;
-    audio.load();
-    setIsLoading(true);
-    setCurrentTime(0);
-  }, [options]);
+      setCurrentTime(0);
+    },
+    [options],
+  );
 
   // Play audio
   const play = useCallback(async () => {
     const audio = audioRef.current;
     const ctx = getAudioContext();
-    
+
     if (!audio) return;
 
     // Resume audio context if suspended
@@ -194,22 +201,25 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPla
   }, []);
 
   // Set volume
-  const setVolume = useCallback((vol: number) => {
-    const clampedVol = Math.max(0, Math.min(1, vol));
-    setVolumeState(clampedVol);
-    
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : clampedVol;
-    }
-    
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.value = isMuted ? 0 : clampedVol;
-    }
-  }, [isMuted]);
+  const setVolume = useCallback(
+    (vol: number) => {
+      const clampedVol = Math.max(0, Math.min(1, vol));
+      setVolumeState(clampedVol);
+
+      if (audioRef.current) {
+        audioRef.current.volume = isMuted ? 0 : clampedVol;
+      }
+
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = isMuted ? 0 : clampedVol;
+      }
+    },
+    [isMuted],
+  );
 
   // Toggle mute
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => {
+    setIsMuted((prev) => {
       const newMuted = !prev;
       if (audioRef.current) {
         audioRef.current.volume = newMuted ? 0 : volume;
@@ -228,7 +238,10 @@ export function useAudioPlayer(options: UseAudioPlayerOptions = {}): UseAudioPla
         audioRef.current.pause();
         audioRef.current.src = "";
       }
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
         audioContextRef.current.close();
       }
     };

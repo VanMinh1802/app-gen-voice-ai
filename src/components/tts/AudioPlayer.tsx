@@ -13,6 +13,8 @@ import {
   Shuffle,
   Mic,
   X,
+  Loader2,
+  Waves,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTtsStore } from "@/features/tts/store";
@@ -55,14 +57,22 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
 
   /** Gapless streaming: use Web Audio progress; otherwise use <audio> element */
   const isGaplessStreaming = streamingDuration > 0;
-  const displayCurrentTime = isGaplessStreaming ? streamingCurrentTime : currentTime;
+  const displayCurrentTime = isGaplessStreaming
+    ? streamingCurrentTime
+    : currentTime;
   const displayDuration = isGaplessStreaming ? streamingDuration : duration;
   const [volume, setVolume] = useState(settings.volume);
   const [isMuted, setIsMuted] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const getVoiceName = (voiceId: string) => {
+  /** Show buffering spinner when non-gapless streaming is buffering */
+  const isBuffering = streamingState === "buffering" && streamingDuration === 0;
+
+  /** Whether playback is active (playing + not paused) */
+  const isPlaying = status === "playing" && !pausedStreaming;
+
+  const getVoiceName = useCallback((voiceId: string) => {
     if (voiceId.startsWith(CUSTOM_MODEL_PREFIX)) {
       const id = voiceId.slice(CUSTOM_MODEL_PREFIX.length);
       const custom = config.customModels.find((m) => m.id === id);
@@ -70,7 +80,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     }
     // Custom-only mode: built-in voices removed
     return voiceId;
-  };
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -137,13 +147,48 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
 
     audio.addEventListener("ended", handleEnded);
     return () => audio.removeEventListener("ended", handleEnded);
-  }, [streamingState, streamingDuration, isLooping, setStatus, setStreamingState]);
+  }, [
+    streamingState,
+    streamingDuration,
+    isLooping,
+    setStatus,
+    setStreamingState,
+  ]);
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.playbackRate = settings.speed;
     }
   }, [settings.speed]);
+
+  /**
+   * Pause <audio> element when status changes away from "playing" (non-gapless path).
+   * The gapless player is paused directly via gaplessPlayer.pause() in this component
+   * and from outside via pauseAudio().
+   */
+  useEffect(() => {
+    if (status !== "playing") {
+      audioRef.current?.pause();
+    }
+  }, [status]);
+
+  /** Pause audio when component unmounts (e.g. user navigates away or player is hidden) */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: refs captured at effect start
+    const gapless = gaplessPlayer.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: ref captured at effect start
+    const audioEl = audioRef.current;
+    return () => {
+      const { streamingDuration } = useTtsStore.getState();
+      if (streamingDuration > 0 && gapless) {
+        gapless.pause();
+      }
+      if (audioEl) {
+        audioEl.pause();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs captured at effect start above
+  }, []);
 
   // If nowPlaying is missing (e.g. older sessions), try to derive from history by audioUrl.
   useEffect(() => {
@@ -176,7 +221,32 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
       }
       setStatus("playing");
     }
-  }, [status, setStatus, streamingState, setStreamingState, streamingDuration, pausedStreaming, pauseStreaming, resumeStreaming, gaplessPlayer]);
+  }, [
+    status,
+    setStatus,
+    streamingState,
+    setStreamingState,
+    streamingDuration,
+    pausedStreaming,
+    pauseStreaming,
+    resumeStreaming,
+    gaplessPlayer,
+  ]);
+
+  /** Keyboard shortcut: Space = toggle play/pause (global, ignores when typing in input/textarea) */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === " " &&
+        !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)
+      ) {
+        e.preventDefault();
+        togglePlay();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePlay]);
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
@@ -198,7 +268,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
         setCurrentTime(newTime);
       }
     },
-    [displayDuration, isGaplessStreaming]
+    [displayDuration, isGaplessStreaming],
   );
 
   const handleSkip = useCallback(
@@ -207,19 +277,20 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
       if (audioRef.current) {
         const newTime = Math.max(
           0,
-          Math.min(displayDuration, audioRef.current.currentTime + seconds)
+          Math.min(displayDuration, audioRef.current.currentTime + seconds),
         );
         audioRef.current.currentTime = newTime;
         setCurrentTime(newTime);
       }
     },
-    [displayDuration, isGaplessStreaming]
+    [displayDuration, isGaplessStreaming],
   );
 
   /** Index of nowPlaying in history, or -1 */
-  const currentIndex = nowPlaying && history.length > 0
-    ? history.findIndex((h) => h.id === nowPlaying.id)
-    : -1;
+  const currentIndex =
+    nowPlaying && history.length > 0
+      ? history.findIndex((h) => h.id === nowPlaying.id)
+      : -1;
 
   const handlePreviousTrack = useCallback(() => {
     if (history.length === 0) {
@@ -235,7 +306,14 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     } else {
       handleSkip(-10);
     }
-  }, [history, currentIndex, setNowPlaying, setCurrentAudio, setStatus, handleSkip]);
+  }, [
+    history,
+    currentIndex,
+    setNowPlaying,
+    setCurrentAudio,
+    setStatus,
+    handleSkip,
+  ]);
 
   const handleNextTrack = useCallback(() => {
     if (history.length === 0) {
@@ -251,7 +329,14 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     } else {
       handleSkip(30);
     }
-  }, [history, currentIndex, setNowPlaying, setCurrentAudio, setStatus, handleSkip]);
+  }, [
+    history,
+    currentIndex,
+    setNowPlaying,
+    setCurrentAudio,
+    setStatus,
+    handleSkip,
+  ]);
 
   const handleShuffle = useCallback(() => {
     if (history.length === 0) return;
@@ -263,15 +348,21 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     setCurrentTime(0);
   }, [history, setNowPlaying, setCurrentAudio, setStatus]);
 
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setSettings({ volume: newVolume });
-  }, [setSettings]);
+  const handleVolumeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newVolume = parseFloat(e.target.value);
+      setVolume(newVolume);
+      setSettings({ volume: newVolume });
+    },
+    [setSettings],
+  );
 
-  const handleSpeedChange = useCallback((speed: number) => {
-    setSettings({ speed });
-  }, [setSettings]);
+  const handleSpeedChange = useCallback(
+    (speed: number) => {
+      setSettings({ speed });
+    },
+    [setSettings],
+  );
 
   const handleDownload = useCallback(async () => {
     let blob: Blob | null = currentAudio;
@@ -287,12 +378,31 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `genvoice-${Date.now()}.wav`;
+    link.download = (() => {
+      const voiceName = getVoiceName(
+        (nowPlaying?.voice ?? settings.voice) as string,
+      )
+        .toLowerCase()
+        .replace(/[^a-z0-9\u00C0-\u024F]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 32);
+      const textSnippet = (nowPlaying?.text ?? "")
+        .trim()
+        .slice(0, 24)
+        .replace(/[^a-z0-9\u00C0-\u024F]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      const parts = [voiceName, textSnippet].filter(Boolean);
+      return parts.length > 0
+        ? `${parts.join("-")}.wav`
+        : `genvoice-${Date.now()}.wav`;
+    })();
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [currentAudio, currentAudioUrl]);
+  }, [currentAudio, currentAudioUrl, nowPlaying, settings, getVoiceName]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -305,9 +415,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
   const progressPercent =
     displayDuration > 0 ? (displayCurrentTime / displayDuration) * 100 : 0;
   const voiceIdForDisplay = nowPlaying?.voice ?? settings.voice;
-  const title =
-    (nowPlaying?.text ?? "").trim().slice(0, 48) ||
-    "TTS Audio";
+  const title = (nowPlaying?.text ?? "").trim().slice(0, 48) || "TTS Audio";
   const speedForDisplay = nowPlaying?.speed ?? settings.speed;
   const subtitleParts = [
     `Giọng ${getVoiceName(voiceIdForDisplay)}`,
@@ -326,13 +434,23 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-bold truncate text-foreground text-sm sm:text-base">{title}</h4>
+            <h4 className="font-bold truncate text-foreground text-sm sm:text-base">
+              {title}
+            </h4>
             <p className="text-[11px] sm:text-xs text-muted-foreground font-medium truncate">
               {subtitle}
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              // Pause audio before closing (gapless + HTMLAudio)
+              if (streamingDuration > 0) {
+                gaplessPlayer.current?.pause();
+              } else {
+                audioRef.current?.pause();
+              }
+              onClose?.();
+            }}
             className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors text-muted-foreground hover:text-foreground lg:hidden"
             aria-label="Đóng"
           >
@@ -360,10 +478,13 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </button>
             <button
               onClick={togglePlay}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40"
-              aria-label={status === "playing" && !pausedStreaming ? "Tạm dừng" : "Phát"}
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 disabled:cursor-not-allowed"
+              aria-label={isPlaying ? "Tạm dừng" : "Phát"}
+              disabled={isBuffering}
             >
-              {status === "playing" && !pausedStreaming ? (
+              {isBuffering ? (
+                <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin" />
+              ) : isPlaying ? (
                 <Pause className="w-6 h-6 sm:w-7 sm:h-7" />
               ) : (
                 <Play className="w-6 h-6 sm:w-7 sm:h-7 ml-1" />
@@ -380,7 +501,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               onClick={() => setIsLooping(!isLooping)}
               className={cn(
                 "hidden sm:inline-flex text-muted-foreground hover:text-primary transition-colors p-2",
-                isLooping && "text-primary"
+                isLooping && "text-primary",
               )}
               aria-label="Lặp"
             >
@@ -392,24 +513,32 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <span className="text-[10px] font-mono font-bold text-muted-foreground w-10 text-right">
               {formatTime(displayCurrentTime)}
             </span>
-            <div 
+            <div
               ref={progressRef}
               className="flex-1 h-2 bg-black/15 dark:bg-slate-800 rounded-full relative cursor-pointer group"
               onClick={handleProgressClick}
             >
+              {/* Buffering: pulsing background */}
+              {isBuffering && (
+                <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
+              )}
               <div
                 className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all group-hover:brightness-110"
                 style={{ width: `${progressPercent}%` }}
               />
-              {/* Thumb */}
-              <div 
-                className={cn(
-                  "absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg transition-opacity",
-                  progressPercent > 0 && progressPercent < 100 ? "opacity-100" : "opacity-0",
-                  "group-hover:opacity-100"
-                )}
-                style={{ left: `calc(${progressPercent}% - 6px)` }}
-              />
+              {/* Thumb — hidden during buffering */}
+              {!isBuffering && (
+                <div
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg transition-opacity",
+                    progressPercent > 0 && progressPercent < 100
+                      ? "opacity-100"
+                      : "opacity-0",
+                    "group-hover:opacity-100",
+                  )}
+                  style={{ left: `calc(${progressPercent}% - 6px)` }}
+                />
+              )}
               <input
                 type="range"
                 min={0}
@@ -423,16 +552,24 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
                 aria-label="Thanh tiến trình"
               />
             </div>
-            <span className="text-[10px] font-mono font-bold text-muted-foreground w-10">
-              {formatTime(displayDuration)}
-            </span>
+            {isBuffering ? (
+              <span className="text-[10px] font-mono font-bold text-primary w-10 animate-pulse">
+                •••
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono font-bold text-muted-foreground w-10">
+                {formatTime(displayDuration)}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Right: Extra Controls */}
         <div className="col-span-12 sm:col-span-3 xl:col-span-3 flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="hidden xl:inline text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Tốc độ</span>
+            <span className="hidden xl:inline text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+              Tốc độ
+            </span>
             <select
               value={settings.speed}
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
@@ -440,10 +577,22 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               aria-label="Tốc độ phát"
             >
               {SPEED_OPTIONS.map((speed) => (
-                <option key={speed} value={speed}>{speed}x</option>
+                <option key={speed} value={speed}>
+                  {speed}x
+                </option>
               ))}
             </select>
           </div>
+
+          {/* Pitch indicator */}
+          {settings.pitch !== 0 && (
+            <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20">
+              <Waves className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[10px] font-bold text-primary tabular-nums">
+                {settings.pitch > 0 ? `+${settings.pitch}` : settings.pitch}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Volume Button - always visible */}
@@ -452,7 +601,11 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
               aria-label={isMuted ? "Bật âm" : "Tắt âm"}
             >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {isMuted ? (
+                <VolumeX className="w-4 h-4" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
             </button>
             {/* Volume Slider - visible on sm+ screens */}
             <div className="hidden sm:flex items-center gap-2 w-24">

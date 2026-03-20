@@ -7,7 +7,11 @@
 const PIPER_PHONEMIZE_CDN =
   "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize";
 
-import { loadCustomPiper, type PiperCustomSession, type PiperVoiceConfig } from "./piperCustom";
+import {
+  loadCustomPiper,
+  type PiperCustomSession,
+  type PiperVoiceConfig,
+} from "./piperCustom";
 import {
   saveModelToCache,
   loadModelFromCache,
@@ -33,7 +37,10 @@ const VERSIONS_URL = "/tts-model/vi/versions.json";
  * Compare two semantic versions. Returns true if cloudVersion > localVersion.
  * Treats undefined/missing as "0.0.0" (legacy cache).
  */
-function isNewerVersion(cloudVersion: string | undefined, localVersion: string | undefined): boolean {
+function isNewerVersion(
+  cloudVersion: string | undefined,
+  localVersion: string | undefined,
+): boolean {
   const cloud = (cloudVersion ?? "0.0.0").split(".").map(Number);
   const local = (localVersion ?? "0.0.0").split(".").map(Number);
 
@@ -53,7 +60,9 @@ async function fetchVersions(): Promise<Record<string, string>> {
   try {
     const res = await fetch(VERSIONS_URL + "?t=" + Date.now());
     if (!res.ok) {
-      console.warn("[piperR2] Failed to fetch versions.json, assuming all cached");
+      console.warn(
+        "[piperR2] Failed to fetch versions.json, assuming all cached",
+      );
       return {};
     }
     return await res.json();
@@ -71,7 +80,7 @@ async function fetchVersions(): Promise<Record<string, string>> {
  * 4. Load the model
  */
 export async function loadPiperWithCache(
-  options: LoadModelOptions
+  options: LoadModelOptions,
 ): Promise<{ session: PiperCustomSession; fromCache: boolean }> {
   const { voiceId, baseUrl = DEFAULT_BASE_URL, onProgress } = options;
   const r2Folder = getR2FolderForVoice(voiceId);
@@ -92,12 +101,21 @@ export async function loadPiperWithCache(
 
       // Check if cloud has newer version
       if (cloudVersion && isNewerVersion(cloudVersion, cached.version)) {
-        console.log(`[piperR2] ${voiceId} cache outdated (local: ${cached.version}, cloud: ${cloudVersion}), re-downloading...`);
-        const { deleteModelFromCache } = await import("@/lib/storage/modelCache");
+        console.log(
+          `[piperR2] ${voiceId} cache outdated (local: ${cached.version}, cloud: ${cloudVersion}), re-downloading...`,
+        );
+        const { deleteModelFromCache } =
+          await import("@/lib/storage/modelCache");
         await deleteModelFromCache(voiceId);
       } else {
-        console.log(`[piperR2] Loading ${voiceId} (v${cached.version ?? "?"}) from IndexedDB cache`);
-        const session = await loadFromArrayBuffer(voiceId, cached.model, cached.config);
+        console.log(
+          `[piperR2] Loading ${voiceId} (v${cached.version ?? "?"}) from IndexedDB cache`,
+        );
+        const session = await loadFromArrayBuffer(
+          voiceId,
+          cached.model,
+          cached.config,
+        );
         onProgress?.(100);
         return { session, fromCache: true };
       }
@@ -123,7 +141,9 @@ export async function loadPiperWithCache(
     throw new Error(`Failed to download model: ${modelRes.status} ${modelUrl}`);
   }
   if (!configRes.ok) {
-    throw new Error(`Failed to download config: ${configRes.status} ${configUrl}`);
+    throw new Error(
+      `Failed to download config: ${configRes.status} ${configUrl}`,
+    );
   }
 
   onProgress?.(50);
@@ -132,7 +152,10 @@ export async function loadPiperWithCache(
   const modelBuffer = await modelRes.arrayBuffer();
   const configText = await configRes.text();
 
-  if (/^\s*Entry not found\s*$/i.test(configText) || /^\s*<!DOCTYPE/i.test(configText)) {
+  if (
+    /^\s*Entry not found\s*$/i.test(configText) ||
+    /^\s*<!DOCTYPE/i.test(configText)
+  ) {
     throw new Error("Voice or model config not found in R2");
   }
 
@@ -172,13 +195,16 @@ export async function loadPiperWithCache(
 async function loadFromArrayBuffer(
   voiceId: string,
   modelBuffer: ArrayBuffer,
-  config: PiperVoiceConfig
+  config: PiperVoiceConfig,
 ): Promise<PiperCustomSession> {
   const ort = await import("onnxruntime-web");
 
-  const session = await ort.InferenceSession.create(new Uint8Array(modelBuffer), {
-    executionProviders: ["wasm"],
-  });
+  const session = await ort.InferenceSession.create(
+    new Uint8Array(modelBuffer),
+    {
+      executionProviders: ["wasm"],
+    },
+  );
 
   const sampleRate = config.audio?.sample_rate ?? 22050;
   const noiseScale = config.inference?.noise_scale ?? 0.667;
@@ -189,7 +215,7 @@ async function loadFromArrayBuffer(
 
   function toId(value: number | number[] | undefined): number {
     if (value === undefined) return 0;
-    return Array.isArray(value) ? value[0] ?? 0 : value;
+    return Array.isArray(value) ? (value[0] ?? 0) : value;
   }
 
   async function runPiperPhonemize(text: string): Promise<number[] | null> {
@@ -202,7 +228,11 @@ async function loadFromArrayBuffer(
       const createPiperPhonemize =
         typeof mod.default === "function"
           ? mod.default
-          : (mod as { createPiperPhonemize?: (opts: unknown) => Promise<unknown> }).createPiperPhonemize;
+          : (
+              mod as {
+                createPiperPhonemize?: (opts: unknown) => Promise<unknown>;
+              }
+            ).createPiperPhonemize;
       if (typeof createPiperPhonemize !== "function") return null;
 
       let resolvePhonemeIds: (ids: number[]) => void;
@@ -217,7 +247,8 @@ async function loadFromArrayBuffer(
         print(data: string) {
           try {
             const parsed = JSON.parse(data) as { phoneme_ids?: number[] };
-            if (Array.isArray(parsed.phoneme_ids)) resolvePhonemeIds(parsed.phoneme_ids);
+            if (Array.isArray(parsed.phoneme_ids))
+              resolvePhonemeIds(parsed.phoneme_ids);
           } catch {
             // ignore
           }
@@ -251,13 +282,16 @@ async function loadFromArrayBuffer(
    * Split text into chunks (by sentences or paragraphs) for processing.
    * Each chunk is processed separately and concatenated.
    */
-  function splitTextIntoChunks(text: string, maxChunkSize: number = 500): string[] {
+  function splitTextIntoChunks(
+    text: string,
+    maxChunkSize: number = 500,
+  ): string[] {
     // Split by common sentence endings first
     const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
-    
+
     const chunks: string[] = [];
     let currentChunk = "";
-    
+
     for (const sentence of sentences) {
       if (currentChunk.length + sentence.length <= maxChunkSize) {
         currentChunk += sentence;
@@ -284,17 +318,21 @@ async function loadFromArrayBuffer(
         }
       }
     }
-    
+
     if (currentChunk.trim()) {
       chunks.push(currentChunk.trim());
     }
-    
+
     return chunks;
   }
 
   async function predict(
     text: string,
-    options?: { speakerId?: number; lengthScale?: number; onProgress?: (progress: number) => void }
+    options?: {
+      speakerId?: number;
+      lengthScale?: number;
+      onProgress?: (progress: number) => void;
+    },
   ): Promise<Float32Array> {
     const trimmed = text.trim();
     if (!trimmed) return new Float32Array(0);
@@ -305,36 +343,43 @@ async function loadFromArrayBuffer(
 
     // Use chunking for long text to avoid memory issues
     const chunks = splitTextIntoChunks(trimmed, 500);
-    
+
     if (chunks.length === 1) {
       // Single chunk - process normally
       onProgress?.(50); // Starting inference
       return processSingleChunk(chunks[0], lengthScale, speakerId);
     }
-    
+
     // Multiple chunks - process each and concatenate
     const audioChunks: Float32Array[] = [];
     const totalChunks = chunks.length;
-    
+
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       // Progress: 40-80% based on chunk progress
       const chunkProgress = 40 + Math.round((i / totalChunks) * 40);
       onProgress?.(chunkProgress);
-      
-      const audioChunk = await processSingleChunk(chunk, lengthScale, speakerId);
+
+      const audioChunk = await processSingleChunk(
+        chunk,
+        lengthScale,
+        speakerId,
+      );
       audioChunks.push(audioChunk);
     }
-    
+
     // Concatenate all chunks
-    const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const totalLength = audioChunks.reduce(
+      (sum, chunk) => sum + chunk.length,
+      0,
+    );
     const result = new Float32Array(totalLength);
     let offset = 0;
     for (const chunk of audioChunks) {
       result.set(chunk, offset);
       offset += chunk.length;
     }
-    
+
     onProgress?.(90); // Almost done
     return result;
   }
@@ -345,39 +390,53 @@ async function loadFromArrayBuffer(
   async function processSingleChunk(
     textChunk: string,
     lengthScale: number,
-    speakerId: number
+    speakerId: number,
   ): Promise<Float32Array> {
     let phonemeIds: number[];
 
     if (phonemeType === "text") {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+      phonemeIds = phonemesToIds(
+        [Array.from(normalized)],
+        config.phoneme_id_map,
+      );
     } else if (phonemeType === "espeak") {
-      const { normalizeVietnamese } = await import("@/lib/text-processing/vietnameseNormalizer");
+      const { normalizeVietnamese } =
+        await import("@/lib/text-processing/vietnameseNormalizer");
       const preprocessed = normalizeVietnamese(textChunk);
       const wasmIds = await runPiperPhonemize(preprocessed);
       if (wasmIds && wasmIds.length > 0) {
         phonemeIds = wasmIds;
       } else {
         const normalized = preprocessed.normalize("NFD").toLowerCase();
-        phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+        phonemeIds = phonemesToIds(
+          [Array.from(normalized)],
+          config.phoneme_id_map,
+        );
       }
     } else {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+      phonemeIds = phonemesToIds(
+        [Array.from(normalized)],
+        config.phoneme_id_map,
+      );
     }
 
     const Tensor = ort.Tensor;
     const input = new Tensor(
       "int64",
       new BigInt64Array(phonemeIds.map((id) => BigInt(id))),
-      [1, phonemeIds.length]
+      [1, phonemeIds.length],
     );
-    const input_lengths = new Tensor("int64", BigInt64Array.from([BigInt(phonemeIds.length)]), [1]);
+    const input_lengths = new Tensor(
+      "int64",
+      BigInt64Array.from([BigInt(phonemeIds.length)]),
+      [1],
+    );
     const scales = new Tensor(
       "float32",
       Float32Array.from([noiseScale, lengthScale, noiseW]),
-      [3]
+      [3],
     );
 
     const inputs: Record<string, InstanceType<typeof Tensor>> = {
@@ -386,9 +445,17 @@ async function loadFromArrayBuffer(
       scales,
     };
 
-    if (config.num_speakers && config.num_speakers > 1 && config.speaker_id_map) {
+    if (
+      config.num_speakers &&
+      config.num_speakers > 1 &&
+      config.speaker_id_map
+    ) {
       const sid = config.speaker_id_map[speakerId] ?? 0;
-      inputs["sid"] = new Tensor("int64", BigInt64Array.from([BigInt(sid)]), [1]);
+      inputs["sid"] = new Tensor(
+        "int64",
+        BigInt64Array.from([BigInt(sid)]),
+        [1],
+      );
     }
 
     const results = await session.run(inputs);
@@ -408,7 +475,7 @@ async function loadFromArrayBuffer(
 
 function phonemesToIds(
   textPhonemes: string[][],
-  idMap: Record<string, number | number[]>
+  idMap: Record<string, number | number[]>,
 ): number[] {
   const BOS = "^";
   const EOS = "$";
@@ -417,7 +484,7 @@ function phonemesToIds(
 
   function toIdValue(value: number | number[] | undefined): number {
     if (value === undefined) return 0;
-    return Array.isArray(value) ? value[0] ?? 0 : value;
+    return Array.isArray(value) ? (value[0] ?? 0) : value;
   }
 
   for (const sentence of textPhonemes) {

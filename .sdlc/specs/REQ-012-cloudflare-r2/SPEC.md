@@ -2,16 +2,16 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-012                                               |
-| **Feature Name**   | Cloudflare R2 Lazy Model Loading                      |
-| **Status**         | ✅ Implemented (Phase 1-2)                            |
-| **Priority**       | P0 (Critical)                                         |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-11                                           |
-| **Target Release** | v1.2.0                                               |
-| **MVP Constraints**| No auth required; TTS only; Ship fast               |
+| Field               | Value                                 |
+| ------------------- | ------------------------------------- |
+| **Feature ID**      | REQ-012                               |
+| **Feature Name**    | Cloudflare R2 Lazy Model Loading      |
+| **Status**          | ✅ Implemented (Phase 1-2)            |
+| **Priority**        | P0 (Critical)                         |
+| **Owner**           | Development Team                      |
+| **Created**         | 2026-03-11                            |
+| **Target Release**  | v1.2.0                                |
+| **MVP Constraints** | No auth required; TTS only; Ship fast |
 
 ---
 
@@ -122,37 +122,39 @@ genvoice-models/       # R2 Bucket Name (user-created)
 
 App sử dụng **file cấu hình tĩnh** thay vì build-time env var để tránh phụ thuộc vào Cloudflare Pages build environment:
 
-| File | Purpose |
-|------|---------|
-| `public/r2-config.json` | Chứa `r2PublicUrl` - URL public của R2 bucket |
-| `src/components/R2ConfigProvider.tsx` | Fetch config khi app load, set vào `window` |
-| `src/lib/config/r2Config.ts` | Cung cấp `loadR2Config()`, `getR2PublicUrl()` |
+| File                                  | Purpose                                       |
+| ------------------------------------- | --------------------------------------------- |
+| `public/r2-config.json`               | Chứa `r2PublicUrl` - URL public của R2 bucket |
+| `src/components/R2ConfigProvider.tsx` | Fetch config khi app load, set vào `window`   |
+| `src/lib/config/r2Config.ts`          | Cung cấp `loadR2Config()`, `getR2PublicUrl()` |
 
 **Flow:**
+
 1. App load → `R2ConfigProvider` fetch `/r2-config.json`
 2. `getR2PublicUrl()` trả URL để sample/model dùng direct R2 fetch
 3. Worker nhận URL qua `setR2PublicUrl` message từ main thread
 
 **Tại sao không dùng `NEXT_PUBLIC_R2_PUBLIC_URL`?**
+
 - Build trên Cloudflare Pages có thể không có quyền truy cập environment variables
 - File tĩnh `r2-config.json` deploy cùng app, không phụ thuộc build env
 
 ### Voice Preview Sample
 
-| Aspect | Decision |
-|--------|----------|
+| Aspect       | Decision                                                                               |
+| ------------ | -------------------------------------------------------------------------------------- |
 | Text content | Shared across all voices: "Xin chào, đây là giọng nói AI. Chúc bạn một ngày tốt lành!" |
-| Duration | 5-10 seconds |
-| Format | WAV (uncompressed for quality) |
-| Storage | Stored in R2 as `sample.wav` per voice folder |
+| Duration     | 5-10 seconds                                                                           |
+| Format       | WAV (uncompressed for quality)                                                         |
+| Storage      | Stored in R2 as `sample.wav` per voice folder                                          |
 
 ### Files Created
 
-| File | Description | Status |
-| ---- | ----------- | ------ |
+| File                                           | Description            | Status     |
+| ---------------------------------------------- | ---------------------- | ---------- |
 | `src/app/api/models/[voiceId]/[file]/route.ts` | API route for R2 proxy | ✅ Created |
-| `src/lib/storage/modelCache.ts` | IndexedDB model cache | ✅ Created |
-| `src/lib/piper/piperR2.ts` | R2-aware Piper loader | ✅ Created |
+| `src/lib/storage/modelCache.ts`                | IndexedDB model cache  | ✅ Created |
+| `src/lib/piper/piperR2.ts`                     | R2-aware Piper loader  | ✅ Created |
 
 ### Cloudflare Pages Configuration
 
@@ -169,10 +171,10 @@ bucket_name = "genvoice-models"
 
 ### Environment Variables
 
-| Variable | Description | Required |
-| -------- | ----------- | -------- |
-| `R2_PUBLIC_URL` | R2 bucket public URL (server-side; e.g. API route fallback in dev) | Local dev |
-| `NEXT_PUBLIC_R2_PUBLIC_URL` | Same URL exposed to client (preview sample, worker) | Optional |
+| Variable                    | Description                                                        | Required  |
+| --------------------------- | ------------------------------------------------------------------ | --------- |
+| `R2_PUBLIC_URL`             | R2 bucket public URL (server-side; e.g. API route fallback in dev) | Local dev |
+| `NEXT_PUBLIC_R2_PUBLIC_URL` | Same URL exposed to client (preview sample, worker)                | Optional  |
 
 **Local development:** Create `.env.local` in project root with `R2_PUBLIC_URL=<Public URL của R2 bucket>` so the API route can proxy model/sample requests. Use UTF-8 encoding for `.env.local`.
 
@@ -185,37 +187,37 @@ bucket_name = "genvoice-models"
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ voiceId: string; file: string }> }
+  { params }: { params: Promise<{ voiceId: string; file: string }> },
 ) {
   const { voiceId, file } = await params;
-  
+
   // Validate voiceId to prevent path traversal
-  const allowedVoiceIds = ['ngochuyen', 'lacphi', /* ... other voices */];
+  const allowedVoiceIds = ["ngochuyen", "lacphi" /* ... other voices */];
   if (!allowedVoiceIds.includes(voiceId)) {
-    return new Response('Not Found', { status: 404 });
+    return new Response("Not Found", { status: 404 });
   }
 
   const bucket = process.env.VIETVOICE_MODELS as unknown as R2Bucket;
   const object = await bucket.get(`vi/${voiceId}/${file}`);
-  
+
   if (!object) {
-    return new Response('Not Found', { status: 404 });
+    return new Response("Not Found", { status: 404 });
   }
 
   // Return with appropriate headers for caching
   return new Response(object.body, {
     headers: {
-      'Content-Type': getContentType(file),
-      'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+      "Content-Type": getContentType(file),
+      "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
     },
   });
 }
 
 function getContentType(file: string): string {
-  if (file.endsWith('.onnx')) return 'application/octet-stream';
-  if (file.endsWith('.json')) return 'application/json';
-  if (file.endsWith('.wav')) return 'audio/wav';
-  return 'application/octet-stream';
+  if (file.endsWith(".onnx")) return "application/octet-stream";
+  if (file.endsWith(".json")) return "application/json";
+  if (file.endsWith(".wav")) return "audio/wav";
+  return "application/octet-stream";
 }
 ```
 
@@ -230,8 +232,13 @@ interface ModelCacheEntry {
   size: number;
 }
 
-export async function saveModelToCache(voiceId: string, data: ArrayBuffer): Promise<void>;
-export async function loadModelFromCache(voiceId: string): Promise<ArrayBuffer | null>;
+export async function saveModelToCache(
+  voiceId: string,
+  data: ArrayBuffer,
+): Promise<void>;
+export async function loadModelFromCache(
+  voiceId: string,
+): Promise<ArrayBuffer | null>;
 export async function getCachedModels(): Promise<string[]>;
 export async function clearModelCache(): Promise<void>;
 ```
@@ -262,10 +269,10 @@ export async function clearModelCache(): Promise<void>;
 
 ### External
 
-| Library | Version | Purpose |
-| -------- | ------- | --------|
-| @cloudflare/workers-types | ^4.0 | R2 types |
-| wrangler | ^3.0 | Deployment |
+| Library                   | Version | Purpose    |
+| ------------------------- | ------- | ---------- |
+| @cloudflare/workers-types | ^4.0    | R2 types   |
+| wrangler                  | ^3.0    | Deployment |
 
 ---
 
@@ -284,12 +291,12 @@ export async function clearModelCache(): Promise<void>;
 
 ---
 
-| Phase | Tasks | Estimated |
-| ---- | ----- | --------- |
-| Phase 0 | Cloudflare Setup (User does) | ~30-45 min |
-| Phase 1 | Create API routes, model cache | 3 hours |
-| Phase 2 | Update piper loader, VoiceCard preview | 2 hours |
-| Phase 3 | Deploy to Cloudflare Pages | 1 hour |
+| Phase   | Tasks                                  | Estimated  |
+| ------- | -------------------------------------- | ---------- |
+| Phase 0 | Cloudflare Setup (User does)           | ~30-45 min |
+| Phase 1 | Create API routes, model cache         | 3 hours    |
+| Phase 2 | Update piper loader, VoiceCard preview | 2 hours    |
+| Phase 3 | Deploy to Cloudflare Pages             | 1 hour     |
 
 ---
 

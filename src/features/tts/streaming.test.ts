@@ -4,7 +4,8 @@ import { config, STREAMING_THRESHOLD_CHARS } from "@/config";
 describe("streaming config", () => {
   describe("threshold calculation", () => {
     it("calculates correct threshold from config", () => {
-      const expected = config.streaming.minChunksForStreaming * config.streaming.charsPerChunk;
+      const expected =
+        config.streaming.minChunksForStreaming * config.streaming.charsPerChunk;
       expect(STREAMING_THRESHOLD_CHARS).toBe(expected);
     });
 
@@ -62,7 +63,10 @@ describe("shouldStream utility", () => {
 
 describe("chunk splitting utility", () => {
   // Extract the logic from worker for testing
-  const splitIntoChunks = (text: string, chunkSize: number = config.streaming.charsPerChunk): string[] => {
+  const splitIntoChunks = (
+    text: string,
+    chunkSize: number = config.streaming.charsPerChunk,
+  ): string[] => {
     const chunks: string[] = [];
     for (let i = 0; i < text.length; i += chunkSize) {
       chunks.push(text.slice(i, i + chunkSize));

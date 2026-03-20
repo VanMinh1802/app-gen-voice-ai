@@ -19,7 +19,8 @@ export function ShareButton({ text, voice, speed }: ShareButtonProps) {
     const params = new URLSearchParams();
     if (text) params.set("text", text);
     if (voice) params.set("voice", voice);
-    if (speed !== config.tts.defaultSpeed) params.set("speed", speed.toString());
+    if (speed !== config.tts.defaultSpeed)
+      params.set("speed", speed.toString());
     params.set("lang", effectiveLocale);
 
     const url = new URL(window.location.href);

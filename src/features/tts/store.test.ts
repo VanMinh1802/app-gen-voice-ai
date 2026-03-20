@@ -134,10 +134,12 @@ describe("ttsStore", () => {
 
     it("limits history to 50 items", () => {
       for (let i = 0; i < 60; i++) {
-        useTtsStore.getState().addToHistory(
-          { ...mockHistoryItem, id: String(i), createdAt: i },
-          mockAudioBlob
-        );
+        useTtsStore
+          .getState()
+          .addToHistory(
+            { ...mockHistoryItem, id: String(i), createdAt: i },
+            mockAudioBlob,
+          );
       }
       expect(useTtsStore.getState().history).toHaveLength(50);
     });

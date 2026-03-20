@@ -173,15 +173,20 @@ Before deploying:
 
 ### Plan Codes
 
-| Code | Name | Access |
-|------|------|--------|
+| Code   | Name     | Access                       |
+| ------ | -------- | ---------------------------- |
 | `FREE` | Miễn phí | 2 voices (1 male + 1 female) |
-| `PRO` | Pro | All voices |
+| `PRO`  | Pro      | All voices                   |
 
 ### License Gating Helpers
 
 ```tsx
-import { canUseVoiceForPlan, getPlanFeatures, isLicenseActiveForPlan, PLAN_ACCESS } from "@/lib/hooks";
+import {
+  canUseVoiceForPlan,
+  getPlanFeatures,
+  isLicenseActiveForPlan,
+  PLAN_ACCESS,
+} from "@/lib/hooks";
 
 // Check if a voice can be used with a specific plan
 const canUse = canUseVoiceForPlan({ planCode: "PRO", voiceId: "some-voice" });
@@ -209,9 +214,7 @@ Use `upgradeToPlan` from `useAuthContext` to redirect users to the Genation Stor
 ```tsx
 const { upgradeToPlan } = useAuthContext();
 
-<button onClick={() => upgradeToPlan("PRO")}>
-  Nâng cấp Pro
-</button>
+<button onClick={() => upgradeToPlan("PRO")}>Nâng cấp Pro</button>;
 ```
 
 ---

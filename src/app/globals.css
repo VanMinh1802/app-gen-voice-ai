@@ -11,7 +11,12 @@
 
     /* Commercial palette - Blue primary (trust, product-ready) */
     --background: 222 47% 11%;
-    --background-gradient: linear-gradient(135deg, hsl(222, 47%, 11%) 0%, hsl(224, 45%, 14%) 50%, hsl(222, 47%, 10%) 100%);
+    --background-gradient: linear-gradient(
+      135deg,
+      hsl(222, 47%, 11%) 0%,
+      hsl(224, 45%, 14%) 50%,
+      hsl(222, 47%, 10%) 100%
+    );
 
     --foreground: 210 40% 98%;
     --card: 222 47% 14%;
@@ -57,7 +62,11 @@
   /* Light mode - Sáng, dễ đọc, contrast cao */
   .light {
     --background: 220 25% 97%;
-    --background-gradient: linear-gradient(180deg, hsl(220, 25%, 98%) 0%, hsl(220, 20%, 96%) 100%);
+    --background-gradient: linear-gradient(
+      180deg,
+      hsl(220, 25%, 98%) 0%,
+      hsl(220, 20%, 96%) 100%
+    );
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -88,36 +97,52 @@
     background-attachment: fixed;
     background-size: cover;
     color: hsl(var(--foreground));
-    font-family: var(--font-be-vietnam-pro), 'Be Vietnam Pro', sans-serif;
+    font-family: var(--font-be-vietnam-pro), "Be Vietnam Pro", sans-serif;
     min-height: 100vh;
   }
 
   /* Headings use Outfit for brand feel */
-  h1, h2, h3, h4, h5, h6,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
   .font-display {
-    font-family: var(--font-outfit), 'Outfit', sans-serif;
+    font-family: var(--font-outfit), "Outfit", sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   /* Subtle gradient background - neutral, product-like */
   body::before {
-    content: '';
+    content: "";
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background:
-      radial-gradient(ellipse 80% 50% at 20% 40%, hsl(221 83% 53% / 0.06), transparent),
-      radial-gradient(ellipse 60% 40% at 80% 60%, hsl(215 25% 30% / 0.04), transparent);
+      radial-gradient(
+        ellipse 80% 50% at 20% 40%,
+        hsl(221 83% 53% / 0.06),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 80% 60%,
+        hsl(215 25% 30% / 0.04),
+        transparent
+      );
     pointer-events: none;
     z-index: -1;
   }
 
   .light body::before {
-    background:
-      radial-gradient(ellipse 80% 50% at 20% 40%, hsl(221 83% 48% / 0.03), transparent);
+    background: radial-gradient(
+      ellipse 80% 50% at 20% 40%,
+      hsl(221 83% 48% / 0.03),
+      transparent
+    );
   }
 
   /* Focus states for accessibility - 4.5:1 contrast ratio */
@@ -161,10 +186,13 @@
     scroll-behavior: auto !important;
   }
 
-  /* Disable waveform animation */
+  /* Waveform animation — respects prefers-reduced-motion and is user-toggled */
   .waveform-bar {
+    transition: opacity 0.2s ease;
+  }
+
+  .waveform-bar.reduced-motion {
     animation: none !important;
-    height: 12px !important;
   }
 }
 
@@ -225,7 +253,9 @@
 
   /* Micro-interactions: Hover lift effect */
   .hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .hover-lift:hover {
@@ -279,7 +309,8 @@
 
 /* Waveform animation - thanh sóng (tên unique để tránh conflict) */
 @keyframes gen-voice-waveform-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scaleY(0.45);
     opacity: 0.75;
   }
@@ -309,7 +340,8 @@
 
 /* Logo 3D - xoay + nổi rõ (không đặt trong @layer để tránh bị ghi đè) */
 @keyframes logo-3d-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: perspective(320px) rotateY(-14deg) rotateX(4deg) scale(1);
   }
   50% {
@@ -345,7 +377,11 @@
   }
 
   .glass-card {
-    background: linear-gradient(135deg, rgba(30, 30, 60, 0.75) 0%, rgba(20, 20, 45, 0.8) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(30, 30, 60, 0.75) 0%,
+      rgba(20, 20, 45, 0.8) 100%
+    );
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -353,7 +389,11 @@
   }
 
   .glass-card-hover {
-    background: linear-gradient(135deg, rgba(35, 35, 65, 0.75) 0%, rgba(25, 25, 50, 0.8) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(35, 35, 65, 0.75) 0%,
+      rgba(25, 25, 50, 0.8) 100%
+    );
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -362,9 +402,15 @@
   }
 
   .glass-card-hover:hover {
-    background: linear-gradient(135deg, rgba(40, 45, 70, 0.8) 0%, rgba(30, 35, 55, 0.85) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(40, 45, 70, 0.8) 0%,
+      rgba(30, 35, 55, 0.85) 100%
+    );
     border-color: hsl(var(--primary) / 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px hsl(var(--primary) / 0.08);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.25),
+      0 0 0 1px hsl(var(--primary) / 0.08);
     transform: translateY(-1px);
   }
 
@@ -394,19 +440,25 @@
   .light .glass-card {
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
   .light .glass-card-hover {
     background: rgba(255, 255, 255, 0.98);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
   .light .glass-card-hover:hover {
     background: rgba(255, 255, 255, 1);
     border-color: hsl(var(--primary) / 0.25);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px hsl(var(--primary) / 0.1);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      0 0 0 1px hsl(var(--primary) / 0.1);
   }
 
   .light .glass-light {
@@ -465,7 +517,11 @@
 /* Gradient text - single primary for product look */
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-cyan)) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent-cyan)) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -496,7 +552,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .shimmer::after {
     position: absolute;
     top: 0;
@@ -512,9 +568,9 @@
       rgba(255, 255, 255, 0)
     );
     animation: shimmer 2s infinite;
-    content: '';
+    content: "";
   }
-  
+
   @keyframes shimmer {
     100% {
       transform: translateX(100%);
@@ -527,7 +583,7 @@
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .transition-smooth-fast {
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -536,14 +592,16 @@
 /* Hover lift effect */
 @layer utilities {
   .hover-lift {
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    transition:
+      transform 0.2s ease-out,
+      box-shadow 0.2s ease-out;
   }
-  
+
   .hover-lift:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
   }
-  
+
   .hover-lift:active {
     transform: translateY(0);
   }
@@ -559,7 +617,11 @@
 /* Card styles - Glassmorphism */
 @layer components {
   .card-elevated {
-    background: linear-gradient(135deg, rgba(35, 35, 65, 0.6) 0%, rgba(25, 25, 50, 0.7) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(35, 35, 65, 0.6) 0%,
+      rgba(25, 25, 50, 0.7) 100%
+    );
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -570,7 +632,11 @@
   }
 
   .card-interactive {
-    background: linear-gradient(135deg, rgba(35, 35, 65, 0.5) 0%, rgba(25, 25, 50, 0.6) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(35, 35, 65, 0.5) 0%,
+      rgba(25, 25, 50, 0.6) 100%
+    );
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -579,9 +645,15 @@
   }
 
   .card-interactive:hover {
-    background: linear-gradient(135deg, rgba(40, 50, 70, 0.6) 0%, rgba(30, 40, 55, 0.7) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(40, 50, 70, 0.6) 0%,
+      rgba(30, 40, 55, 0.7) 100%
+    );
     border-color: hsl(var(--primary) / 0.2);
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px hsl(var(--primary) / 0.08);
+    box-shadow:
+      0 10px 32px rgba(0, 0, 0, 0.25),
+      0 0 0 1px hsl(var(--primary) / 0.08);
     transform: translateY(-2px);
   }
 
@@ -601,7 +673,9 @@
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px hsl(var(--primary) / 0.35), inset 0 1px 0 hsl(var(--primary-light) / 0.3);
+    box-shadow:
+      0 2px 8px hsl(var(--primary) / 0.35),
+      inset 0 1px 0 hsl(var(--primary-light) / 0.3);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -610,7 +684,9 @@
 
   .btn-primary:hover:not(:disabled) {
     filter: brightness(1.06);
-    box-shadow: 0 4px 14px hsl(var(--primary) / 0.4), inset 0 1px 0 hsl(var(--primary-light) / 0.4);
+    box-shadow:
+      0 4px 14px hsl(var(--primary) / 0.4),
+      inset 0 1px 0 hsl(var(--primary-light) / 0.4);
     transform: translateY(-1px);
   }
 
@@ -746,12 +822,36 @@
   }
 }
 
+/* ============================================
+   ANIMATION DOCUMENTATION
+
+   This file contains CSS animations used in the TTS application.
+
+   ANIMATION CATEGORIES:
+   1. Base animations - Basic utility animations
+   2. Audio card animations - Stepped animations for GenerationSuccess component
+   3. Legacy animations - Older animations (kept for compatibility)
+
+   USAGE:
+   - Use .animate-* classes directly in JSX
+   - Stepped animations have "-stepped" suffix (clear, non-smooth)
+   - Waveform animations require transform-origin: center bottom
+
+   REDUCED MOTION:
+   All animations respect prefers-reduced-motion
+   ============================================ */
+
+/* ============================================
+   1. BASE ANIMATIONS
+   Standard utility animations for UI feedback
+   ============================================ */
+
 /* Animations */
 @layer utilities {
   .animate-in {
     animation: animate-in 0.3s ease-out;
   }
-  
+
   @keyframes animate-in {
     from {
       opacity: 0;
@@ -762,11 +862,11 @@
       transform: scale(1);
     }
   }
-  
+
   .animate-fade-up {
     animation: fade-up 0.4s ease-out;
   }
-  
+
   @keyframes fade-up {
     from {
       opacity: 0;
@@ -777,11 +877,11 @@
       transform: translateY(0);
     }
   }
-  
+
   .animate-scale-in {
     animation: scale-in 0.2s ease-out;
   }
-  
+
   @keyframes scale-in {
     from {
       opacity: 0;
@@ -793,6 +893,122 @@
     }
   }
 }
+
+/* ============================================
+   2. AUDIO CARD ANIMATIONS
+   Stepped animations for GenerationSuccess component
+   These animations are clear and non-smooth, using steps()
+   ============================================ */
+
+/* Shimmer - Background gradient sweep when playing */
+@keyframes shimmer-stepped {
+  0% { transform: translateX(-100%); }
+  25% { transform: translateX(0%); }
+  50% { transform: translateX(50%); }
+  75% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Waveform - Pulsing bars for audio visualization */
+@keyframes waveform-pulse-stepped {
+  0% { transform: scaleY(0.3); opacity: 0.5; }
+  25% { transform: scaleY(0.7); opacity: 0.8; }
+  50% { transform: scaleY(1); opacity: 1; }
+  75% { transform: scaleY(0.7); opacity: 0.8; }
+  100% { transform: scaleY(0.3); opacity: 0.5; }
+}
+
+/* Icon bounce - Bouncing headphone icon when playing */
+@keyframes icon-bounce-stepped {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.15) rotate(-2deg); }
+  50% { transform: scale(1.1) rotate(2deg); }
+  75% { transform: scale(1.15) rotate(-1deg); }
+}
+
+/* Border pulse - Glowing border when playing */
+@keyframes border-pulse-stepped {
+  0% { border-color: hsl(var(--primary) / 0.2); box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+  25% { border-color: hsl(var(--primary) / 0.4); box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1); }
+  50% { border-color: hsl(var(--primary) / 0.6); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+  75% { border-color: hsl(var(--primary) / 0.4); box-shadow: 0 0 0 2px hsl(var(--primary) / 0.1); }
+  100% { border-color: hsl(var(--primary) / 0.2); box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+
+/* Card entrance - Initial appearance animation */
+@keyframes card-entrance-stepped {
+  0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+  50% { opacity: 0.7; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Badge pulse - "Đang phát" badge animation */
+@keyframes badge-pulse-stepped {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  25% { opacity: 0.8; transform: scale(1.05); }
+  50% { opacity: 1; transform: scale(1.1); }
+  75% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* Animation utility classes */
+.animate-shimmer-stepped {
+  animation: shimmer-stepped 2s steps(4, end) infinite;
+}
+
+.animate-waveform-pulse-stepped {
+  animation: waveform-pulse-stepped 1.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-icon-bounce-stepped {
+  animation: icon-bounce-stepped 2s steps(4, end) infinite;
+}
+
+.animate-border-pulse-stepped {
+  animation: border-pulse-stepped 2s steps(4, end) infinite;
+}
+
+.animate-card-entrance-stepped {
+  animation: card-entrance-stepped 0.6s steps(3, end) forwards;
+}
+
+.animate-badge-pulse-stepped {
+  animation: badge-pulse-stepped 1.5s steps(4, end) infinite;
+}
+
+/* ============================================
+   3. LEGACY/WAVEFORM ANIMATIONS
+   Kept for backward compatibility
+   ============================================ */
+
+/* Waveform animation - thanh sóng (tên unique để tránh conflict) */
+@keyframes gen-voice-waveform-pulse {
+  0%, 100% { transform: scaleY(0.45); opacity: 0.75; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.waveform-bar {
+  width: 3px;
+  min-width: 3px;
+  background-color: hsl(var(--primary));
+  border-radius: 99px;
+  margin: 0 1px;
+  transform-origin: center bottom;
+  animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite;
+  -webkit-animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Ép animation chạy (độ ưu tiên cao, tránh bị ghi đè) */
+.gen-voice-waveform .waveform-bar {
+  animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite !important;
+  -webkit-animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite !important;
+}
+
+/* ============================================
+   4. STAGGER ANIMATIONS
+   For list items
+   ============================================ */
 
 /* Stagger animations for lists */
 .stagger-item {

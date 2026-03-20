@@ -26,14 +26,20 @@ function AuthCallbackContent() {
     if (error) {
       setStatus("error");
       setMessage(errorDescription || error);
-      router.replace("/?auth_error=true&message=" + encodeURIComponent(errorDescription || error));
+      router.replace(
+        "/?auth_error=true&message=" +
+          encodeURIComponent(errorDescription || error),
+      );
       return;
     }
 
     if (!code || !state) {
       setStatus("error");
       setMessage("Thiếu code hoặc state");
-      router.replace("/?auth_error=true&message=" + encodeURIComponent("Missing authorization code"));
+      router.replace(
+        "/?auth_error=true&message=" +
+          encodeURIComponent("Missing authorization code"),
+      );
       return;
     }
 
@@ -51,7 +57,9 @@ function AuthCallbackContent() {
         }
       } catch (err) {
         setStatus("error");
-        setMessage("Lỗi cấu hình: " + (err instanceof Error ? err.message : "Unknown"));
+        setMessage(
+          "Lỗi cấu hình: " + (err instanceof Error ? err.message : "Unknown"),
+        );
         router.replace("/?auth_error=true&message=Config+error");
         return;
       }
@@ -68,9 +76,12 @@ function AuthCallbackContent() {
         if (!cancelled) {
           setStatus("error");
           const msg = err instanceof Error ? err.message : "Unknown error";
-          const cause = err instanceof Error && err.cause ? String(err.cause) : "";
+          const cause =
+            err instanceof Error && err.cause ? String(err.cause) : "";
           setMessage(msg + (cause ? ` (${cause})` : ""));
-          router.replace("/?auth_error=true&message=" + encodeURIComponent(msg));
+          router.replace(
+            "/?auth_error=true&message=" + encodeURIComponent(msg),
+          );
         }
       }
     })();

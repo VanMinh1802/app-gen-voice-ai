@@ -53,7 +53,8 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         const matchRegion = voice.region.toLowerCase().includes(query);
         const matchGender = voice.gender.toLowerCase().includes(query);
         const matchStyle = voice.style.toLowerCase().includes(query);
-        if (!matchName && !matchRegion && !matchGender && !matchStyle) return false;
+        if (!matchName && !matchRegion && !matchGender && !matchStyle)
+          return false;
       }
       // Region filter
       if (regionFilter !== "all" && voice.region !== regionFilter) return false;
@@ -65,7 +66,11 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
     });
   }, [regionFilter, genderFilter, styleFilter, searchQuery]);
 
-  const hasActiveFilters = regionFilter !== "all" || genderFilter !== "all" || styleFilter !== "all" || searchQuery.trim().length > 0;
+  const hasActiveFilters =
+    regionFilter !== "all" ||
+    genderFilter !== "all" ||
+    styleFilter !== "all" ||
+    searchQuery.trim().length > 0;
 
   const handleClearFilters = useCallback(() => {
     setRegionFilter("all");
@@ -79,7 +84,10 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
   useEffect(() => {
     if (!showAdvancedFilter) return;
     const handleClick = (e: MouseEvent) => {
-      if (advancedFilterRef.current && !advancedFilterRef.current.contains(e.target as Node)) {
+      if (
+        advancedFilterRef.current &&
+        !advancedFilterRef.current.contains(e.target as Node)
+      ) {
         setShowAdvancedFilter(false);
       }
     };
@@ -87,25 +95,34 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showAdvancedFilter]);
 
-  const handleSelectVoice = useCallback((voice: VoiceMetadata) => {
-    const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}` as any;
-    setSettings({ voice: voiceId, model: voiceId });
-    onSelectVoice?.(voiceId);
-  }, [setSettings, onSelectVoice]);
+  const handleSelectVoice = useCallback(
+    (voice: VoiceMetadata) => {
+      const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}` as any;
+      setSettings({ voice: voiceId, model: voiceId });
+      onSelectVoice?.(voiceId);
+    },
+    [setSettings, onSelectVoice],
+  );
 
-  const handlePreview = useCallback((voice: VoiceMetadata) => {
-    setPreviewingVoice(voice.id);
-    previewVoice(voice.id);
-    onPreview?.(voice.id);
-  }, [previewVoice, onPreview]);
+  const handlePreview = useCallback(
+    (voice: VoiceMetadata) => {
+      setPreviewingVoice(voice.id);
+      previewVoice(voice.id);
+      onPreview?.(voice.id);
+    },
+    [previewVoice, onPreview],
+  );
 
   return (
     <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar pb-32">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-foreground mb-2 tracking-tight">Thư viện giọng</h1>
+        <h1 className="text-3xl font-black text-foreground mb-2 tracking-tight">
+          Thư viện giọng
+        </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Khám phá hơn {voiceMetadata.length} giọng đọc AI chuyên nghiệp với nhiều vùng miền và phong cách khác nhau cho dự án của bạn.
+          Khám phá hơn {voiceMetadata.length} giọng đọc AI chuyên nghiệp với
+          nhiều vùng miền và phong cách khác nhau cho dự án của bạn.
         </p>
       </div>
 
@@ -133,20 +150,22 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
 
         {/* Region Filter Buttons */}
         <div className="flex items-center bg-card border border-primary/10 rounded-lg p-1">
-          {(["all", "Miền Bắc", "Miền Trung", "Miền Nam"] as const).map((region) => (
-            <button
-              key={region}
-              onClick={() => setRegionFilter(region)}
-              className={cn(
-                "px-4 py-1.5 rounded-md text-xs font-semibold transition-colors",
-                regionFilter === region
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {region === "all" ? "Tất cả" : region}
-            </button>
-          ))}
+          {(["all", "Miền Bắc", "Miền Trung", "Miền Nam"] as const).map(
+            (region) => (
+              <button
+                key={region}
+                onClick={() => setRegionFilter(region)}
+                className={cn(
+                  "px-4 py-1.5 rounded-md text-xs font-semibold transition-colors",
+                  regionFilter === region
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {region === "all" ? "Tất cả" : region}
+              </button>
+            ),
+          )}
         </div>
 
         <div className="h-8 w-px bg-primary/10 mx-2 hidden sm:block"></div>
@@ -171,7 +190,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
                 "flex items-center gap-2 bg-card border text-xs rounded-lg px-4 py-2 transition-colors",
                 showAdvancedFilter
                   ? "border-primary text-primary"
-                  : "border-primary/10 text-muted-foreground hover:text-foreground"
+                  : "border-primary/10 text-muted-foreground hover:text-foreground",
               )}
               aria-expanded={showAdvancedFilter}
               aria-label="Lọc nâng cao"
@@ -181,7 +200,9 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
             </button>
             {showAdvancedFilter && (
               <div className="absolute right-0 top-full mt-2 z-50 min-w-[200px] bg-card border border-primary/10 rounded-xl shadow-xl p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">Phong cách</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-2">
+                  Phong cách
+                </p>
                 <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
                   <button
                     type="button"
@@ -190,7 +211,9 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
                     }}
                     className={cn(
                       "text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                      styleFilter === "all" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      styleFilter === "all"
+                        ? "bg-primary/20 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     Tất cả
@@ -202,7 +225,9 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
                       onClick={() => setStyleFilter(style)}
                       className={cn(
                         "text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                        styleFilter === style ? "bg-primary/20 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        styleFilter === style
+                          ? "bg-primary/20 text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
                       )}
                     >
                       {style}
@@ -218,7 +243,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="text-xs text-red-400 hover:text-red-300 underline"
+            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/50 rounded-lg transition-colors"
             aria-label="Xóa bộ lọc"
           >
             Xóa bộ lọc
@@ -230,9 +255,15 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredVoices.map((voice) => {
           const isActive = config.activeVoiceIds.includes(voice.id);
-          const isSelected = isActive && settings.voice === `${CUSTOM_MODEL_PREFIX}${voice.id}`;
+          const isSelected =
+            isActive && settings.voice === `${CUSTOM_MODEL_PREFIX}${voice.id}`;
           const isPreviewing = previewingVoice === voice.id;
-          const isLockedForPlan = isActive && !canUseVoiceForPlan({ planCode: activePlanCode, voiceId: voice.id });
+          const isLockedForPlan =
+            isActive &&
+            !canUseVoiceForPlan({
+              planCode: activePlanCode,
+              voiceId: voice.id,
+            });
 
           return (
             <VoiceCardShared
@@ -257,8 +288,12 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
           <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4">
             <SearchX className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Không tìm thấy giọng nói</h3>
-          <p className="text-muted-foreground text-sm">Thử thay đổi bộ lọc để xem thêm giọng nói.</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Không tìm thấy giọng nói
+          </h3>
+          <p className="text-muted-foreground text-sm">
+            Thử thay đổi bộ lọc để xem thêm giọng nói.
+          </p>
         </div>
       )}
     </div>

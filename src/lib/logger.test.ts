@@ -28,7 +28,9 @@ describe("logger", () => {
     vi.spyOn(console, "warn").mockImplementation(consoleSpy.warn as any);
     vi.spyOn(console, "error").mockImplementation(consoleSpy.error as any);
     vi.spyOn(console, "group").mockImplementation(consoleSpy.group as any);
-    vi.spyOn(console, "groupEnd").mockImplementation(consoleSpy.groupEnd as any);
+    vi.spyOn(console, "groupEnd").mockImplementation(
+      consoleSpy.groupEnd as any,
+    );
   });
 
   afterEach(() => {
@@ -133,7 +135,7 @@ describe("logger", () => {
         analytics.track("test_event", { key: "value" });
         expect(consoleSpy.info).toHaveBeenCalledWith(
           "[Analytics] Track: test_event",
-          { key: "value" }
+          { key: "value" },
         );
       });
 
@@ -141,15 +143,13 @@ describe("logger", () => {
         analytics.identify("user123", { name: "Test" });
         expect(consoleSpy.info).toHaveBeenCalledWith(
           "[Analytics] Identify: user123",
-          { name: "Test" }
+          { name: "Test" },
         );
       });
 
       it("logs page calls", () => {
         analytics.page("/home");
-        expect(consoleSpy.info).toHaveBeenCalledWith(
-          "[Analytics] Page: /home"
-        );
+        expect(consoleSpy.info).toHaveBeenCalledWith("[Analytics] Page: /home");
       });
     });
 

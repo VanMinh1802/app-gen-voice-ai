@@ -49,14 +49,14 @@ git push -u origin main
 
 Điền form **Create a project**:
 
-| Trường | Giá trị |
-|--------|--------|
-| **Project name** | `vietvoice-ai` (hoặc tên khác) |
-| **Production branch** | `main` |
-| **Framework preset** | **Next.js** (nếu có trong danh sách) hoặc **None** |
-| **Build command** | `npx @cloudflare/next-on-pages@1` |
-| **Build output directory** | `.vercel/output/static` |
-| **Root directory** | Để trống (nếu repo là project gốc) |
+| Trường                     | Giá trị                                            |
+| -------------------------- | -------------------------------------------------- |
+| **Project name**           | `vietvoice-ai` (hoặc tên khác)                     |
+| **Production branch**      | `main`                                             |
+| **Framework preset**       | **Next.js** (nếu có trong danh sách) hoặc **None** |
+| **Build command**          | `npx @cloudflare/next-on-pages@1`                  |
+| **Build output directory** | `.vercel/output/static`                            |
+| **Root directory**         | Để trống (nếu repo là project gốc)                 |
 
 **Lưu ý:** Dùng next-on-pages adapter để build cho Cloudflare Pages. Output directory `.vercel/output/static` (đã xử lý, không có webpack cache).
 

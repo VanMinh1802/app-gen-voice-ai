@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import { X, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,16 +42,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const value = useMemo(() => ({
-    toasts,
-    addToast,
-    removeToast,
-  }), [toasts, addToast, removeToast]);
+  const value = useMemo(
+    () => ({
+      toasts,
+      addToast,
+      removeToast,
+    }),
+    [toasts, addToast, removeToast],
+  );
 
   return (
-    <ToastContext.Provider value={value}>
-      {children}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
   );
 }
 
@@ -123,7 +131,7 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
     <div
       className={cn(
         "flex items-center gap-3 p-4 rounded-xl border animate-fade-in",
-        colors[toast.type as "success" | "info"]
+        colors[toast.type as "success" | "info"],
       )}
       role="alert"
     >
@@ -158,7 +166,11 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 }
 
 // Global toast listener component
-export function GlobalToastListener({ addToast }: { addToast: (toast: Omit<Toast, "id">) => void }) {
+export function GlobalToastListener({
+  addToast,
+}: {
+  addToast: (toast: Omit<Toast, "id">) => void;
+}) {
   useEffect(() => {
     const handleToast = (event: CustomEvent<Omit<Toast, "id">>) => {
       addToast(event.detail);
@@ -166,7 +178,10 @@ export function GlobalToastListener({ addToast }: { addToast: (toast: Omit<Toast
 
     window.addEventListener("genvoice-toast", handleToast as EventListener);
     return () => {
-      window.removeEventListener("genvoice-toast", handleToast as EventListener);
+      window.removeEventListener(
+        "genvoice-toast",
+        handleToast as EventListener,
+      );
     };
   }, [addToast]);
 

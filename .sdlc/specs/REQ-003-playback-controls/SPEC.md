@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-003                                               |
-| **Feature Name**   | Playback Controls                                     |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P0 (Critical)                                         |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.0.0                                               |
+| Field              | Value             |
+| ------------------ | ----------------- |
+| **Feature ID**     | REQ-003           |
+| **Feature Name**   | Playback Controls |
+| **Status**         | ✅ Completed      |
+| **Priority**       | P0 (Critical)     |
+| **Owner**          | Development Team  |
+| **Created**        | 2026-03-10        |
+| **Target Release** | v1.0.0            |
 
 ---
 
@@ -68,17 +68,17 @@ Users need to control audio playback to review generated speech.
 
 ### Files Created
 
-| File | Description |
-| ---- | ----------- |
+| File                                 | Description               |
+| ------------------------------------ | ------------------------- |
 | `src/components/tts/AudioPlayer.tsx` | Fixed bottom audio player |
 
 ### State Management
 
-| State | Solution | Justification |
-| ----- | -------- | ------------- |
-| Current audio | Zustand store | Shared state |
-| Playing status | React useState | Real-time updates |
-| Progress | HTMLAudioElement events | Direct DOM |
+| State          | Solution                | Justification     |
+| -------------- | ----------------------- | ----------------- |
+| Current audio  | Zustand store           | Shared state      |
+| Playing status | React useState          | Real-time updates |
+| Progress       | HTMLAudioElement events | Direct DOM        |
 
 ---
 

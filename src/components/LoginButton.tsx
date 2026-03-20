@@ -1,6 +1,6 @@
 /**
  * LoginButton Component
- * 
+ *
  * Button for signing in with Genation.
  * Shows different states: loading, signed in, or sign in prompt.
  */
@@ -25,7 +25,8 @@ export function LoginButton({
   showPlanBadge = true,
   className,
 }: LoginButtonProps) {
-  const { user, isLoading, isAuthenticated, isConfigured, signIn, signOut } = useAuth();
+  const { user, isLoading, isAuthenticated, isConfigured, signIn, signOut } =
+    useAuth();
   const { activePlanCode, isLoading: isLicenseLoading } = useLicense();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -46,7 +47,7 @@ export function LoginButton({
           "flex items-center gap-2 text-muted-foreground text-sm",
           size === "sm" && "text-xs",
           size === "lg" && "text-base",
-          className
+          className,
         )}
       >
         <span>Cần cấu hình Genation SDK</span>
@@ -65,7 +66,7 @@ export function LoginButton({
           size === "sm" && "px-3 py-1.5 text-xs",
           size === "md" && "px-4 py-2 text-sm",
           size === "lg" && "px-6 py-3 text-base",
-          className
+          className,
         )}
       >
         <Loader2 className="w-4 h-4 animate-spin" />
@@ -76,8 +77,8 @@ export function LoginButton({
 
   // Authenticated - show user info and sign out
   if (isAuthenticated && user) {
-    const planInfo = activePlanCode 
-      ? Object.values(PLAN_ACCESS).find(p => p.code === activePlanCode)
+    const planInfo = activePlanCode
+      ? Object.values(PLAN_ACCESS).find((p) => p.code === activePlanCode)
       : null;
 
     return (
@@ -87,7 +88,7 @@ export function LoginButton({
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow-lg shadow-primary/25">
             {user.name?.charAt(0) || user.email?.charAt(0) || "?"}
           </div>
-          
+
           {/* User info */}
           <div className="hidden sm:block">
             <p className="text-sm font-medium text-foreground">
@@ -112,7 +113,7 @@ export function LoginButton({
             size === "sm" && "px-2 py-1.5 text-xs",
             size === "md" && "px-3 py-2 text-sm",
             size === "lg" && "px-4 py-3 text-base",
-            className
+            className,
           )}
           title="Đăng xuất"
         >
@@ -132,13 +133,16 @@ export function LoginButton({
       onClick={signIn}
       className={cn(
         "flex items-center gap-2 rounded-xl font-medium transition-all",
-        variant === "default" && "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25",
-        variant === "outline" && "border-2 border-primary text-primary hover:bg-primary/10",
-        variant === "ghost" && "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
+        variant === "default" &&
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/25",
+        variant === "outline" &&
+          "border-2 border-primary text-primary hover:bg-primary/10",
+        variant === "ghost" &&
+          "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
         size === "sm" && "px-3 py-1.5 text-xs",
         size === "md" && "px-4 py-2 text-sm",
         size === "lg" && "px-6 py-3 text-base",
-        className
+        className,
       )}
     >
       <Sparkles className="w-4 h-4" />

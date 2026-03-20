@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-002                                               |
-| **Feature Name**   | TTS Generation                                        |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P0 (Critical)                                         |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.0.0                                               |
+| Field              | Value            |
+| ------------------ | ---------------- |
+| **Feature ID**     | REQ-002          |
+| **Feature Name**   | TTS Generation   |
+| **Status**         | ✅ Completed     |
+| **Priority**       | P0 (Critical)    |
+| **Owner**          | Development Team |
+| **Created**        | 2026-03-10       |
+| **Target Release** | v1.0.0           |
 
 ---
 
@@ -87,40 +87,40 @@ Users need to convert Vietnamese text to speech in the browser without server-si
 
 ### Files Created
 
-| File | Description |
-| ---- | ----------- |
-| `src/lib/piper/piperTts.ts` | Piper wrapper class |
-| `src/lib/piper/piperCustom.ts` | Custom ONNX model loader |
-| `src/workers/tts-worker.ts` | Web Worker for TTS |
-| `src/features/tts/hooks/useTtsGenerate.ts` | Main generation hook |
-| `src/components/tts/MainContent.tsx` | Main UI component |
+| File                                       | Description              |
+| ------------------------------------------ | ------------------------ |
+| `src/lib/piper/piperTts.ts`                | Piper wrapper class      |
+| `src/lib/piper/piperCustom.ts`             | Custom ONNX model loader |
+| `src/workers/tts-worker.ts`                | Web Worker for TTS       |
+| `src/features/tts/hooks/useTtsGenerate.ts` | Main generation hook     |
+| `src/components/tts/MainContent.tsx`       | Main UI component        |
 
 ### State Management
 
-| State | Solution | Justification |
-| ----- | -------- | ------------- |
-| Text input | React useState | Simple, component-level |
-| Voice selection | Zustand store | Shared across components |
-| Generation progress | React useState | Real-time updates |
-| Generated audio | Zustand store | Shared for playback |
+| State               | Solution       | Justification            |
+| ------------------- | -------------- | ------------------------ |
+| Text input          | React useState | Simple, component-level  |
+| Voice selection     | Zustand store  | Shared across components |
+| Generation progress | React useState | Real-time updates        |
+| Generated audio     | Zustand store  | Shared for playback      |
 
 ### Dependencies
 
-| Library | Version | Purpose |
-| -------- | ------- | --------|
-| @mintplex-labs/piper-tts-web | ^1.0 | TTS engine |
-| onnxruntime-web | ^1.16 | ONNX inference |
+| Library                      | Version | Purpose        |
+| ---------------------------- | ------- | -------------- |
+| @mintplex-labs/piper-tts-web | ^1.0    | TTS engine     |
+| onnxruntime-web              | ^1.16   | ONNX inference |
 
 ---
 
 ## ⚠️ Edge Cases
 
-| Case | Handling |
-| ---- | -------- |
-| Empty text | Disable generate button |
-| Model loading fails | Show error toast, allow retry |
-| Browser doesn't support WASM | Show compatibility error |
-| Generation timeout | Cancel after 60s, show error |
+| Case                         | Handling                      |
+| ---------------------------- | ----------------------------- |
+| Empty text                   | Disable generate button       |
+| Model loading fails          | Show error toast, allow retry |
+| Browser doesn't support WASM | Show compatibility error      |
+| Generation timeout           | Cancel after 60s, show error  |
 
 ---
 

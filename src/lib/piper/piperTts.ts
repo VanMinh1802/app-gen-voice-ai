@@ -1,4 +1,8 @@
-import { TtsSession, type InferenceConfig, type VoiceId } from "@mintplex-labs/piper-tts-web";
+import {
+  TtsSession,
+  type InferenceConfig,
+  type VoiceId,
+} from "@mintplex-labs/piper-tts-web";
 
 export interface PiperTtsOptions {
   voiceId: string;
@@ -25,7 +29,7 @@ export async function initTtsSession(voiceId: string): Promise<TtsSession> {
 export async function synthesize(
   text: string,
   options: PiperTtsOptions,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<Float32Array> {
   const session = await initTtsSession(options.voiceId);
 
@@ -59,7 +63,7 @@ function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
     view.getUint8(0),
     view.getUint8(1),
     view.getUint8(2),
-    view.getUint8(3)
+    view.getUint8(3),
   );
 
   if (riff !== "RIFF") {
@@ -77,7 +81,7 @@ function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
       view.getUint8(offset),
       view.getUint8(offset + 1),
       view.getUint8(offset + 2),
-      view.getUint8(offset + 3)
+      view.getUint8(offset + 3),
     );
     const chunkSize = view.getUint32(offset + 4, true);
 

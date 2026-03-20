@@ -1,13 +1,13 @@
 /**
  * useLicense Hook - License and plan management
- * 
+ *
  * Provides license state and methods for checking user plan access.
  * Integrates with Genation SDK for license verification.
- * 
+ *
  * Plan codes:
  * - "FREE" - Free tier (1 giọng nam + 1 giọng nữ)
  * - "PRO" - Pro tier (tất cả model giọng)
- * 
+ *
  * License status:
  * - "active" - License is active and valid
  * - "expired" - License has expired
@@ -96,7 +96,10 @@ export function isProPlanCode(planCode: string | null): boolean {
  * - Free: only 2 allowed voices can be used for generation
  * - Pro: all voices can be used
  */
-export function canUseVoiceForPlan(opts: { planCode: string | null; voiceId: string }): boolean {
+export function canUseVoiceForPlan(opts: {
+  planCode: string | null;
+  voiceId: string;
+}): boolean {
   const { planCode, voiceId } = opts;
   if (isProPlanCode(planCode)) return true;
   // Treat null/unknown as FREE for MVP
@@ -109,7 +112,7 @@ export function canUseVoiceForPlan(opts: { planCode: string | null; voiceId: str
 export function getPlanFeatures(planCode: string | null) {
   if (!planCode) return PLAN_ACCESS.FREE.features;
   if (isProPlanCode(planCode)) return PLAN_ACCESS.PRO.features;
-  const plan = Object.values(PLAN_ACCESS).find(p => p.code === planCode);
+  const plan = Object.values(PLAN_ACCESS).find((p) => p.code === planCode);
   return plan?.features || PLAN_ACCESS.FREE.features;
 }
 
@@ -119,9 +122,12 @@ export function getPlanFeatures(planCode: string | null) {
  * @param licenses - Array of user licenses
  * @returns true if user has an active license for the given plan
  */
-export function isLicenseActiveForPlan(planCode: string, licenses: License[]): boolean {
+export function isLicenseActiveForPlan(
+  planCode: string,
+  licenses: License[],
+): boolean {
   return licenses.some(
-    (license) => license.status === "active" && license.plan.code === planCode
+    (license) => license.status === "active" && license.plan.code === planCode,
   );
 }
 
@@ -173,7 +179,9 @@ function useLicenseInner(): UseLicenseReturn {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to get licenses");
+          setError(
+            err instanceof Error ? err.message : "Failed to get licenses",
+          );
           setIsVerified(false);
         }
       } finally {
@@ -209,7 +217,9 @@ function useLicenseInner(): UseLicenseReturn {
       setIsVerified(true);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to refresh licenses");
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh licenses",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +240,7 @@ function useLicenseInner(): UseLicenseReturn {
       if (!isAuth || !isVerified) return false;
       return await hasActivePlan(planCode);
     },
-    [isAuth, isVerified]
+    [isAuth, isVerified],
   );
 
   const checkProAccessFn = useCallback(async (): Promise<boolean> => {
@@ -239,10 +249,12 @@ function useLicenseInner(): UseLicenseReturn {
   }, [isAuth]);
 
   const upgradeToPlan = useCallback((planCode: string) => {
-    const storeUrl = process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
-    const redirectUri = typeof window !== "undefined" 
-      ? `${window.location.origin}/auth/callback`
-      : "http://localhost:3000/auth/callback";
+    const storeUrl =
+      process.env.NEXT_PUBLIC_GENATION_STORE_URL || "https://genation.ai";
+    const redirectUri =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : "http://localhost:3000/auth/callback";
     // Build the store URL with plan and redirect back to app after purchase
     const purchaseUrl = `${storeUrl}?plan=${planCode}&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.location.href = purchaseUrl;

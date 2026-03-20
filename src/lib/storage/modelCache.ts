@@ -40,7 +40,9 @@ async function openDB(): Promise<IDBDatabase> {
         const objectStore = database.createObjectStore(STORE_NAME, {
           keyPath: "voiceId",
         });
-        objectStore.createIndex("downloadedAt", "downloadedAt", { unique: false });
+        objectStore.createIndex("downloadedAt", "downloadedAt", {
+          unique: false,
+        });
       }
     };
   });
@@ -53,7 +55,7 @@ export async function saveModelToCache(
   voiceId: string,
   modelData: ArrayBuffer,
   config: PiperVoiceConfig,
-  version: string
+  version: string,
 ): Promise<void> {
   const database = await openDB();
   const record: CachedModel = {
@@ -81,8 +83,12 @@ export async function saveModelToCache(
  * version may be undefined for records cached before versioning was added.
  */
 export async function loadModelFromCache(
-  voiceId: string
-): Promise<{ model: ArrayBuffer; config: PiperVoiceConfig; version?: string } | null> {
+  voiceId: string,
+): Promise<{
+  model: ArrayBuffer;
+  config: PiperVoiceConfig;
+  version?: string;
+} | null> {
   const database = await openDB();
 
   return new Promise((resolve, reject) => {
@@ -148,7 +154,9 @@ export async function isModelCached(voiceId: string): Promise<boolean> {
 /**
  * Get cached version for a voice. Returns null if not cached.
  */
-export async function getCachedVersion(voiceId: string): Promise<string | null> {
+export async function getCachedVersion(
+  voiceId: string,
+): Promise<string | null> {
   const database = await openDB();
 
   return new Promise((resolve, reject) => {

@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls, isBlobUrl } from "@/lib/storage/blobUrl";
+import {
+  createBlobUrl,
+  revokeBlobUrl,
+  revokeAllBlobUrls,
+  isBlobUrl,
+} from "@/lib/storage/blobUrl";
 
 describe("blobUrl manager", () => {
   beforeEach(() => {
@@ -11,7 +16,7 @@ describe("blobUrl manager", () => {
     it("creates a blob URL", () => {
       const blob = new Blob(["test"], { type: "audio/wav" });
       const url = createBlobUrl(blob);
-      
+
       expect(url).toContain("blob:");
       expect(isBlobUrl(url)).toBe(true);
     });
@@ -21,9 +26,9 @@ describe("blobUrl manager", () => {
     it("revokes a blob URL", () => {
       const blob = new Blob(["test"], { type: "audio/wav" });
       const url = createBlobUrl(blob);
-      
+
       revokeBlobUrl(url);
-      
+
       expect(isBlobUrl(url)).toBe(false);
     });
 
@@ -44,12 +49,12 @@ describe("blobUrl manager", () => {
     it("revokes all tracked blob URLs", () => {
       const blob1 = new Blob(["test1"], { type: "audio/wav" });
       const blob2 = new Blob(["test2"], { type: "audio/wav" });
-      
+
       const url1 = createBlobUrl(blob1);
       const url2 = createBlobUrl(blob2);
-      
+
       revokeAllBlobUrls();
-      
+
       expect(isBlobUrl(url1)).toBe(false);
       expect(isBlobUrl(url2)).toBe(false);
     });
@@ -59,7 +64,7 @@ describe("blobUrl manager", () => {
     it("returns true for tracked blob URL", () => {
       const blob = new Blob(["test"], { type: "audio/wav" });
       const url = createBlobUrl(blob);
-      
+
       expect(isBlobUrl(url)).toBe(true);
     });
 

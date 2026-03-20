@@ -11,11 +11,12 @@ import { createClient, GenationClient, Session } from "@genation/sdk";
 import { getGenationConfig } from "./config";
 
 /** License type inferred from SDK getLicenses() return */
-export type License = NonNullable<
-  Awaited<ReturnType<GenationClient["getLicenses"]>>
-> extends (infer E)[]
-  ? E
-  : never;
+export type License =
+  NonNullable<
+    Awaited<ReturnType<GenationClient["getLicenses"]>>
+  > extends (infer E)[]
+    ? E
+    : never;
 
 let genationClient: GenationClient | null = null;
 
@@ -73,7 +74,7 @@ export async function hasActivePlan(planCode: string): Promise<boolean> {
     const licenses = await getLicenses();
     return licenses.some(
       (license) =>
-        license.status === "active" && license.plan.code === planCode
+        license.status === "active" && license.plan.code === planCode,
     );
   } catch {
     return false;
@@ -100,7 +101,7 @@ export async function checkProAccess(): Promise<boolean> {
   if (!licenses) return false;
   return licenses.some(
     (license) =>
-      isProPlanCode(license.plan.code) && license.status === "active"
+      isProPlanCode(license.plan.code) && license.status === "active",
   );
 }
 
@@ -159,7 +160,7 @@ export async function signOut(): Promise<void> {
  * Listen to auth state changes
  */
 export function onAuthStateChange(
-  callback: (event: string, session: Session | null) => void
+  callback: (event: string, session: Session | null) => void,
 ): { unsubscribe: () => void } {
   const client = getGenationClient();
   if (!client) return { unsubscribe: () => {} };

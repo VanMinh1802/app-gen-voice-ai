@@ -32,12 +32,12 @@ NEXT_PUBLIC_GENATION_REDIRECT_URI=http://localhost:3000/auth/callback
 2. Vào **Settings** → **Environment variables**.
 3. Thêm các biến sau (Production và Preview nếu cần):
 
-| Tên | Giá trị | Ghi chú |
-|-----|--------|--------|
-| `NEXT_PUBLIC_GENATION_CLIENT_ID` | `98459c3f-dabd-4d42-8219-0488e6a3acbf` | Bắt buộc |
-| `GENATION_CLIENT_SECRET` | *(secret từ Genation)* | Bắt buộc (cho callback server-side) |
-| **`NEXT_PUBLIC_GENATION_CLIENT_SECRET`** | *(cùng giá trị với GENATION_CLIENT_SECRET)* | **Bắt buộc** – nút Đăng nhập chạy trên browser, Next.js chỉ embed biến `NEXT_PUBLIC_*` vào client |
-| `NEXT_PUBLIC_GENATION_REDIRECT_URI` | `https://app-gen-voice-ai.pages.dev/auth/callback` | Khớp với Redirect URI đã đăng ký trên Genation |
+| Tên                                      | Giá trị                                            | Ghi chú                                                                                           |
+| ---------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_GENATION_CLIENT_ID`         | `98459c3f-dabd-4d42-8219-0488e6a3acbf`             | Bắt buộc                                                                                          |
+| `GENATION_CLIENT_SECRET`                 | _(secret từ Genation)_                             | Bắt buộc (cho callback server-side)                                                               |
+| **`NEXT_PUBLIC_GENATION_CLIENT_SECRET`** | _(cùng giá trị với GENATION_CLIENT_SECRET)_        | **Bắt buộc** – nút Đăng nhập chạy trên browser, Next.js chỉ embed biến `NEXT_PUBLIC_*` vào client |
+| `NEXT_PUBLIC_GENATION_REDIRECT_URI`      | `https://app-gen-voice-ai.pages.dev/auth/callback` | Khớp với Redirect URI đã đăng ký trên Genation                                                    |
 
 **Lưu ý:** Thiếu `NEXT_PUBLIC_GENATION_CLIENT_SECRET` → production vẫn hiển thị "Chưa cấu hình Genation SDK" và có thể gây React hydration error #418 (server có secret, client không có → render khác nhau).
 

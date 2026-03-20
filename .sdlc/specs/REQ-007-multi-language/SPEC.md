@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-007                                               |
-| **Feature Name**   | Multi-Language Support                                 |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P1 (High)                                             |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.1.0                                               |
+| Field              | Value                  |
+| ------------------ | ---------------------- |
+| **Feature ID**     | REQ-007                |
+| **Feature Name**   | Multi-Language Support |
+| **Status**         | ✅ Completed           |
+| **Priority**       | P1 (High)              |
+| **Owner**          | Development Team       |
+| **Created**        | 2026-03-10             |
+| **Target Release** | v1.1.0                 |
 
 ---
 

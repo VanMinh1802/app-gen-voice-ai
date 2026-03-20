@@ -60,15 +60,12 @@ export const config = {
     "anhkhoi",
     "banmai",
     "chieuthanh",
-    "hoaimy_goc",
     "lacphi",
     "manhdung",
     "maiphuong",
     "minhkhang",
     "minhquang",
     "mytam2",
-    "namminh",
-    "namminh_goc",
     "ngocngan",
     "ngochuyen",
   ] as string[],
@@ -76,9 +73,6 @@ export const config = {
   customModels: [
     { id: "ngochuyen", name: "Ngọc Huyền (custom)" },
     { id: "ngocngan", name: "Ngọc Ngạn (custom)" },
-    { id: "namminh", name: "Nam Minh (custom)" },
-    { id: "namminh_goc", name: "Nam Minh Gốc (custom)" },
-    { id: "hoaimy_goc", name: "Hoài My Gốc (custom)" },
     { id: "banmai", name: "Ban Mai (custom)" },
     { id: "manhdung", name: "Mạnh Dũng (custom)" },
     { id: "minhquang", name: "Minh Quang (custom)" },
@@ -106,9 +100,7 @@ export const popularVoiceIds: string[] = [
 ];
 
 /** Voice ID type */
-export type VoiceId =
-  | (typeof config.voices)[number]["id"]
-  | `custom:${string}`;
+export type VoiceId = (typeof config.voices)[number]["id"] | `custom:${string}`;
 
 /** Calculate minimum text length for streaming: minChunks * charsPerChunk */
 export const STREAMING_THRESHOLD_CHARS =

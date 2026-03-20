@@ -4,10 +4,12 @@ test.describe("GenVoice AI - Pricing Page", () => {
   test("Pricing page loads and displays plans", async ({ page }) => {
     await page.goto("/pricing");
     await page.waitForLoadState("domcontentloaded");
-    
+
     // Check pricing page loads - look for the main heading
-    await expect(page.locator("h1").filter({ hasText: /Chọn gói/ })).toBeVisible({ timeout: 15000 });
-    
+    await expect(
+      page.locator("h1").filter({ hasText: /Chọn gói/ }),
+    ).toBeVisible({ timeout: 15000 });
+
     // Check that plans are displayed
     await expect(page.getByText("Miễn phí")).toBeVisible();
     await expect(page.getByText("Pro")).toBeVisible();

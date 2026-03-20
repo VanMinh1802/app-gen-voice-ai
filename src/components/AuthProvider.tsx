@@ -1,18 +1,27 @@
 /**
  * AuthProvider - Authentication context provider
- * 
+ *
  * Wraps the app with auth state, making it available throughout the component tree.
  */
 
 "use client";
 
 import { ReactNode, createContext, useContext, Suspense } from "react";
-import { useAuth, useLicense, isProPlanCode, type AuthState, type AuthActions, type LicenseState, type LicenseActions } from "@/lib/hooks";
+import {
+  useAuth,
+  useLicense,
+  isProPlanCode,
+  type AuthState,
+  type AuthActions,
+  type LicenseState,
+  type LicenseActions,
+} from "@/lib/hooks";
 
 /**
  * Combined auth + license context type
  */
-export interface AuthContextValue extends AuthState, AuthActions, LicenseState, LicenseActions {
+export interface AuthContextValue
+  extends AuthState, AuthActions, LicenseState, LicenseActions {
   canAccessPro: boolean;
 }
 
@@ -29,15 +38,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
 
   return (
-    <Suspense fallback={<AuthContext.Provider value={getDefaultAuthContextValue()}><div className="min-h-screen flex items-center justify-center">Loading...</div></AuthContext.Provider>}>
-      <LicenseProvider auth={auth}>
-        {children}
-      </LicenseProvider>
+    <Suspense
+      fallback={
+        <AuthContext.Provider value={getDefaultAuthContextValue()}>
+          <div className="min-h-screen flex items-center justify-center">
+            Loading...
+          </div>
+        </AuthContext.Provider>
+      }
+    >
+      <LicenseProvider auth={auth}>{children}</LicenseProvider>
     </Suspense>
   );
 }
 
-function LicenseProvider({ children, auth }: { children: ReactNode; auth: AuthState & AuthActions }) {
+function LicenseProvider({
+  children,
+  auth,
+}: {
+  children: ReactNode;
+  auth: AuthState & AuthActions;
+}) {
   const license = useLicense();
 
   // Computed: user has PRO access
@@ -49,11 +70,7 @@ function LicenseProvider({ children, auth }: { children: ReactNode; auth: AuthSt
     canAccessPro,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 function getDefaultAuthContextValue(): AuthContextValue {

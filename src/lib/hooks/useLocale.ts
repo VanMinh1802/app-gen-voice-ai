@@ -22,7 +22,10 @@ function getStoredLocale(): Locale {
 
 function getEffectiveLocale(locale: Locale): "vi" | "en" {
   if (locale === "auto") {
-    const browserLocale = localStorage.getItem(BROWSER_LOCALE_KEY) as "vi" | "en" | null;
+    const browserLocale = localStorage.getItem(BROWSER_LOCALE_KEY) as
+      | "vi"
+      | "en"
+      | null;
     if (browserLocale) return browserLocale;
     const detected = detectBrowserLocale();
     localStorage.setItem(BROWSER_LOCALE_KEY, detected);
@@ -216,7 +219,7 @@ export function useLocale() {
 
       return translations[key]?.[effectiveLocale] || key;
     },
-    [effectiveLocale]
+    [effectiveLocale],
   );
 
   return {

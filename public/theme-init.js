@@ -1,4 +1,4 @@
-(function() {
+(function () {
   try {
     var theme = localStorage.getItem("theme");
     var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;

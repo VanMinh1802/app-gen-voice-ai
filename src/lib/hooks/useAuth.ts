@@ -1,6 +1,6 @@
 /**
  * useAuth Hook - Authentication state management
- * 
+ *
  * Provides authentication state and methods using Genation SDK.
  * Handles login, logout, and session management.
  */
@@ -61,7 +61,9 @@ export function useAuth(): UseAuthReturn {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to get session");
+          setError(
+            err instanceof Error ? err.message : "Failed to get session",
+          );
           setUser(null);
         }
       } finally {
@@ -75,7 +77,7 @@ export function useAuth(): UseAuthReturn {
 
     // Subscribe to auth state changes
     let unsubscribe: (() => void) | undefined;
-    
+
     if (isConfigured) {
       const { unsubscribe: unsub } = onAuthStateChange((event, session) => {
         if (isMounted) {
@@ -133,7 +135,9 @@ export function useAuth(): UseAuthReturn {
       setUser(session?.user || null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to refresh session");
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh session",
+      );
     }
   }, []);
 

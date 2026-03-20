@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-006                                               |
-| **Feature Name**   | Settings Persistence                                   |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P1 (High)                                             |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.0.0                                               |
+| Field              | Value                |
+| ------------------ | -------------------- |
+| **Feature ID**     | REQ-006              |
+| **Feature Name**   | Settings Persistence |
+| **Status**         | ✅ Completed         |
+| **Priority**       | P1 (High)            |
+| **Owner**          | Development Team     |
+| **Created**        | 2026-03-10           |
+| **Target Release** | v1.0.0               |
 
 ---
 
@@ -48,8 +48,8 @@ Users need their preferences saved across browser sessions.
 
 ### State Management
 
-| State | Solution | Justification |
-| ----- | -------- | ------------- |
+| State    | Solution          | Justification      |
+| -------- | ----------------- | ------------------ |
 | Settings | Zustand + persist | Shared + persisted |
 
 ---

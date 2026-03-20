@@ -2,44 +2,44 @@
 
 ## 📋 Metadata
 
-| Field              | Value            |
-| ------------------ | ---------------- |
-| **Feature ID**     | REQ-001          |
+| Field              | Value                               |
+| ------------------ | ----------------------------------- |
+| **Feature ID**     | REQ-001                             |
 | **Feature Name**   | Piper TTS Engine with Cloudflare R2 |
-| **Status**         | ✅ Implemented   |
-| **Priority**       | P1 (High)        |
-| **Owner**          | Development Team |
-| **Created**        | 2026-03-10       |
-| **Last Updated**   | 2026-03-11       |
-| **Target Release** | v1.2.0           |
+| **Status**         | ✅ Implemented                      |
+| **Priority**       | P1 (High)                           |
+| **Owner**          | Development Team                    |
+| **Created**        | 2026-03-10                          |
+| **Last Updated**   | 2026-03-11                          |
+| **Target Release** | v1.2.0                              |
 
 ### Architecture Summary (v1.2)
 
-| Component | Technology | Notes |
-| --------- | ---------- | -------|
-| **Hosting** | Cloudflare Pages | Same ecosystem as R2, better integration |
-| **Model Storage** | Cloudflare R2 | Lazy-load on-demand, ~550GB free tier |
-| **Model Loading** | IndexedDB Cache | Cache downloaded models locally |
-| **Voice Preview** | Pre-rendered WAV | Instant playback, no generation needed |
-| **Audio History** | IndexedDB | Blobs stored locally |
+| Component         | Technology       | Notes                                    |
+| ----------------- | ---------------- | ---------------------------------------- |
+| **Hosting**       | Cloudflare Pages | Same ecosystem as R2, better integration |
+| **Model Storage** | Cloudflare R2    | Lazy-load on-demand, ~550GB free tier    |
+| **Model Loading** | IndexedDB Cache  | Cache downloaded models locally          |
+| **Voice Preview** | Pre-rendered WAV | Instant playback, no generation needed   |
+| **Audio History** | IndexedDB        | Blobs stored locally                     |
 
 ### Implemented Features (v1.2)
 
-| Tính năng              | Status | Notes                                    |
-| ---------------------- | ------ | ---------------------------------------- |
-| Multi-language TTS     | ✅     | Vietnamese only (custom models)          |
-| Custom Voice Models    | ✅     | 11 voices in Cloudflare R2              |
-| Voice Selection UI     | ✅     | VoiceCard, VoiceSelection components     |
-| Audio Customization    | ✅     | Speed (0.5-2.0x), Pitch (-12 to +12)   |
-| History (IndexedDB)    | ✅     | Audio blobs, replay, refill text        |
-| Settings Panel         | ✅     | Personal, Subscription, Customization, Security |
-| Dark Mode              | ✅     | useTheme hook + Tailwind dark:          |
-| Vietnamese Normalizer  | ✅     | vietnameseNormalizer.ts                 |
-| New UI (Sidebar)       | ✅     | Dashboard, Voice Library, History, Settings |
-| Preview Voice          | ✅     | Pre-rendered samples from R2            |
-| Share Button           | ✅     | Copy URL to clipboard                   |
-| **Cloudflare R2 Storage** | ✅   | Lazy-load models, IndexedDB cache       |
-| **Model Caching**      | ✅     | IndexedDB for downloaded models          |
+| Tính năng                 | Status | Notes                                           |
+| ------------------------- | ------ | ----------------------------------------------- |
+| Multi-language TTS        | ✅     | Vietnamese only (custom models)                 |
+| Custom Voice Models       | ✅     | 11 voices in Cloudflare R2                      |
+| Voice Selection UI        | ✅     | VoiceCard, VoiceSelection components            |
+| Audio Customization       | ✅     | Speed (0.5-2.0x), Pitch (-12 to +12)            |
+| History (IndexedDB)       | ✅     | Audio blobs, replay, refill text                |
+| Settings Panel            | ✅     | Personal, Subscription, Customization, Security |
+| Dark Mode                 | ✅     | useTheme hook + Tailwind dark:                  |
+| Vietnamese Normalizer     | ✅     | vietnameseNormalizer.ts                         |
+| New UI (Sidebar)          | ✅     | Dashboard, Voice Library, History, Settings     |
+| Preview Voice             | ✅     | Pre-rendered samples from R2                    |
+| Share Button              | ✅     | Copy URL to clipboard                           |
+| **Cloudflare R2 Storage** | ✅     | Lazy-load models, IndexedDB cache               |
+| **Model Caching**         | ✅     | IndexedDB for downloaded models                 |
 
 ---
 
@@ -102,40 +102,40 @@ flowchart TB
     %% User Selection Flow
     User["User"] -->|1. Browse voices| VoiceLibrary
     VoiceLibrary -->|2. Click preview| VoiceCard
-    
+
     %% Pre-rendered Sample Flow
     VoiceCard -->|3. Fetch sample.wav| API
     API -->|4. Get from R2| R2_Bucket
     R2_Bucket -->|5. Stream audio| VoiceCard
     VoiceCard -->|6. Play instantly| User
-    
+
     %% Model Selection Flow
     VoiceCard -->|7. Select voice| MainContent
     MainContent -->|8. Generate| Hook
     Hook -->|9. Post to worker| Worker
-    
+
     %% Lazy Model Load Flow
     Worker -->|10. Check cache| IDB_Models
     IDB_Models -->|cache hit| Worker
     IDB_Models -.->|cache miss| Worker
     Worker -->|11. Download model| API
     API -->|12. Get from R2| R2_Bucket
-    
+
     %% R2 Structure
     R2_Bucket --> R2_Vi
     R2_Vi --> R2_Vi_Ngochuyen
     R2_Vi --> R2_Vi_Lacphi
     R2_Vi --> R2_Other
-    
+
     %% Model Caching
     R2_Bucket -->|13. Download + cache| IDB_Models
-    
+
     %% TTS Generation
     Worker -->|14. Load ONNX| ONNX
     ONNX -->|15. Synthesize| PiperLib
     PiperLib -->|16. Audio Float32| Worker
     Worker -->|17. WAV blob| Hook
-    
+
     %% State & Persistence
     Hook <--> Zustand
     Zustand -.->|persist settings| LS
@@ -186,19 +186,19 @@ Users need to convert Vietnamese text to speech directly in the browser for:
 
 | Metric                                | Target                                            | Status |
 | ------------------------------------- | ------------------------------------------------- | ------ |
-| First-generation latency (short text) | < 10 seconds (includes R2 download)              | ✅     |
-| Cached voice load time                | < 1 second (from IndexedDB)                     | ✅     |
-| Generation success rate               | > 95%                                            | ✅     |
-| Bundle size increase                  | < 5MB (WASM only, no models in build)           | ✅     |
+| First-generation latency (short text) | < 10 seconds (includes R2 download)               | ✅     |
+| Cached voice load time                | < 1 second (from IndexedDB)                       | ✅     |
+| Generation success rate               | > 95%                                             | ✅     |
+| Bundle size increase                  | < 5MB (WASM only, no models in build)             | ✅     |
 | Browser compatibility                 | Chrome, Firefox, Safari, Edge (latest 2 versions) | ✅     |
-| Cloudflare Pages compatibility         | Works on Cloudflare Pages (Edge runtime)         | ✅     |
-| Custom voice models                   | 11 Vietnamese voices in R2 bucket                | ✅     |
-| History persistence                   | IndexedDB with audio blobs                       | ✅     |
-| Dark mode                             | Theme persisted in localStorage                  | ✅     |
-| **R2 Model lazy loading**             | Only download selected model (~50MB)             | ✅     |
-| **IndexedDB model cache**             | Cache downloaded models for reuse                | ✅     |
-| **Pre-rendered voice samples**        | Instant preview (< 1s, 5-10s WAV from R2)      | ✅     |
-| **R2 free tier**                      | ~550GB storage, 1M Class A, 10M Class B ops    | ✅     |
+| Cloudflare Pages compatibility        | Works on Cloudflare Pages (Edge runtime)          | ✅     |
+| Custom voice models                   | 11 Vietnamese voices in R2 bucket                 | ✅     |
+| History persistence                   | IndexedDB with audio blobs                        | ✅     |
+| Dark mode                             | Theme persisted in localStorage                   | ✅     |
+| **R2 Model lazy loading**             | Only download selected model (~50MB)              | ✅     |
+| **IndexedDB model cache**             | Cache downloaded models for reuse                 | ✅     |
+| **Pre-rendered voice samples**        | Instant preview (< 1s, 5-10s WAV from R2)         | ✅     |
+| **R2 free tier**                      | ~550GB storage, 1M Class A, 10M Class B ops       | ✅     |
 
 ---
 
@@ -435,11 +435,17 @@ interface TtsSettings {
   voice: string;
   speed: number;
   volume: number;
-  pitch: number;           // NEW: -12 to +12
-  normalizeText: boolean;   // NEW: Vietnamese text normalization
+  pitch: number; // NEW: -12 to +12
+  normalizeText: boolean; // NEW: Vietnamese text normalization
 }
 
-type TtsStatus = "idle" | "loading" | "generating" | "playing" | "previewing" | "error";
+type TtsStatus =
+  | "idle"
+  | "loading"
+  | "generating"
+  | "playing"
+  | "previewing"
+  | "error";
 
 // src/features/tts/store.ts
 interface TtsHistoryItem {
@@ -448,7 +454,7 @@ interface TtsHistoryItem {
   model: string;
   voice: string;
   speed: number;
-  audioUrl: string;  // blob URL from IndexedDB
+  audioUrl: string; // blob URL from IndexedDB
   duration: number;
   createdAt: number;
 }
@@ -459,8 +465,8 @@ type Theme = "light" | "dark" | "system";
 // Custom voice model configuration
 // src/config.ts
 interface CustomModel {
-  id: string;        // e.g., "ngochuyen", "lacphi", "anhkhoi"
-  name: string;      // e.g., "Ngọc Huyền (custom)"
+  id: string; // e.g., "ngochuyen", "lacphi", "anhkhoi"
+  name: string; // e.g., "Ngọc Huyền (custom)"
 }
 
 interface Config {
@@ -477,29 +483,30 @@ interface Config {
     settingsKey: string;
     historyKey: string;
   };
-  activeVoiceIds: string[];  // IDs of voices with .onnx in public/tts-model/vi/
+  activeVoiceIds: string[]; // IDs of voices with .onnx in public/tts-model/vi/
   customModels: CustomModel[];
-  voices: [];  // Built-in voices removed (custom-only)
+  voices: []; // Built-in voices removed (custom-only)
 }
 ```
 
 ### Custom Voice Models (v1.0)
 
-| Voice ID      | Name              | Gender | Region    | Status      |
-| ------------- | ----------------- | ------ | --------- | ----------- |
-| ngochuyen     | Ngọc Huyền       | Female | Miền Nam  | ✅ Active   |
-| banmai        | Ban Mai           | Female | Miền Nam  | ✅ Active   |
-| manhdung      | Mạnh Dũng        | Male   | Miền Bắc | ✅ Active   |
-| minhquang     | Minh Quang        | Male   | Miền Bắc | ✅ Active   |
-| duyoryx3175   | Duy Oryx          | Male   | Miền Nam  | ✅ Active   |
-| maiphuong     | Mai Phương        | Female | Miền Nam  | ✅ Active   |
-| lacphi        | Lạc Phi           | Female | Miền Trung| ✅ Active   |
-| minhkhang     | Minh Khang        | Male   | Miền Bắc | ✅ Active   |
-| chieuthanh    | Chiếu Thành      | Male   | Miền Trung| ✅ Active   |
-| mytam2794     | Mỹ Tâm            | Female | Miền Nam  | ✅ Active   |
-| anhkhoi       | Anh Khôi         | Male   | Miền Bắc | ✅ Active   |
+| Voice ID    | Name        | Gender | Region     | Status    |
+| ----------- | ----------- | ------ | ---------- | --------- |
+| ngochuyen   | Ngọc Huyền  | Female | Miền Nam   | ✅ Active |
+| banmai      | Ban Mai     | Female | Miền Nam   | ✅ Active |
+| manhdung    | Mạnh Dũng   | Male   | Miền Bắc   | ✅ Active |
+| minhquang   | Minh Quang  | Male   | Miền Bắc   | ✅ Active |
+| duyoryx3175 | Duy Oryx    | Male   | Miền Nam   | ✅ Active |
+| maiphuong   | Mai Phương  | Female | Miền Nam   | ✅ Active |
+| lacphi      | Lạc Phi     | Female | Miền Trung | ✅ Active |
+| minhkhang   | Minh Khang  | Male   | Miền Bắc   | ✅ Active |
+| chieuthanh  | Chiếu Thành | Male   | Miền Trung | ✅ Active |
+| mytam2794   | Mỹ Tâm      | Female | Miền Nam   | ✅ Active |
+| anhkhoi     | Anh Khôi    | Male   | Miền Bắc   | ✅ Active |
 
 Models are stored in `public/tts-model/vi/` directory:
+
 - `{voiceId}.onnx` - ONNX model file
 - `{voiceId}.onnx.json` - Model config (sample rate, etc.)
 
@@ -583,7 +590,8 @@ interface R2Config {
 export const r2Config: R2Config = {
   bucketBinding: "VIETVOICE_MODELS",
   basePath: "vi",
-  publicUrl: process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://models.vietvoice.ai",
+  publicUrl:
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://models.vietvoice.ai",
 };
 
 // R2 Bucket Structure
@@ -617,7 +625,7 @@ interface ModelCacheEntry {
 
 export async function saveModelToCache(
   voiceId: string,
-  data: ArrayBuffer
+  data: ArrayBuffer,
 ): Promise<void> {
   const db = await openDB(MODEL_CACHE_DB, 1, {
     upgrade(db) {
@@ -635,10 +643,12 @@ export async function saveModelToCache(
 }
 
 export async function loadModelFromCache(
-  voiceId: string
+  voiceId: string,
 ): Promise<ArrayBuffer | null> {
   const db = await openDB(MODEL_CACHE_DB, 1);
-  const entry = await db.get(MODEL_STORE, voiceId) as ModelCacheEntry | undefined;
+  const entry = (await db.get(MODEL_STORE, voiceId)) as
+    | ModelCacheEntry
+    | undefined;
   return entry?.data ?? null;
 }
 
@@ -663,22 +673,22 @@ import { R2Bucket } from "@cloudflare/workers-types";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ voiceId: string; file: string }> }
+  { params }: { params: Promise<{ voiceId: string; file: string }> },
 ) {
   const { voiceId, file } = await params;
-  
+
   // R2 bucket binding from wrangler.toml
   const bucket = process.env.VIETVOICE_MODELS as unknown as R2Bucket;
-  
+
   const object = await bucket.get(`vi/${voiceId}/${file}`);
   if (!object) {
     return new Response("File not found", { status: 404 });
   }
-  
-  const contentType = file.endsWith(".json") 
-    ? "application/json" 
+
+  const contentType = file.endsWith(".json")
+    ? "application/json"
     : "application/octet-stream";
-  
+
   return new Response(object.body, {
     headers: {
       "Content-Type": contentType,
@@ -695,54 +705,60 @@ export async function GET(
 
 export class PiperR2Loader {
   private cache = new Map<string, PiperCustomSession>();
-  
-  async loadModel(voiceId: string, onProgress?: (p: number) => void): Promise<PiperCustomSession> {
+
+  async loadModel(
+    voiceId: string,
+    onProgress?: (p: number) => void,
+  ): Promise<PiperCustomSession> {
     // 1. Memory cache
     if (this.cache.has(voiceId)) {
       return this.cache.get(voiceId)!;
     }
-    
+
     // 2. IndexedDB cache
     onProgress?.(5);
     const cachedData = await loadModelFromCache(voiceId);
     if (cachedData) {
-      const session = await this.initSessionFromArrayBuffer(cachedData, voiceId);
+      const session = await this.initSessionFromArrayBuffer(
+        cachedData,
+        voiceId,
+      );
       this.cache.set(voiceId, session);
       return session;
     }
-    
+
     // 3. Download from R2
     onProgress?.(10);
     const [modelData, configData] = await Promise.all([
       this.downloadFromR2(voiceId, "model.onnx", onProgress),
       this.downloadFromR2(voiceId, "model.onnx.json"),
     ]);
-    
+
     // 4. Cache for next time
     await saveModelToCache(voiceId, modelData);
-    
+
     // 5. Initialize session
     const session = await this.initSessionFromArrayBuffer(modelData, voiceId);
     this.cache.set(voiceId, session);
-    
+
     return session;
   }
-  
+
   private async downloadFromR2(
-    voiceId: string, 
+    voiceId: string,
     file: string,
-    onProgress?: (p: number) => void
+    onProgress?: (p: number) => void,
   ): Promise<ArrayBuffer> {
     const response = await fetch(`/api/models/${voiceId}/${file}`);
     if (!response.ok) {
       throw new Error(`Failed to download ${file}: ${response.statusText}`);
     }
-    
+
     const reader = response.body?.getReader();
     const contentLength = +response.headers.get("Content-Length")!;
     let receivedLength = 0;
     const chunks: Uint8Array[] = [];
-    
+
     while (true) {
       const { done, value } = await reader!.read();
       if (done) break;
@@ -750,36 +766,36 @@ export class PiperR2Loader {
       receivedLength += value.length;
       onProgress?.(10 + Math.round((receivedLength / contentLength) * 60));
     }
-    
+
     const allChunks = new Uint8Array(receivedLength);
     let position = 0;
     for (const chunk of chunks) {
       allChunks.set(chunk, position);
       position += chunk.length;
     }
-    
+
     return allChunks.buffer;
   }
 }
 ```
 
-| Component | File | Description |
-|-----------|------|-------------|
-| **App Shell** | `src/app/page.tsx` | Main layout with Sidebar, Header, tab routing |
-| **Sidebar** | `components/layout/Sidebar.tsx` | Navigation: Dashboard, Voice Library, History, Settings |
-| **Header** | `components/layout/Header.tsx` | Title, notifications dropdown, user menu |
-| **MainContent** | `components/tts/MainContent.tsx` | TTS form: TextInput, VoiceSelection, GenerateButton |
-| **TextInput** | `components/tts/MainContent.tsx` | Textarea with char count, progress bar |
-| **VoiceSelection** | `components/tts/MainContent.tsx` | Voice cards with preview |
-| **VoiceCard** | `components/tts/VoiceCard.tsx` | Individual voice with avatar, preview button |
-| **VoiceLibrary** | `components/tts/VoiceLibrary.tsx` | Grid of all voices with filters |
-| **AudioCustomization** | `components/tts/MainContent.tsx` | Speed/Pitch sliders |
-| **GenerateButton** | `components/tts/MainContent.tsx` | Generate button with progress |
-| **AudioPlayer** | `components/tts/AudioPlayer.tsx` | Fixed bottom player with waveform |
-| **HistoryPanel** | `features/tts/components/HistoryPanel.tsx` | History list with play/refill/delete |
-| **VoiceSettings** | `features/tts/components/VoiceSettings.tsx` | Settings with 4 tabs |
-| **ShareButton** | `components/ShareButton.tsx` | Copy URL to clipboard |
-| **Toast** | `components/ui/Toast.tsx` | Toast notifications |
+| Component              | File                                        | Description                                             |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| **App Shell**          | `src/app/page.tsx`                          | Main layout with Sidebar, Header, tab routing           |
+| **Sidebar**            | `components/layout/Sidebar.tsx`             | Navigation: Dashboard, Voice Library, History, Settings |
+| **Header**             | `components/layout/Header.tsx`              | Title, notifications dropdown, user menu                |
+| **MainContent**        | `components/tts/MainContent.tsx`            | TTS form: TextInput, VoiceSelection, GenerateButton     |
+| **TextInput**          | `components/tts/MainContent.tsx`            | Textarea with char count, progress bar                  |
+| **VoiceSelection**     | `components/tts/MainContent.tsx`            | Voice cards with preview                                |
+| **VoiceCard**          | `components/tts/VoiceCard.tsx`              | Individual voice with avatar, preview button            |
+| **VoiceLibrary**       | `components/tts/VoiceLibrary.tsx`           | Grid of all voices with filters                         |
+| **AudioCustomization** | `components/tts/MainContent.tsx`            | Speed/Pitch sliders                                     |
+| **GenerateButton**     | `components/tts/MainContent.tsx`            | Generate button with progress                           |
+| **AudioPlayer**        | `components/tts/AudioPlayer.tsx`            | Fixed bottom player with waveform                       |
+| **HistoryPanel**       | `features/tts/components/HistoryPanel.tsx`  | History list with play/refill/delete                    |
+| **VoiceSettings**      | `features/tts/components/VoiceSettings.tsx` | Settings with 4 tabs                                    |
+| **ShareButton**        | `components/ShareButton.tsx`                | Copy URL to clipboard                                   |
+| **Toast**              | `components/ui/Toast.tsx`                   | Toast notifications                                     |
 
 ### 3.8 Voice Data with R2 Samples
 
@@ -800,17 +816,116 @@ export interface VoiceMetadata {
 }
 
 export const voiceMetadata: VoiceMetadata[] = [
-  { id: "ngochuyen", name: "Ngọc Huyền", region: "Miền Bắc", gender: "Nữ", style: "Truyền cảm", description: "Giọng đọc nhẹ nhàng, phù hợp cho podcast", avatarColor: "#ec4899", sampleUrl: "https://models.vietvoice.ai/vi/ngochuyen/sample.wav" },
-  { id: "banmai", name: "Ban Mai", region: "Miền Bắc", gender: "Nữ", style: "Tin tức", description: "Tròn vành rõ chữ, giọng đọc chuẩn bản tin", avatarColor: "#ec4899", sampleUrl: "https://models.vietvoice.ai/vi/banmai/sample.wav" },
-  { id: "manhdung", name: "Mạnh Dũng", region: "Miền Nam", gender: "Nam", style: "Doanh nghiệp", description: "Trầm ấm, uy tín", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/manhdung/sample.wav" },
-  { id: "minhquang", name: "Minh Quang", region: "Miền Trung", gender: "Nam", style: "Truyền cảm", description: "Giọng đọc truyền cảm", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/minhquang/sample.wav" },
-  { id: "duyoryx3175", name: "Duy Oryx", region: "Miền Nam", gender: "Nam", style: "Công nghệ", description: "Năng động và trẻ trung", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/duyoryx3175/sample.wav" },
-  { id: "maiphuong", name: "Mai Phương", region: "Miền Bắc", gender: "Nữ", style: "Quảng cáo", description: "Tốc độ đọc nhanh", avatarColor: "#ec4899", sampleUrl: "https://models.vietvoice.ai/vi/maiphuong/sample.wav" },
-  { id: "lacphi", name: "Lạc Phi", region: "Miền Trung", gender: "Nữ", style: "Du lịch", description: "Ngọt ngào và trong trẻo", avatarColor: "#ec4899", sampleUrl: "https://models.vietvoice.ai/vi/lacphi/sample.wav" },
-  { id: "minhkhang", name: "Minh Khang", region: "Miền Bắc", gender: "Nam", style: "Giáo dục", description: "Giọng đọc trầm và vang", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/minhkhang/sample.wav" },
-  { id: "chieuthanh", name: "Chiếu Thành", region: "Miền Nam", gender: "Nam", style: "Truyền thống", description: "Giọng ông lão miền Tây", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/chieuthanh/sample.wav" },
-  { id: "mytam2794", name: "Mỹ Tâm", region: "Miền Nam", gender: "Nữ", style: "Ca hát", description: "Giọng hát trong sáng", avatarColor: "#ec4899", sampleUrl: "https://models.vietvoice.ai/vi/mytam2794/sample.wav" },
-  { id: "anhkhoi", name: "Anh Khôi", region: "Miền Bắc", gender: "Nam", style: "Hiện đại", description: "Trẻ trung và năng động", avatarColor: "#3b82f6", sampleUrl: "https://models.vietvoice.ai/vi/anhkhoi/sample.wav" },
+  {
+    id: "ngochuyen",
+    name: "Ngọc Huyền",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Truyền cảm",
+    description: "Giọng đọc nhẹ nhàng, phù hợp cho podcast",
+    avatarColor: "#ec4899",
+    sampleUrl: "https://models.vietvoice.ai/vi/ngochuyen/sample.wav",
+  },
+  {
+    id: "banmai",
+    name: "Ban Mai",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Tin tức",
+    description: "Tròn vành rõ chữ, giọng đọc chuẩn bản tin",
+    avatarColor: "#ec4899",
+    sampleUrl: "https://models.vietvoice.ai/vi/banmai/sample.wav",
+  },
+  {
+    id: "manhdung",
+    name: "Mạnh Dũng",
+    region: "Miền Nam",
+    gender: "Nam",
+    style: "Doanh nghiệp",
+    description: "Trầm ấm, uy tín",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/manhdung/sample.wav",
+  },
+  {
+    id: "minhquang",
+    name: "Minh Quang",
+    region: "Miền Trung",
+    gender: "Nam",
+    style: "Truyền cảm",
+    description: "Giọng đọc truyền cảm",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/minhquang/sample.wav",
+  },
+  {
+    id: "duyoryx3175",
+    name: "Duy Oryx",
+    region: "Miền Nam",
+    gender: "Nam",
+    style: "Công nghệ",
+    description: "Năng động và trẻ trung",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/duyoryx3175/sample.wav",
+  },
+  {
+    id: "maiphuong",
+    name: "Mai Phương",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Quảng cáo",
+    description: "Tốc độ đọc nhanh",
+    avatarColor: "#ec4899",
+    sampleUrl: "https://models.vietvoice.ai/vi/maiphuong/sample.wav",
+  },
+  {
+    id: "lacphi",
+    name: "Lạc Phi",
+    region: "Miền Trung",
+    gender: "Nữ",
+    style: "Du lịch",
+    description: "Ngọt ngào và trong trẻo",
+    avatarColor: "#ec4899",
+    sampleUrl: "https://models.vietvoice.ai/vi/lacphi/sample.wav",
+  },
+  {
+    id: "minhkhang",
+    name: "Minh Khang",
+    region: "Miền Bắc",
+    gender: "Nam",
+    style: "Giáo dục",
+    description: "Giọng đọc trầm và vang",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/minhkhang/sample.wav",
+  },
+  {
+    id: "chieuthanh",
+    name: "Chiếu Thành",
+    region: "Miền Nam",
+    gender: "Nam",
+    style: "Truyền thống",
+    description: "Giọng ông lão miền Tây",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/chieuthanh/sample.wav",
+  },
+  {
+    id: "mytam2794",
+    name: "Mỹ Tâm",
+    region: "Miền Nam",
+    gender: "Nữ",
+    style: "Ca hát",
+    description: "Giọng hát trong sáng",
+    avatarColor: "#ec4899",
+    sampleUrl: "https://models.vietvoice.ai/vi/mytam2794/sample.wav",
+  },
+  {
+    id: "anhkhoi",
+    name: "Anh Khôi",
+    region: "Miền Bắc",
+    gender: "Nam",
+    style: "Hiện đại",
+    description: "Trẻ trung và năng động",
+    avatarColor: "#3b82f6",
+    sampleUrl: "https://models.vietvoice.ai/vi/anhkhoi/sample.wav",
+  },
 ];
 ```
 
@@ -848,7 +963,7 @@ interface TtsState {
   progress: number;
   currentAudio: Blob | null;
   currentAudioUrl: string | null;
-  nowPlaying: TtsHistoryItem | null;  // NEW: track what's playing
+  nowPlaying: TtsHistoryItem | null; // NEW: track what's playing
   history: TtsHistoryItem[];
   error: string | null;
   isHistoryLoaded: boolean;
@@ -858,7 +973,7 @@ interface TtsState {
   setStatus: (status: TtsStatus) => void;
   setProgress: (progress: number) => void;
   setCurrentAudio: (audio: Blob | null, url: string | null) => void;
-  setNowPlaying: (item: TtsHistoryItem | null) => void;  // NEW
+  setNowPlaying: (item: TtsHistoryItem | null) => void; // NEW
   addToHistory: (item: TtsHistoryItem, audioBlob: Blob) => void;
   removeFromHistory: (id: string) => void;
   clearHistory: () => void;
@@ -873,8 +988,8 @@ interface TtsSettings {
   voice: string;
   speed: number;
   volume: number;
-  pitch: number;       // NEW: -12 to +12
-  normalizeText: boolean;  // NEW: Vietnamese text normalization
+  pitch: number; // NEW: -12 to +12
+  normalizeText: boolean; // NEW: Vietnamese text normalization
 }
 ```
 
@@ -933,7 +1048,10 @@ export function useTheme(): {
 // src/lib/storage/history.ts
 
 export async function initHistoryDb(): Promise<IDBDatabase>;
-export async function addHistoryItem(item: TtsHistoryItem, audioBlob: Blob): Promise<void>;
+export async function addHistoryItem(
+  item: TtsHistoryItem,
+  audioBlob: Blob,
+): Promise<void>;
 export async function getHistoryItems(limit: number): Promise<TtsHistoryItem[]>;
 export async function getHistoryAudio(id: string): Promise<Blob | null>;
 export async function removeHistoryItem(id: string): Promise<void>;
@@ -1015,23 +1133,23 @@ function toFriendlyErrorMessage(raw: string): string {
 | Audio playback fails          | Offer download as WAV fallback                                       | `PLAYBACK_FAILED`    |
 | IndexedDB quota exceeded      | Warning toast, suggest clearing history                              | `STORAGE_FULL`       |
 | Worker initialization fails   | Show error, disable generation                                       | `WORKER_INIT_FAILED` |
-| Clipboard API unavailable     | Show "Copy link not available" (e.g. non-secure context)              | `SHARE_UNAVAILABLE`  |
+| Clipboard API unavailable     | Show "Copy link not available" (e.g. non-secure context)             | `SHARE_UNAVAILABLE`  |
 | Theme preference not applied  | Fallback to light; log warning                                       | N/A                  |
 | Normalization throws          | Fall back to raw text; log error                                     | `NORMALIZE_ERROR`    |
-| IndexedDB migration fails     | Keep localStorage history; toast "Could not migrate history"        | `IDB_MIGRATE_FAILED` |
+| IndexedDB migration fails     | Keep localStorage history; toast "Could not migrate history"         | `IDB_MIGRATE_FAILED` |
 
 ---
 
 ## 5. Security Considerations
 
-| Concern          | Mitigation                                                                          |
-| ---------------- | ----------------------------------------------------------------------------------- |
-| Input validation | Text length limited to 5000 chars, no special character restrictions needed for TTS |
-| CDN trust        | Only load from jsDelivr (trusted CDN), voices from Piper project                    |
-| Data exposure    | Audio processed in-memory only; history in user's IndexedDB (client-side only)     |
-| XSS via text     | Text passed directly to TTS engine (not rendered as HTML)                           |
-| Share / clipboard| Only copy URL; no user content in clipboard                                        |
-| Normalization    | No eval or remote code; regex/string only for number/date/currency rules          |
+| Concern           | Mitigation                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| Input validation  | Text length limited to 5000 chars, no special character restrictions needed for TTS |
+| CDN trust         | Only load from jsDelivr (trusted CDN), voices from Piper project                    |
+| Data exposure     | Audio processed in-memory only; history in user's IndexedDB (client-side only)      |
+| XSS via text      | Text passed directly to TTS engine (not rendered as HTML)                           |
+| Share / clipboard | Only copy URL; no user content in clipboard                                         |
+| Normalization     | No eval or remote code; regex/string only for number/date/currency rules            |
 
 ---
 
@@ -1065,26 +1183,26 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Component Tests
 
-| Test                                       | File                                           |
-| ------------------------------------------ | ---------------------------------------------- |
-| Renders with voice dropdown                | `src/features/tts/components/TtsGenerator.tsx` |
-| Generate disabled when text empty          | `src/features/tts/components/TtsGenerator.tsx` |
-| Progress indicator shows during generation | `src/features/tts/components/TtsGenerator.tsx` |
-| Error state displays correctly             | `src/features/tts/components/TtsGenerator.tsx` |
-| History panel shows items                  | `src/features/tts/components/HistoryPanel.tsx` |
-| Theme toggle applies dark/light class      | `ThemeToggle.tsx` or layout                     |
-| Share button copies URL                    | `ShareButton.tsx` or integration test           |
+| Test                                       | File                                              |
+| ------------------------------------------ | ------------------------------------------------- |
+| Renders with voice dropdown                | `src/features/tts/components/TtsGenerator.tsx`    |
+| Generate disabled when text empty          | `src/features/tts/components/TtsGenerator.tsx`    |
+| Progress indicator shows during generation | `src/features/tts/components/TtsGenerator.tsx`    |
+| Error state displays correctly             | `src/features/tts/components/TtsGenerator.tsx`    |
+| History panel shows items                  | `src/features/tts/components/HistoryPanel.tsx`    |
+| Theme toggle applies dark/light class      | `ThemeToggle.tsx` or layout                       |
+| Share button copies URL                    | `ShareButton.tsx` or integration test             |
 | Vietnamese normalizer (numbers, dates)     | `src/lib/text-processing/vietnameseNormalizer.ts` |
 
 ### Integration Tests
 
-| Test        | Scenario                                             |
-| ----------- | ---------------------------------------------------- |
-| Full flow   | Enter text → Generate → Audio plays                  |
-| Persistence | Change voice → Reload page → Voice selected          |
-| Offline     | Download voice → Disconnect network → Generate works |
-| History     | Generate 2x → Check history shows 2 items (IndexedDB)|
-| Theme       | Toggle dark → Reload → Theme persisted               |
+| Test        | Scenario                                              |
+| ----------- | ----------------------------------------------------- |
+| Full flow   | Enter text → Generate → Audio plays                   |
+| Persistence | Change voice → Reload page → Voice selected           |
+| Offline     | Download voice → Disconnect network → Generate works  |
+| History     | Generate 2x → Check history shows 2 items (IndexedDB) |
+| Theme       | Toggle dark → Reload → Theme persisted                |
 | Share       | Click Share → Clipboard contains current URL          |
 
 ---
@@ -1093,8 +1211,8 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Phase 1: Core Infrastructure (Est. 6 hours)
 
-| Step | Task                                   | Files                                             | Dependency | Status |
-| ---- | -------------------------------------- | ------------------------------------------------- | ---------- | ------ |
+| Step | Task                                   | Files                                             | Dependency | Status  |
+| ---- | -------------------------------------- | ------------------------------------------------- | ---------- | ------- |
 | 1.1  | Install dependencies                   | `@mintplex-labs/piper-tts-web`, `onnxruntime-web` | -          | ✅ Done |
 | 1.2  | Create PiperTts wrapper class          | `src/lib/piper/piperTts.ts`                       | 1.1        | ✅ Done |
 | 1.3  | Create Web Worker for TTS              | `src/workers/tts-worker.ts`                       | 1.2        | ✅ Done |
@@ -1102,8 +1220,8 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Phase 2: State Management (Est. 3 hours)
 
-| Step | Task                       | Files                                      | Dependency | Status |
-| ---- | -------------------------- | ------------------------------------------ | ---------- | ------ |
+| Step | Task                       | Files                                      | Dependency | Status  |
+| ---- | -------------------------- | ------------------------------------------ | ---------- | ------- |
 | 2.1  | Define TypeScript types    | `src/features/tts/types.ts`                | -          | ✅ Done |
 | 2.2  | Create Zustand store       | `src/features/tts/store.ts`                | 2.1        | ✅ Done |
 | 2.3  | Create useTtsGenerate hook | `src/features/tts/hooks/useTtsGenerate.ts` | 2.2, 1.3   | ✅ Done |
@@ -1111,87 +1229,87 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Phase 3: UI Components (Est. 5 hours)
 
-| Step | Task                          | Files                                           | Dependency | Status |
-| ---- | ----------------------------- | ----------------------------------------------- | ---------- | ------ |
-| 3.1  | Create MainContent component | `src/components/tts/MainContent.tsx`            | 2.3        | ✅ Done |
-| 3.2  | Create AudioPlayer component  | `src/components/tts/AudioPlayer.tsx`           | -          | ✅ Done |
+| Step | Task                          | Files                                           | Dependency | Status  |
+| ---- | ----------------------------- | ----------------------------------------------- | ---------- | ------- |
+| 3.1  | Create MainContent component  | `src/components/tts/MainContent.tsx`            | 2.3        | ✅ Done |
+| 3.2  | Create AudioPlayer component  | `src/components/tts/AudioPlayer.tsx`            | -          | ✅ Done |
 | 3.3  | Create HistoryPanel component | `src/features/tts/components/HistoryPanel.tsx`  | 2.2        | ✅ Done |
 | 3.4  | Create Settings panel         | `src/features/tts/components/VoiceSettings.tsx` | -          | ✅ Done |
-| 3.5  | Create VoiceLibrary          | `src/components/tts/VoiceLibrary.tsx`           | -          | ✅ Done |
-| 3.6  | Create VoiceCard             | `src/components/tts/VoiceCard.tsx`              | -          | ✅ Done |
+| 3.5  | Create VoiceLibrary           | `src/components/tts/VoiceLibrary.tsx`           | -          | ✅ Done |
+| 3.6  | Create VoiceCard              | `src/components/tts/VoiceCard.tsx`              | -          | ✅ Done |
 
 ### Phase 4: App Shell & Layout (Est. 3 hours) - **NEW PHASE**
 
-| Step | Task                      | Files                                      | Dependency | Status |
-| ---- | ------------------------- | ------------------------------------------ | ---------- | ------ |
-| 4.1  | Create Sidebar component   | `src/components/layout/Sidebar.tsx`         | -          | ✅ Done |
-| 4.2  | Create Header component    | `src/components/layout/Header.tsx`          | -          | ✅ Done |
-| 4.3  | Create App Shell page      | `src/app/page.tsx`                          | 3.1-3.6   | ✅ Done |
-| 4.4  | Integrate TtsProvider      | `src/app/layout.tsx`                       | 2.4        | ✅ Done |
+| Step | Task                     | Files                               | Dependency | Status  |
+| ---- | ------------------------ | ----------------------------------- | ---------- | ------- |
+| 4.1  | Create Sidebar component | `src/components/layout/Sidebar.tsx` | -          | ✅ Done |
+| 4.2  | Create Header component  | `src/components/layout/Header.tsx`  | -          | ✅ Done |
+| 4.3  | Create App Shell page    | `src/app/page.tsx`                  | 3.1-3.6    | ✅ Done |
+| 4.4  | Integrate TtsProvider    | `src/app/layout.tsx`                | 2.4        | ✅ Done |
 
 ### Phase 5: Utilities & Integration (Est. 3 hours)
 
-| Step | Task                      | Files                                      | Dependency | Status |
-| ---- | ------------------------- | ------------------------------------------ | ---------- | ------ |
+| Step | Task                      | Files                                      | Dependency | Status  |
+| ---- | ------------------------- | ------------------------------------------ | ---------- | ------- |
 | 5.1  | Add text validation       | `src/lib/text-processing/textProcessor.ts` | -          | ✅ Done |
 | 5.2  | Implement history storage | `src/lib/storage/history.ts`               | -          | ✅ Done |
 | 5.3  | Add config defaults       | `src/config.ts`                            | -          | ✅ Done |
 | 5.4  | Add voice data            | `src/config/voiceData.ts`                  | -          | ✅ Done |
-| 5.5  | Add ShareButton           | `src/components/ShareButton.tsx`            | -          | ✅ Done |
+| 5.5  | Add ShareButton           | `src/components/ShareButton.tsx`           | -          | ✅ Done |
 
 ### Phase 6: Extended Features (v1.1)
 
-| Step | Task                                   | Files / Scope                                      | Dependency | Status   |
-| ---- | -------------------------------------- | -------------------------------------------------- | ---------- | -------- |
-| 6.1  | Vietnamese text normalizer             | `src/lib/text-processing/vietnameseNormalizer.ts`  | -          | ✅ Done  |
-| 6.2  | Integrate normalizer in TTS flow       | `useTtsGenerate`, config toggle                    | 6.1        | ✅ Done  |
-| 6.3  | IndexedDB history service              | `src/lib/storage/history.ts` (IDB backend)         | -          | ✅ Done  |
-| 6.4  | Migrate localStorage history → IDB     | Migration on first load, clear LS key              | 6.3        | ✅ Done  |
-| 6.5  | Theme store + ThemeToggle component   | `lib/hooks/useTheme` + toggle in layout           | -          | ✅ Done  |
-| 6.6  | Apply theme class (dark) in layout     | `app/layout.tsx`, Tailwind `dark:`                 | 6.5        | ✅ Done  |
-| 6.7  | Multi-language: locale + voice filter | Config locales (vi/en/id), voice list by locale   | -          | ✅ Done  |
-| 6.8  | Unit tests for normalizer + IDB       | `vietnameseNormalizer.test.ts`, history.test.ts    | 6.1, 6.3   | ✅ Done  |
+| Step | Task                                  | Files / Scope                                     | Dependency | Status  |
+| ---- | ------------------------------------- | ------------------------------------------------- | ---------- | ------- |
+| 6.1  | Vietnamese text normalizer            | `src/lib/text-processing/vietnameseNormalizer.ts` | -          | ✅ Done |
+| 6.2  | Integrate normalizer in TTS flow      | `useTtsGenerate`, config toggle                   | 6.1        | ✅ Done |
+| 6.3  | IndexedDB history service             | `src/lib/storage/history.ts` (IDB backend)        | -          | ✅ Done |
+| 6.4  | Migrate localStorage history → IDB    | Migration on first load, clear LS key             | 6.3        | ✅ Done |
+| 6.5  | Theme store + ThemeToggle component   | `lib/hooks/useTheme` + toggle in layout           | -          | ✅ Done |
+| 6.6  | Apply theme class (dark) in layout    | `app/layout.tsx`, Tailwind `dark:`                | 6.5        | ✅ Done |
+| 6.7  | Multi-language: locale + voice filter | Config locales (vi/en/id), voice list by locale   | -          | ✅ Done |
+| 6.8  | Unit tests for normalizer + IDB       | `vietnameseNormalizer.test.ts`, history.test.ts   | 6.1, 6.3   | ✅ Done |
 
 ### Phase 7: Cloudflare R2 Migration (v1.2)
 
-| Step | Task | Files / Scope | Dependency | Status |
-| ---- | ---- | -------------- | ---------- | -------- |
-| 7.1 | Setup Cloudflare R2 bucket | wrangler.toml, R2 console | - | Pending |
-| 7.2 | Upload models to R2 | 11 .onnx + .json files to vi/ | 7.1 | Pending |
-| 7.3 | Pre-render voice samples | 5-10s WAV per voice | 7.2 | Pending |
-| 7.4 | Create R2 API routes | `src/app/api/models/[voiceId]/*/route.ts` | 7.1 | Pending |
-| 7.5 | Implement IndexedDB model cache | `src/lib/storage/modelCache.ts` | - | Pending |
-| 7.6 | Update piperCustom for R2 loading | `src/lib/piper/piperCustom.ts` | 7.4, 7.5 | Pending |
-| 7.7 | Update voiceData with sample URLs | `src/config/voiceData.ts` | 7.3 | Pending |
-| 7.8 | Update VoiceCard for sample preview | Use pre-rendered sample | 7.7 | Pending |
-| 7.9 | Remove public/tts-model from build | Delete folder, update .gitignore | 7.6 | Pending |
-| 7.10 | Configure Cloudflare Pages | Add R2 binding, setup domain | 7.1 | Pending |
+| Step | Task                                | Files / Scope                             | Dependency | Status  |
+| ---- | ----------------------------------- | ----------------------------------------- | ---------- | ------- |
+| 7.1  | Setup Cloudflare R2 bucket          | wrangler.toml, R2 console                 | -          | Pending |
+| 7.2  | Upload models to R2                 | 11 .onnx + .json files to vi/             | 7.1        | Pending |
+| 7.3  | Pre-render voice samples            | 5-10s WAV per voice                       | 7.2        | Pending |
+| 7.4  | Create R2 API routes                | `src/app/api/models/[voiceId]/*/route.ts` | 7.1        | Pending |
+| 7.5  | Implement IndexedDB model cache     | `src/lib/storage/modelCache.ts`           | -          | Pending |
+| 7.6  | Update piperCustom for R2 loading   | `src/lib/piper/piperCustom.ts`            | 7.4, 7.5   | Pending |
+| 7.7  | Update voiceData with sample URLs   | `src/config/voiceData.ts`                 | 7.3        | Pending |
+| 7.8  | Update VoiceCard for sample preview | Use pre-rendered sample                   | 7.7        | Pending |
+| 7.9  | Remove public/tts-model from build  | Delete folder, update .gitignore          | 7.6        | Pending |
+| 7.10 | Configure Cloudflare Pages          | Add R2 binding, setup domain              | 7.1        | Pending |
 
 ### Suggested PRs
 
-| PR        | Scope                | Files                                                                          | Est. Size |
-| --------- | -------------------- | ------------------------------------------------------------------------------ | --------- |
-| **PR #1** | PiperTts Core        | `piperTts.ts`, `tts-worker.ts`, `next.config.ts`                               | Medium    |
-| **PR #2** | Types + Store + Hook | `types.ts`, `store.ts`, `useTtsGenerate.ts`, `TtsContext.tsx`                  | Small     |
-| **PR #3** | UI Components        | `MainContent.tsx`, `AudioPlayer.tsx`, `HistoryPanel.tsx`, `VoiceSettings.tsx` | Large     |
-| **PR #4** | Integration + Utils  | `page.tsx`, `textProcessor.ts`, `history.ts`, `config.ts`                      | Medium    |
-| **PR #5** | Tests + Polish       | Test files, error handling                                                     | Medium    |
-| **PR #6** | Vietnamese + IDB     | vietnameseNormalizer, history IndexedDB, migration                              | Medium    |
-| **PR #7** | Theme + Share        | ThemeToggle, useTheme, ShareButton, layout                                      | Small     |
-| **PR #8** | Voice Library        | VoiceLibrary, VoiceCard, voiceData                                              | Medium    |
-| **PR #9** | App Shell            | Sidebar, Header, page.tsx                                                      | Medium    |
-| **PR #10** | Cloudflare R2 Setup | wrangler.toml, R2 bucket, API routes                                          | Medium    |
-| **PR #11** | Model Caching        | modelCache.ts, update piperCustom, VoiceCard sample preview                    | Medium    |
-| **PR #12** | R2 Migration         | Remove public/tts-model, final integration, deploy to Cloudflare Pages          | Medium    |
+| PR         | Scope                | Files                                                                         | Est. Size |
+| ---------- | -------------------- | ----------------------------------------------------------------------------- | --------- |
+| **PR #1**  | PiperTts Core        | `piperTts.ts`, `tts-worker.ts`, `next.config.ts`                              | Medium    |
+| **PR #2**  | Types + Store + Hook | `types.ts`, `store.ts`, `useTtsGenerate.ts`, `TtsContext.tsx`                 | Small     |
+| **PR #3**  | UI Components        | `MainContent.tsx`, `AudioPlayer.tsx`, `HistoryPanel.tsx`, `VoiceSettings.tsx` | Large     |
+| **PR #4**  | Integration + Utils  | `page.tsx`, `textProcessor.ts`, `history.ts`, `config.ts`                     | Medium    |
+| **PR #5**  | Tests + Polish       | Test files, error handling                                                    | Medium    |
+| **PR #6**  | Vietnamese + IDB     | vietnameseNormalizer, history IndexedDB, migration                            | Medium    |
+| **PR #7**  | Theme + Share        | ThemeToggle, useTheme, ShareButton, layout                                    | Small     |
+| **PR #8**  | Voice Library        | VoiceLibrary, VoiceCard, voiceData                                            | Medium    |
+| **PR #9**  | App Shell            | Sidebar, Header, page.tsx                                                     | Medium    |
+| **PR #10** | Cloudflare R2 Setup  | wrangler.toml, R2 bucket, API routes                                          | Medium    |
+| **PR #11** | Model Caching        | modelCache.ts, update piperCustom, VoiceCard sample preview                   | Medium    |
+| **PR #12** | R2 Migration         | Remove public/tts-model, final integration, deploy to Cloudflare Pages        | Medium    |
 
 ### ⏱️ Implementation Timeline
 
-| Week   | Phase     | Focus                                  |
-| ------ | --------- | -------------------------------------- |
-| Week 1 | Phase 1-2 | Core infrastructure + state management |
-| Week 2 | Phase 3   | UI components                          |
-| Week 3 | Phase 4   | App Shell + Layout                     |
-| Week 4 | Phase 5   | Integration + utilities                |
+| Week   | Phase     | Focus                                   |
+| ------ | --------- | --------------------------------------- |
+| Week 1 | Phase 1-2 | Core infrastructure + state management  |
+| Week 2 | Phase 3   | UI components                           |
+| Week 3 | Phase 4   | App Shell + Layout                      |
+| Week 4 | Phase 5   | Integration + utilities                 |
 | Week 5 | Phase 6   | Extended: normalizer, IDB, theme, share |
 
 ---
@@ -1221,13 +1339,13 @@ function toFriendlyErrorMessage(raw: string): string {
 
 ### Internal
 
-| Module                   | Dependency Reason                    |
-| ------------------------ | ------------------------------------ |
-| features/tts/store       | Zustand state management             |
-| features/tts/components  | UI rendering                         |
+| Module                   | Dependency Reason                      |
+| ------------------------ | -------------------------------------- |
+| features/tts/store       | Zustand state management               |
+| features/tts/components  | UI rendering                           |
 | lib/text-processing      | Text validation, Vietnamese normalizer |
-| lib/storage/history      | History operations (IndexedDB)       |
-| features/theme (or hook) | Dark mode state and persistence      |
+| lib/storage/history      | History operations (IndexedDB)         |
+| features/theme (or hook) | Dark mode state and persistence        |
 
 ---
 

@@ -29,7 +29,10 @@ export class GaplessStreamingPlayer {
   private getContext(): AudioContext {
     if (this.stopped) throw new Error("Player stopped");
     if (!this.context) {
-      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       this.context = new Ctx();
       this.gainNode = this.context.createGain();
       this.gainNode.connect(this.context.destination);
@@ -48,7 +51,13 @@ export class GaplessStreamingPlayer {
   getCurrentTime(): number {
     if (!this.context || !this.totalScheduledDuration) return 0;
     if (this.paused) return this._pausedAt ?? 0;
-    return Math.max(0, Math.min(this.context.currentTime - this.firstStartTime, this.totalScheduledDuration));
+    return Math.max(
+      0,
+      Math.min(
+        this.context.currentTime - this.firstStartTime,
+        this.totalScheduledDuration,
+      ),
+    );
   }
 
   private _pausedAt = 0;
@@ -100,13 +109,25 @@ export class GaplessStreamingPlayer {
 
     // When paused, stop ticking until resumed
     if (this.paused) {
-      this._pausedAt = Math.max(0, Math.min(this.context.currentTime - this.firstStartTime, this.totalScheduledDuration));
+      this._pausedAt = Math.max(
+        0,
+        Math.min(
+          this.context.currentTime - this.firstStartTime,
+          this.totalScheduledDuration,
+        ),
+      );
       this.rafId = null;
       return;
     }
 
     const ctx = this.context;
-    const currentTime = Math.max(0, Math.min(ctx.currentTime - this.firstStartTime, this.totalScheduledDuration));
+    const currentTime = Math.max(
+      0,
+      Math.min(
+        ctx.currentTime - this.firstStartTime,
+        this.totalScheduledDuration,
+      ),
+    );
     this.callbacks.onProgress(currentTime, this.totalScheduledDuration);
 
     if (this.receivedComplete && ctx.currentTime >= this.nextStartTime - 0.05) {
@@ -130,7 +151,13 @@ export class GaplessStreamingPlayer {
     this.context?.suspend();
     // Save paused position for progress display
     if (this.context) {
-      this._pausedAt = Math.max(0, Math.min(this.context.currentTime - this.firstStartTime, this.totalScheduledDuration));
+      this._pausedAt = Math.max(
+        0,
+        Math.min(
+          this.context.currentTime - this.firstStartTime,
+          this.totalScheduledDuration,
+        ),
+      );
     }
   }
 

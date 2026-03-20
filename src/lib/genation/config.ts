@@ -46,7 +46,9 @@ export function getGenationConfig(): {
   const clientId =
     (typeof cf?.NEXT_PUBLIC_GENATION_CLIENT_ID === "string"
       ? cf.NEXT_PUBLIC_GENATION_CLIENT_ID
-      : "") || genationConfig.clientId || "";
+      : "") ||
+    genationConfig.clientId ||
+    "";
   const clientSecret =
     (typeof cf?.GENATION_CLIENT_SECRET === "string"
       ? cf.GENATION_CLIENT_SECRET

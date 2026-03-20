@@ -18,113 +18,89 @@ export interface VoiceMetadata {
  * Maps to customModels in config.ts by ID
  */
 export const voiceMetadata: VoiceMetadata[] = [
-  { 
-    id: "ngochuyen", 
-    name: "Ngọc Huyền", 
-    region: "Miền Bắc", 
-    gender: "Nữ", 
-    style: "Truyền cảm", 
-    description: "Giọng đọc nhẹ nhàng, phù hợp cho podcast và kể chuyện tình cảm.",
-    avatarColor: "#ec4899"
-  },
-  { 
-    id: "ngocngan", 
-    name: "Ngọc Ngạn", 
-    region: "Miền Bắc", 
-    gender: "Nữ", 
-    style: "Tin tức", 
-    description: "Giọng đọc rõ ràng, chuyên nghiệp, phù hợp bản tin và nội dung chính thống.",
-    avatarColor: "#ec4899"
-  },
-  { 
-    id: "namminh", 
-    name: "Nam Minh", 
-    region: "Miền Bắc", 
-    gender: "Nam", 
-    style: "Trầm ấm", 
-    description: "Giọng nam trầm ấm, uy tín, phù hợp nội dung doanh nghiệp và tài chính.",
-    avatarColor: "#3b82f6"
-  },
-  { 
-    id: "namminh_goc", 
-    name: "Nam Minh Gốc", 
-    region: "Miền Bắc", 
-    gender: "Nam", 
-    style: "Trầm ấm", 
-    description: "Phiên bản gốc giọng Nam Minh, trầm ấm và uy tín.",
-    avatarColor: "#3b82f6"
-  },
-  { 
-    id: "hoaimy_goc", 
-    name: "Hoài My Gốc", 
-    region: "Miền Bắc", 
-    gender: "Nữ", 
-    style: "Truyền cảm", 
-    description: "Giọng nữ truyền cảm, phù hợp podcast và nội dung tình cảm.",
-    avatarColor: "#ec4899"
-  },
-  { 
-    id: "banmai", 
-    name: "Ban Mai", 
-    region: "Miền Bắc", 
-    gender: "Nữ", 
-    style: "Tin tức", 
-    description: "Tròn vành rõ chữ, giọng đọc chuẩn bản tin thời sự.",
-    avatarColor: "#ec4899"
-  },
-  { 
-    id: "manhdung", 
-    name: "Mạnh Dũng", 
-    region: "Miền Nam", 
-    gender: "Nam", 
-    style: "Doanh nghiệp", 
-    description: "Trầm ấm, uy tín, lý tưởng cho đọc bản tin tài chính.",
-    avatarColor: "#3b82f6"
-  },
-  { 
-    id: "minhquang", 
-    name: "Minh Quang", 
-    region: "Miền Trung", 
-    gender: "Nam", 
-    style: "Truyền cảm", 
-    description: "Giọng đọc truyền cảm, mang âm hưởng miền Trung đặc trưng.",
-    avatarColor: "#3b82f6"
+  {
+    id: "ngochuyen",
+    name: "Ngọc Huyền",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Truyền cảm",
+    description:
+      "Giọng đọc nhẹ nhàng, phù hợp cho podcast và kể chuyện tình cảm.",
+    avatarColor: "#ec4899",
   },
   {
-    id: "maiphuong", 
-    name: "Mai Phương", 
-    region: "Miền Bắc", 
-    gender: "Nữ", 
-    style: "Quảng cáo", 
+    id: "ngocngan",
+    name: "Ngọc Ngạn",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Tin tức",
+    description:
+      "Giọng đọc rõ ràng, chuyên nghiệp, phù hợp bản tin và nội dung chính thống.",
+    avatarColor: "#ec4899",
+  },
+  {
+    id: "banmai",
+    name: "Ban Mai",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Tin tức",
+    description: "Tròn vành rõ chữ, giọng đọc chuẩn bản tin thời sự.",
+    avatarColor: "#ec4899",
+  },
+  {
+    id: "manhdung",
+    name: "Mạnh Dũng",
+    region: "Miền Nam",
+    gender: "Nam",
+    style: "Doanh nghiệp",
+    description: "Trầm ấm, uy tín, lý tưởng cho đọc bản tin tài chính.",
+    avatarColor: "#3b82f6",
+  },
+  {
+    id: "minhquang",
+    name: "Minh Quang",
+    region: "Miền Trung",
+    gender: "Nam",
+    style: "Truyền cảm",
+    description: "Giọng đọc truyền cảm, mang âm hưởng miền Trung đặc trưng.",
+    avatarColor: "#3b82f6",
+  },
+  {
+    id: "maiphuong",
+    name: "Mai Phương",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Quảng cáo",
     description: "Tốc độ đọc nhanh, truyền cảm hứng, lý tưởng cho quảng cáo.",
-    avatarColor: "#ec4899"
+    avatarColor: "#ec4899",
   },
-  { 
-    id: "lacphi", 
-    name: "Lạc Phi", 
-    region: "Miền Trung", 
-    gender: "Nữ", 
-    style: "Du lịch", 
-    description: "Ngọt ngào và trong trẻo, lý tưởng cho đọc thơ và giới thiệu du lịch.",
-    avatarColor: "#ec4899"
+  {
+    id: "lacphi",
+    name: "Lạc Phi",
+    region: "Miền Trung",
+    gender: "Nữ",
+    style: "Du lịch",
+    description:
+      "Ngọt ngào và trong trẻo, lý tưởng cho đọc thơ và giới thiệu du lịch.",
+    avatarColor: "#ec4899",
   },
-  { 
-    id: "minhkhang", 
-    name: "Minh Khang", 
-    region: "Miền Bắc", 
-    gender: "Nam", 
-    style: "Giáo dục", 
+  {
+    id: "minhkhang",
+    name: "Minh Khang",
+    region: "Miền Bắc",
+    gender: "Nam",
+    style: "Giáo dục",
     description: "Giọng đọc trầm và vang, phù hợp với video giáo dục.",
-    avatarColor: "#3b82f6"
+    avatarColor: "#3b82f6",
   },
-  { 
-    id: "chieuthanh", 
-    name: "Chiếu Thành", 
-    region: "Miền Nam", 
-    gender: "Nam", 
-    style: "Truyền thống", 
+  {
+    id: "chieuthanh",
+    name: "Chiếu Thành",
+    region: "Miền Nam",
+    gender: "Nam",
+    style: "Truyền thống",
     description: "Giọng ông lão miền Tây chân chất, kể chuyện đồng quê.",
-    avatarColor: "#3b82f6"
+    avatarColor: "#3b82f6",
   },
   {
     id: "mytam2",
@@ -135,14 +111,14 @@ export const voiceMetadata: VoiceMetadata[] = [
     description: "Giọng hát trong sáng, phù hợp cho nhạc và giải trí.",
     avatarColor: "#ec4899",
   },
-  { 
-    id: "anhkhoi", 
-    name: "Anh Khôi", 
-    region: "Miền Bắc", 
-    gender: "Nam", 
-    style: "Hiện đại", 
+  {
+    id: "anhkhoi",
+    name: "Anh Khôi",
+    region: "Miền Bắc",
+    gender: "Nam",
+    style: "Hiện đại",
     description: "Trẻ trung và năng động, phù hợp cho nội dung mạng xã hội.",
-    avatarColor: "#3b82f6"
+    avatarColor: "#3b82f6",
   },
 ];
 
@@ -150,5 +126,5 @@ export const voiceMetadata: VoiceMetadata[] = [
  * Get voice metadata by ID
  */
 export function getVoiceMetadata(id: string): VoiceMetadata | undefined {
-  return voiceMetadata.find(v => v.id === id);
+  return voiceMetadata.find((v) => v.id === id);
 }

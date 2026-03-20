@@ -20,8 +20,10 @@ export function GET(request: Request): Response {
     }
   }
 
-  const message = "Vui lòng bấm nút Đăng nhập trên trang để đăng nhập với Genation.";
-  const location = origin + "/?auth_prompt=true&message=" + encodeURIComponent(message);
+  const message =
+    "Vui lòng bấm nút Đăng nhập trên trang để đăng nhập với Genation.";
+  const location =
+    origin + "/?auth_prompt=true&message=" + encodeURIComponent(message);
 
   return new Response(null, {
     status: 302,

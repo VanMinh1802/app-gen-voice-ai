@@ -17,10 +17,14 @@ export interface TtsGeneratorProps {
   onRefillApplied?: () => void;
 }
 
-export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps = {}) {
+export function TtsGenerator({
+  refillText,
+  onRefillApplied,
+}: TtsGeneratorProps = {}) {
   const [text, setText] = useState("");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
-  const { settings, status, progress, error, generate, isReady } = useTtsGenerate();
+  const { settings, status, progress, error, generate, isReady } =
+    useTtsGenerate();
   const { currentAudio, setSettings } = useTtsStore();
   const { t, mounted } = useLocale();
 
@@ -101,12 +105,14 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
       setText(value);
 
       if (value && !isTextValid(value, config.tts.maxTextLength)) {
-        setTextError(`Text exceeds maximum length of ${config.tts.maxTextLength} characters`);
+        setTextError(
+          `Text exceeds maximum length of ${config.tts.maxTextLength} characters`,
+        );
       } else {
         setTextError(null);
       }
     },
-    []
+    [],
   );
 
   const handleVoiceChange = useCallback(
@@ -114,7 +120,7 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
       const voice = e.target.value as typeof settings.voice;
       setSettings({ voice, model: voice });
     },
-    [setSettings, settings]
+    [setSettings, settings],
   );
 
   const handleSpeedChange = useCallback(
@@ -122,14 +128,14 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
       const speed = parseFloat(e.target.value);
       setSettings({ speed });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const handleNormalizeToggle = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSettings({ normalizeText: e.target.checked });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const handleGenerate = useCallback(() => {
@@ -139,7 +145,8 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
 
   const isGenerating = status === "generating";
   const isPlaying = status === "playing";
-  const canGenerate = text.trim().length > 0 && !textError && isReady && !isGenerating;
+  const canGenerate =
+    text.trim().length > 0 && !textError && isReady && !isGenerating;
 
   const getStatusText = () => {
     if (!isReady) return t("initializing");
@@ -194,7 +201,7 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
           disabled={isGenerating}
           className={cn(
             "w-full h-40 px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50",
-            textError && "border-red-500"
+            textError && "border-red-500",
           )}
         />
         <div className="flex justify-between text-sm text-muted-foreground">
@@ -209,7 +216,11 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
 
       <div className="space-y-2">
         <label htmlFor="speed" className="text-sm font-medium">
-          {t("speed")}: {(typeof settings?.speed === "number" ? settings.speed : 1).toFixed(1)}x
+          {t("speed")}:{" "}
+          {(typeof settings?.speed === "number" ? settings.speed : 1).toFixed(
+            1,
+          )}
+          x
         </label>
         <input
           id="speed"
@@ -237,7 +248,10 @@ export function TtsGenerator({ refillText, onRefillApplied }: TtsGeneratorProps 
           disabled={isGenerating}
           className="w-4 h-4 accent-primary"
         />
-        <label htmlFor="normalizeText" className="text-sm text-muted-foreground">
+        <label
+          htmlFor="normalizeText"
+          className="text-sm text-muted-foreground"
+        >
           {t("normalizeText")}
         </label>
       </div>

@@ -37,7 +37,20 @@ export interface TtsSettings {
   normalizeText: boolean;
 }
 
-export type TtsStatus = "idle" | "loading" | "generating" | "previewing" | "playing" | "error" | "streaming-ended";
+export type TtsStatus =
+  | "idle"
+  | "loading"
+  | "generating"
+  | "previewing"
+  | "playing"
+  | "error"
+  | "streaming-ended";
+
+/**
+ * Separate playback state from TTS generation state.
+ * Allows AudioPlayer to distinguish "TTS is generating" vs "audio is playing".
+ */
+export type PlaybackStatus = "idle" | "playing" | "paused" | "buffering";
 
 export interface TtsHistoryItem {
   id: string;

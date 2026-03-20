@@ -23,12 +23,18 @@ interface VoiceCardProps {
   onPreview?: () => void;
 }
 
-export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: VoiceCardProps) {
+export function VoiceCard({
+  voice,
+  isSelected,
+  onSelect,
+  disabled,
+  onPreview,
+}: VoiceCardProps) {
   return (
     <div
       className={cn(
         "bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover-lift transition-all group relative cursor-pointer",
-        disabled && "opacity-50 cursor-not-allowed"
+        disabled && "opacity-50 cursor-not-allowed",
       )}
     >
       {/* Top row: Avatar + Preview button */}
@@ -43,12 +49,14 @@ export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: 
               sizes="56px"
             />
           ) : (
-            <div className={cn(
-              "w-full h-full rounded-full flex items-center justify-center text-lg font-medium transition-transform group-hover:scale-110 duration-200",
-              voice.gender === "male"
-                ? "bg-blue-500/20 text-blue-400"
-                : "bg-pink-500/20 text-pink-400"
-            )}>
+            <div
+              className={cn(
+                "w-full h-full rounded-full flex items-center justify-center text-lg font-medium transition-transform group-hover:scale-110 duration-200",
+                voice.gender === "male"
+                  ? "bg-blue-500/20 text-blue-400"
+                  : "bg-pink-500/20 text-pink-400",
+              )}
+            >
               {voice.name.charAt(0)}
             </div>
           )}
@@ -73,12 +81,14 @@ export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: 
         <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
           {voice.region}
         </span>
-        <span className={cn(
-          "text-[10px] px-2 py-0.5 rounded-full font-medium",
-          voice.gender === "male" 
-            ? "bg-blue-500/10 text-blue-500" 
-            : "bg-pink-500/10 text-pink-500"
-        )}>
+        <span
+          className={cn(
+            "text-[10px] px-2 py-0.5 rounded-full font-medium",
+            voice.gender === "male"
+              ? "bg-blue-500/10 text-blue-500"
+              : "bg-pink-500/10 text-pink-500",
+          )}
+        >
           {voice.gender === "male" ? "Nam" : "Nữ"}
         </span>
         {voice.style && (
@@ -102,8 +112,9 @@ export function VoiceCard({ voice, isSelected, onSelect, disabled, onPreview }: 
         className={cn(
           "w-full border border-border text-muted-foreground py-2 rounded-lg text-xs font-bold transition-colors",
           "hover:bg-muted",
-          isSelected && "bg-primary text-primary-foreground border-primary hover:bg-primary",
-          disabled && "opacity-50 cursor-not-allowed"
+          isSelected &&
+            "bg-primary text-primary-foreground border-primary hover:bg-primary",
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       >
         {isSelected ? "Đã chọn" : "Chọn giọng này"}

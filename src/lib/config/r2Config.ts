@@ -19,9 +19,11 @@ export async function loadR2Config(): Promise<string | undefined> {
     const res = await fetch("/r2-config.json?t=" + Date.now());
     if (!res.ok) return undefined;
     const data = (await res.json()) as { r2PublicUrl?: string };
-    const url = typeof data.r2PublicUrl === "string" && data.r2PublicUrl.startsWith("http")
-      ? data.r2PublicUrl.trim()
-      : undefined;
+    const url =
+      typeof data.r2PublicUrl === "string" &&
+      data.r2PublicUrl.startsWith("http")
+        ? data.r2PublicUrl.trim()
+        : undefined;
     if (url) {
       cachedFromConfig = url;
       window.NEXT_PUBLIC_R2_PUBLIC_URL = url;

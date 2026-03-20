@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-008                                               |
-| **Feature Name**   | Vietnamese Text Processing                             |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P1 (High)                                             |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.1.0                                               |
+| Field              | Value                      |
+| ------------------ | -------------------------- |
+| **Feature ID**     | REQ-008                    |
+| **Feature Name**   | Vietnamese Text Processing |
+| **Status**         | ✅ Completed               |
+| **Priority**       | P1 (High)                  |
+| **Owner**          | Development Team           |
+| **Created**        | 2026-03-10                 |
+| **Target Release** | v1.1.0                     |
 
 ---
 
@@ -68,16 +68,16 @@ Vietnamese numbers, dates, times, currency need to be spoken naturally.
 
 ### Files Created
 
-| File | Description |
-| ---- | ----------- |
+| File                                              | Description        |
+| ------------------------------------------------- | ------------------ |
 | `src/lib/text-processing/vietnameseNormalizer.ts` | Text normalization |
-| `src/lib/text-processing/textProcessor.ts` | Text validation |
+| `src/lib/text-processing/textProcessor.ts`        | Text validation    |
 
 ### Dependencies
 
-| Library | Version | Purpose |
-| -------- | ------- | --------|
-| vitest | ^2.0 | Unit testing |
+| Library | Version | Purpose      |
+| ------- | ------- | ------------ |
+| vitest  | ^2.0    | Unit testing |
 
 ---
 

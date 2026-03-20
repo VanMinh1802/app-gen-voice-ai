@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field | Value |
-| ----- | ----- |
-| **Feature ID** | REQ-014 |
-| **Feature Name** | Streaming Audio Playback |
-| **Status** | ⏳ Pending Approval |
-| **Priority** | P1 (High) |
-| **Owner** | Development Team |
-| **Created** | 2026-03-19 |
-| **Target Release** | v1.2.0 |
+| Field              | Value                    |
+| ------------------ | ------------------------ |
+| **Feature ID**     | REQ-014                  |
+| **Feature Name**   | Streaming Audio Playback |
+| **Status**         | ✅ Completed      |
+| **Priority**       | P1 (High)                |
+| **Owner**          | Development Team         |
+| **Created**        | 2026-03-19               |
+| **Target Release** | v1.2.0                   |
 
 ---
 
@@ -35,12 +35,12 @@ Currently, users must wait for the entire TTS generation to complete (4-8 second
 
 ### Success Criteria
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Time to first audio | < 2s for 1000+ char text | User perceives audio sooner |
-| Audio quality | Same as non-streaming | No degradation |
-| Implementation complexity | Medium | 4-6 files changed |
-| Backward compatibility | 100% | Short text unchanged |
+| Metric                    | Target                   | Measurement                 |
+| ------------------------- | ------------------------ | --------------------------- |
+| Time to first audio       | < 2s for 1000+ char text | User perceives audio sooner |
+| Audio quality             | Same as non-streaming    | No degradation              |
+| Implementation complexity | Medium                   | 4-6 files changed           |
+| Backward compatibility    | 100%                     | Short text unchanged        |
 
 ---
 
@@ -112,35 +112,35 @@ flowchart TD
             Button["Generate Button"]
             Player["Audio Player"]
         end
-        
+
         subgraph Hooks["TTS Hooks"]
             Generate["useTtsGenerate"]
             PlayerHook["useAudioPlayer"]
         end
-        
+
         subgraph State["State"]
             Store["TtsStore"]
         end
     end
-    
+
     subgraph Worker["TTS Worker"]
         Chunk1[Chunk 1] --> Process1[Process]
         Chunk2[Chunk 2] --> Process2[Process]
         Chunk3[Chunk 3] --> Process3[Process]
-        
+
         Process1 -->|chunk 0| Stream1[Stream Message]
         Process2 -->|chunk 1| Stream2[Stream Message]
         Process3 -->|chunk 2| Stream3[Stream Message]
-        
+
         ProcessAll[Process All] -->|complete| CompleteMsg[Complete Message]
     end
-    
+
     Input -->|text| Generate
     Generate -->|generate| Worker
     Worker -->|chunk| Generate
     Generate -->|play| PlayerHook
     PlayerHook -->|audio| Player
-    
+
     Worker -->|complete| Generate
     Generate -->|save history| Store
 ```
@@ -153,48 +153,48 @@ sequenceDiagram
     participant UI
     participant Worker
     participant AudioContext
-    
+
     User->>UI: Click Generate (1000+ chars)
     UI->>Worker: generate(text)
-    
+
     Note over Worker: Split to 3 chunks
-    
+
     Note over Worker: Process chunk 0
     Worker-->>UI: chunk(audio[0], index: 0)
     Note over UI: Add to queue[0]
-    
+
     Note over Worker: Process chunk 1
     Worker-->>UI: chunk(audio[1], index: 1)
     Note over UI: Add to queue[1], queue has 2 → Start playback
-    
+
     UI->>AudioContext: play(queue[0])
     AudioContext-->>User: Plays audio[0]
-    
+
     Note over UI: Remove played chunk, queue now has 1
-    
+
     Note over Worker: Process chunk 2
     Worker-->>UI: chunk(audio[2], index: 2)
     Note over UI: Add to queue[2], has 2 → play(queue[1])
-    
+
     UI->>AudioContext: play(queue[1])
     AudioContext-->>User: Plays audio[1]
-    
+
     Worker-->>UI: complete(allAudio)
     Note over UI: Play remaining queue: queue[2]
-    
+
     UI->>AudioContext: play(queue[2])
     UI->>UI: Save to history
 ```
 
 ### Files to Modify
 
-| File | Change | Priority |
-|------|--------|----------|
-| `src/features/tts/types.ts` | Add `TtsWorkerChunk` type | Required |
-| `src/workers/tts-worker.ts` | Add chunk streaming logic with threshold | Required |
-| `src/features/tts/hooks/useTtsGenerate.ts` | Handle chunk messages, streaming state | Required |
-| `src/lib/audio/useAudioPlayer.ts` | Add `queueChunk()` method | Required |
-| `src/features/tts/components/AudioPlayer.tsx` | Update playback logic | Required |
+| File                                          | Change                                   | Priority |
+| --------------------------------------------- | ---------------------------------------- | -------- |
+| `src/features/tts/types.ts`                   | Add `TtsWorkerChunk` type                | Required |
+| `src/workers/tts-worker.ts`                   | Add chunk streaming logic with threshold | Required |
+| `src/features/tts/hooks/useTtsGenerate.ts`    | Handle chunk messages, streaming state   | Required |
+| `src/lib/audio/useAudioPlayer.ts`             | Add `queueChunk()` method                | Required |
+| `src/features/tts/components/AudioPlayer.tsx` | Update playback logic                    | Required |
 
 ### Type Definitions
 
@@ -229,7 +229,7 @@ export type TtsWorkerOutgoingMessage =
 // src/config.ts - Add streaming config
 export const config = {
   // ... existing config
-  
+
   // Streaming settings
   streaming: {
     /** Minimum number of chunks to trigger streaming mode */
@@ -242,9 +242,8 @@ export const config = {
 } as const;
 
 /** Calculate minimum text length for streaming: minChunks * charsPerChunk */
-export const STREAMING_THRESHOLD_CHARS = 
-  config.streaming.minChunksForStreaming * 
-  config.streaming.charsPerChunk; // = 1000 chars
+export const STREAMING_THRESHOLD_CHARS =
+  config.streaming.minChunksForStreaming * config.streaming.charsPerChunk; // = 1000 chars
 ```
 
 ### Worker Changes
@@ -269,15 +268,15 @@ function shouldStream(textLength: number): boolean {
 
 async function handleGenerate(payload: TtsRequest) {
   const chunks = splitIntoChunks(payload.text);
-  
+
   if (shouldStream(chunks)) {
     // Streaming mode: send each chunk as it completes
     const allAudio: Float32Array[] = [];
-    
+
     for (let i = 0; i < chunks.length; i++) {
       const audio = await processSingleChunk(chunks[i]);
       allAudio.push(audio);
-      
+
       // Stream chunk immediately
       postMessage({
         type: "chunk",
@@ -286,7 +285,7 @@ async function handleGenerate(payload: TtsRequest) {
         isStreaming: true,
       } as TtsWorkerChunk);
     }
-    
+
     // Send complete with all audio combined for history
     const fullAudio = concatenateFloat32Arrays(allAudio);
     postMessage({
@@ -320,19 +319,19 @@ export interface AudioPlayerState {
 
 export interface UseAudioPlayerReturn {
   // ... existing methods
-  
+
   /** Queue a chunk to play after current audio finishes */
   queueChunk: (audioBuffer: ArrayBuffer) => void;
-  
+
   /** Play a chunk immediately and set up queue for subsequent chunks */
   playChunkNow: (audioBuffer: ArrayBuffer, onEnded?: () => void) => void;
-  
+
   /** Clear all queued chunks (for stop/cancel) */
   clearQueue: () => void;
-  
+
   /** Check if currently in streaming playback mode */
   isStreaming: boolean;
-  
+
   /** Number of chunks currently in queue */
   queueLength: number;
 }
@@ -353,7 +352,7 @@ const MIN_CHUNKS_TO_START = config.streaming.bufferChunks;
 const handleChunkMessage = (msg: TtsWorkerChunk) => {
   const queue = [...chunkQueueRef.current, msg.audio];
   chunkQueueRef.current = queue;
-  
+
   // Start streaming when buffer is full
   if (queue.length >= MIN_CHUNKS_TO_START && !isPlayingRef.current) {
     startPlayback();
@@ -365,7 +364,7 @@ const startPlayback = () => {
   playAudio(chunk, () => {
     // On chunk ended
     chunkQueueRef.current.shift();
-    
+
     // Continue if more chunks in queue
     if (chunkQueueRef.current.length > 0) {
       startPlayback();
@@ -380,23 +379,23 @@ const startPlayback = () => {
 
 ### Primary Edge Cases (Buffer-Based Streaming)
 
-| # | Case | Handling | User Feedback |
-|---|------|----------|---------------|
-| 1 | **Gap between chunks** | Buffer 2 chunks before starting playback | Smooth continuous audio |
-| 2 | **Last chunk(s)** | On "complete" message, play all remaining in queue | All audio played |
-| 3 | **Stop mid-stream** | Clear queue + cancel worker + stop playback | UI returns to idle |
-| 4 | **Error mid-stream** | Show error, don't save partial to history | Error toast |
+| #   | Case                   | Handling                                           | User Feedback           |
+| --- | ---------------------- | -------------------------------------------------- | ----------------------- |
+| 1   | **Gap between chunks** | Buffer 2 chunks before starting playback           | Smooth continuous audio |
+| 2   | **Last chunk(s)**      | On "complete" message, play all remaining in queue | All audio played        |
+| 3   | **Stop mid-stream**    | Clear queue + cancel worker + stop playback        | UI returns to idle      |
+| 4   | **Error mid-stream**   | Show error, don't save partial to history          | Error toast             |
 
 ### Secondary Edge Cases
 
-| # | Case | Handling | User Feedback |
-|---|------|----------|---------------|
-| 5 | **Text exactly 1000 chars** (2 chunks) | Buffer 1 chunk + wait complete → play last | Slight delay but works |
-| 6 | **Device too fast** (inference < audio duration) | Queue fills up - acceptable memory impact | No issue |
-| 7 | **Browser tab inactive** | Resume AudioContext on visible | Auto-resume audio |
-| 8 | **User generate again** during stream | Disable button or auto-cancel previous | Clean restart |
-| 9 | **AudioContext interrupted** (notification, call) | Let browser handle, resume on interaction | Audio resumes |
-| 10 | **Memory management** | Release AudioBuffer after play, keep ArrayBuffer for history | Normal memory use |
+| #   | Case                                              | Handling                                                     | User Feedback          |
+| --- | ------------------------------------------------- | ------------------------------------------------------------ | ---------------------- |
+| 5   | **Text exactly 1000 chars** (2 chunks)            | Buffer 1 chunk + wait complete → play last                   | Slight delay but works |
+| 6   | **Device too fast** (inference < audio duration)  | Queue fills up - acceptable memory impact                    | No issue               |
+| 7   | **Browser tab inactive**                          | Resume AudioContext on visible                               | Auto-resume audio      |
+| 8   | **User generate again** during stream             | Disable button or auto-cancel previous                       | Clean restart          |
+| 9   | **AudioContext interrupted** (notification, call) | Let browser handle, resume on interaction                    | Audio resumes          |
+| 10  | **Memory management**                             | Release AudioBuffer after play, keep ArrayBuffer for history | Normal memory use      |
 
 ### Detailed Solutions
 
@@ -408,7 +407,7 @@ const MIN_CHUNKS_TO_START = 2;
 
 const handleChunkMessage = (chunk: TtsWorkerChunk) => {
   chunkQueueRef.current.push(chunk.audio);
-  
+
   // Start playback only when queue has 2+ chunks
   if (chunkQueueRef.current.length >= MIN_CHUNKS_TO_START) {
     playAudio(chunkQueueRef.current[0]);
@@ -425,7 +424,7 @@ const handleCompleteMessage = (msg: TtsWorkerComplete) => {
   while (chunkQueueRef.current.length > 0) {
     playAudio(chunkQueueRef.current.shift()!);
   }
-  
+
   // Then save full audio to history
   saveToHistory(msg.audio);
 };
@@ -457,13 +456,13 @@ const handleStop = () => {
 const handleError = (error: TtsWorkerError) => {
   // Don't save partial audio to history
   clearAudioHistory();
-  
+
   // Show error
   toast.error(error.message);
-  
+
   // Reset state
   chunkQueueRef.current = [];
-  setStatus('error');
+  setStatus("error");
 };
 ```
 
@@ -473,7 +472,7 @@ const handleError = (error: TtsWorkerError) => {
 // src/config.ts
 export const config = {
   // ... existing config
-  
+
   streaming: {
     minChunksForStreaming: 2,
     charsPerChunk: 500,
@@ -496,13 +495,13 @@ export const config = {
 
 ## 🧪 Testing Strategy
 
-| Type | What to Test | Files |
-|------|--------------|-------|
-| Unit | `shouldStream()` logic | `tts-worker.test.ts` |
-| Unit | Chunk splitting | `text-processing.test.ts` |
-| Integration | Full streaming flow | Manual test |
-| Integration | Stop during stream | Manual test |
-| Integration | Short text fallback | Manual test |
+| Type        | What to Test           | Files                     |
+| ----------- | ---------------------- | ------------------------- |
+| Unit        | `shouldStream()` logic | `tts-worker.test.ts`      |
+| Unit        | Chunk splitting        | `text-processing.test.ts` |
+| Integration | Full streaming flow    | Manual test               |
+| Integration | Stop during stream     | Manual test               |
+| Integration | Short text fallback    | Manual test               |
 
 ### Manual Test Scenarios
 
@@ -518,24 +517,26 @@ export const config = {
 
 ## 📋 Implementation Plan
 
-| Step | Task | Dependency | Status |
-|------|------|------------|--------|
-| 1 | Add types (`TtsWorkerChunk`) to `types.ts` | - | Pending |
-| 2 | Add streaming config to `config.ts` | - | Pending |
-| 3 | Implement chunk streaming in `tts-worker.ts` | 1, 2 | Pending |
-| 4 | Update `useTtsGenerate` to handle chunk messages | 1, 3 | Pending |
-| 5 | Add `queueChunk`/`playChunk` to `useAudioPlayer` | - | Pending |
-| 6 | Update `AudioPlayer.tsx` for streaming playback | 5 | Pending |
-| 7 | Manual testing | All | Pending |
-| 8 | Build & lint check | All | Pending |
+| Step | Task                                             | Dependency | Status  |
+| ---- | ------------------------------------------------ | ---------- | ------- |
+| 1    | Add types (`TtsWorkerChunk`) to `types.ts`       | -          | Pending |
+| 2    | Add streaming config to `config.ts`              | -          | Pending |
+| 3    | Implement chunk streaming in `tts-worker.ts`     | 1, 2       | Pending |
+| 4    | Update `useTtsGenerate` to handle chunk messages | 1, 3       | Pending |
+| 5    | Add `queueChunk`/`playChunk` to `useAudioPlayer` | -          | Pending |
+| 6    | Update `AudioPlayer.tsx` for streaming playback  | 5          | Pending |
+| 7    | Manual testing                                   | All        | Pending |
+| 8    | Build & lint check                               | All        | Pending |
 
 ### PR Breakdown
 
 **PR 1: Worker Streaming** (Step 1-3)
+
 - Types and config changes
 - Worker streaming logic
 
 **PR 2: UI Streaming** (Step 4-6)
+
 - Hook and player updates
 - Integration testing
 
@@ -554,19 +555,107 @@ export const config = {
 
 ---
 
-## ✅ Definition of Done
+### Story 4: GenerationSuccess UI/UX
 
-- [ ] Code implemented per spec
-- [ ] Long text (1500+ chars) streams audio within 2s
-- [ ] No audio gaps between chunks (buffer 2 chunks)
-- [ ] Short text (≤1000 chars) uses existing flow
-- [ ] Stop during stream works correctly (queue cleared)
-- [ ] Error mid-stream shows error, no partial saved
-- [ ] Generate again during stream cancels previous
-- [ ] History saves only after complete
-- [ ] Build passes (`npm run build`)
-- [ ] No lint errors (`npm run lint`)
-- [ ] Human approved
+**As a** user **I want** the success state after audio generation to be clear and intuitive **So that** I can easily copy, download, or continue working.
+
+**Acceptance Criteria:**
+
+- [x] Collapsible result card with text preview
+- [x] Quick action buttons: Copy text, Download audio
+- [x] "Saved to History" timing fix (show spinner during save, checkmark after)
+- [x] "View History" button to navigate to history
+- [x] Clear visual hierarchy: banner → collapsible card → actions
+- [x] Animation effects during playback
+
+**Priority:** P2 (Medium)
+
+---
+
+## GenerationSuccess Component Design
+
+### UI Structure
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ ✅ Tạo giọng nói thành công!                            │
+│    ✓ Đã lưu vào Lịch sử              [Xem Lịch sử]    │
+│    Sẵn sàng để nghe và tải ở thanh dưới màn hình       │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│ VĂN BẢN NỘI DUNG          [Copy] [Download] [Mở rộng ▼]│
+├─────────────────────────────────────────────────────────┤
+│ [Text preview textarea - read only]                     │
+│                                                         │
+├─────────────────────────────────────────────────────────┤
+│ [🎧] Giọng {voiceName}   [Đang phát badge]             │
+│       Điều khiển phát nhạc ở thanh dưới    [▶ Phát]   │
+├─────────────────────────────────────────────────────────┤
+│ Tạo lại              [Tạo lượt mới]                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Animation Effects
+
+When audio is playing, the following animations are active:
+
+1. **Card Border Pulse**: Border color and shadow animate in stepped pattern
+2. **Background Shimmer**: Gradient overlay sweeps across card
+3. **Icon Bounce**: Headphone icon bounces with rotation
+4. **Waveform Bars**: 4 bars animate in stepped pulse pattern
+5. **Badge Pulse**: "Đang phát" badge pulses with scale
+
+### Key CSS Animations
+
+```css
+@keyframes waveform-pulse-stepped {
+  0% { transform: scaleY(0.3); opacity: 0.5; }
+  25% { transform: scaleY(0.7); opacity: 0.8; }
+  50% { transform: scaleY(1); opacity: 1; }
+  75% { transform: scaleY(0.7); opacity: 0.8; }
+  100% { transform: scaleY(0.3); opacity: 0.5; }
+}
+
+@keyframes icon-bounce-stepped {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.15) rotate(-2deg); }
+  50% { transform: scale(1.1) rotate(2deg); }
+  75% { transform: scale(1.15) rotate(-1deg); }
+}
+
+@keyframes border-pulse-stepped {
+  0% { border-color: hsl(var(--primary) / 0.2); }
+  50% { border-color: hsl(var(--primary) / 0.6); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+  100% { border-color: hsl(var(--primary) / 0.2); }
+}
+
+@keyframes shimmer-stepped {
+  0% { transform: translateX(-100%); }
+  25% { transform: translateX(0%); }
+  50% { transform: translateX(50%); }
+  75% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+```
+
+---
+
+## Definition of Done
+
+- [x] Code implemented
+- [x] Long text (1500+ chars) streams audio within 2s
+- [x] No audio gaps between chunks (buffer 2 chunks)
+- [x] Short text (≤1000 chars) uses existing flow
+- [x] Stop during stream works correctly (queue cleared)
+- [x] Error mid-stream shows error, no partial saved
+- [x] Generate again during stream cancels previous
+- [x] History saves only after complete
+- [x] GenerationSuccess UI with collapsible card and quick actions
+- [x] Animation effects during playback
+- [x] Build passes (`npm run build`)
+- [x] No lint errors (`npm run lint`)
+- [x] Human approved
 
 ---
 

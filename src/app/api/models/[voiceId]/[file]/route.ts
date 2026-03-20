@@ -17,7 +17,6 @@ const ALLOWED_VOICE_IDS = [
   "anhkhoi",
   "banmai",
   "chieuthanh",
-  "hoaimy_goc",
   "lacphi",
   "maiphuong",
   "manhdung",
@@ -25,8 +24,6 @@ const ALLOWED_VOICE_IDS = [
   "minhquang",
   "mytam",
   "mytam2",
-  "namminh",
-  "namminh_goc",
   "ngocngan",
   "ngochuyen",
 ] as const;
@@ -67,12 +64,17 @@ function getR2PublicUrlFromEnv(): string {
 function getR2Bucket(): R2Bucket | null {
   try {
     const env = getCloudflareEnv();
-    const bucket = env ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR] : undefined;
-    if (bucket && typeof (bucket as R2Bucket).get === "function") return bucket as R2Bucket;
+    const bucket = env
+      ? (env as Record<string, R2Bucket | undefined>)[R2_BUCKET_VAR]
+      : undefined;
+    if (bucket && typeof (bucket as R2Bucket).get === "function")
+      return bucket as R2Bucket;
   } catch {
     // ignore
   }
-  const binding = (globalThis as unknown as { __env?: Record<string, R2Bucket> }).__env?.[R2_BUCKET_VAR];
+  const binding = (
+    globalThis as unknown as { __env?: Record<string, R2Bucket> }
+  ).__env?.[R2_BUCKET_VAR];
   if (binding) return binding;
   return null;
 }
@@ -96,7 +98,11 @@ function withCoep(headers: Record<string, string>): Record<string, string> {
   return { ...headers, ...COEP_HEADERS };
 }
 
-function jsonResponse(body: unknown, status: number, extraHeaders: Record<string, string> = {}): Response {
+function jsonResponse(
+  body: unknown,
+  status: number,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: withCoep({ "Content-Type": "application/json", ...extraHeaders }),
@@ -105,10 +111,9 @@ function jsonResponse(body: unknown, status: number, extraHeaders: Record<string
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ voiceId: string; file: string }> }
+  { params }: { params: Promise<{ voiceId: string; file: string }> },
 ) {
-  const json500 = (body: Record<string, unknown>) =>
-    jsonResponse(body, 500);
+  const json500 = (body: Record<string, unknown>) => jsonResponse(body, 500);
 
   // Debug: trả JSON tĩnh. Gọi: /api/models/banmai/sample.wav?debug=1
   try {
@@ -141,7 +146,7 @@ export async function GET(
     if (!voiceId || !file) {
       return jsonResponse(
         { error: "Missing voiceId or file", voiceId, file },
-        400
+        400,
       );
     }
 
@@ -151,11 +156,24 @@ export async function GET(
     }
 
     // Validate file name: allow {voiceId}.onnx, {voiceId}.onnx.json, sample.wav (and legacy model.onnx, model.onnx.json)
-    if (!file || file.includes("..") || file.includes("/") || file.includes("\\")) {
+    if (
+      !file ||
+      file.includes("..") ||
+      file.includes("/") ||
+      file.includes("\\")
+    ) {
       return jsonResponse({ error: "Invalid file" }, 400);
     }
     const modelFileName = getModelFileName(voiceId);
-    const allowedFiles = [`${voiceId}.onnx`, `${voiceId}.onnx.json`, "sample.wav", "model.onnx", "model.onnx.json", `${modelFileName}.onnx`, `${modelFileName}.onnx.json`];
+    const allowedFiles = [
+      `${voiceId}.onnx`,
+      `${voiceId}.onnx.json`,
+      "sample.wav",
+      "model.onnx",
+      "model.onnx.json",
+      `${modelFileName}.onnx`,
+      `${modelFileName}.onnx.json`,
+    ];
     if (!allowedFiles.includes(file)) {
       return jsonResponse({ error: "Invalid file name" }, 400);
     }
@@ -164,10 +182,12 @@ export async function GET(
     const objectKey = `vi/${r2Folder}/${file}`;
 
     const baseUrl =
-      getR2PublicUrlFromEnv() ||
-      request.headers.get("X-R2-Public-URL")?.trim();
+      getR2PublicUrlFromEnv() || request.headers.get("X-R2-Public-URL")?.trim();
     const useDirectUrl = !!baseUrl?.startsWith("http");
-    const directUrl = useDirectUrl && baseUrl ? `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}` : "";
+    const directUrl =
+      useDirectUrl && baseUrl
+        ? `${baseUrl.replace(/\/$/, "")}/vi/${r2Folder}/${file}`
+        : "";
 
     const debug = (extra: Record<string, unknown> = {}) => ({
       key: objectKey,
@@ -187,7 +207,7 @@ export async function GET(
             error: "R2 public URL not configured",
             hint: "Set R2_PUBLIC_URL or NEXT_PUBLIC_R2_PUBLIC_URL (Cloudflare: Settings → Environment variables)",
           },
-          503
+          503,
         );
       }
       try {
@@ -197,8 +217,12 @@ export async function GET(
         });
         if (!response.ok) {
           return jsonResponse(
-            { error: "File not found", url: directUrl, status: response.status },
-            404
+            {
+              error: "File not found",
+              url: directUrl,
+              status: response.status,
+            },
+            404,
           );
         }
         const blob = await response.blob();
@@ -209,7 +233,8 @@ export async function GET(
           }),
         });
       } catch (fetchError) {
-        const msg = fetchError instanceof Error ? fetchError.message : String(fetchError);
+        const msg =
+          fetchError instanceof Error ? fetchError.message : String(fetchError);
         return json500({
           error: "Direct fetch failed",
           detail: msg,
@@ -229,10 +254,7 @@ export async function GET(
       try {
         const object = await r2Bucket.get(objectKey);
         if (!object) {
-          return jsonResponse(
-            { error: "File not found", key: objectKey },
-            404
-          );
+          return jsonResponse({ error: "File not found", key: objectKey }, 404);
         }
         const body = object.body;
         if (!body || typeof (body as ReadableStream).getReader !== "function") {

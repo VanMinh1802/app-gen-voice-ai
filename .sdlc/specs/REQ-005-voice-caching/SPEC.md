@@ -2,16 +2,16 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-005                                               |
-| **Feature Name**   | Voice Model Caching + Version Check                    |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P1 (High)                                             |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Last Updated**   | 2026-03-14                                           |
-| **Target Release** | v1.0.0                                               |
+| Field              | Value                               |
+| ------------------ | ----------------------------------- |
+| **Feature ID**     | REQ-005                             |
+| **Feature Name**   | Voice Model Caching + Version Check |
+| **Status**         | ✅ Completed                        |
+| **Priority**       | P1 (High)                           |
+| **Owner**          | Development Team                    |
+| **Created**        | 2026-03-10                          |
+| **Last Updated**   | 2026-03-14                          |
+| **Target Release** | v1.0.0                              |
 
 ---
 
@@ -98,13 +98,13 @@ Users need voice models cached locally for faster subsequent use. Additionally, 
 
 ### Files Created/Modified
 
-| File | Description |
-| ---- | ----------- |
-| `src/lib/piper/piperCustom.ts` | Custom model loader with caching |
-| `src/features/tts/components/VoiceSettings.tsx` | Settings panel |
-| `src/lib/storage/modelCache.ts` | **Modified**: Added version field to CachedModel |
-| `src/lib/piper/piperR2.ts` | **Modified**: Added version checking logic |
-| `public/tts-model/vi/versions.json` | **NEW**: Version manifest file |
+| File                                            | Description                                      |
+| ----------------------------------------------- | ------------------------------------------------ |
+| `src/lib/piper/piperCustom.ts`                  | Custom model loader with caching                 |
+| `src/features/tts/components/VoiceSettings.tsx` | Settings panel                                   |
+| `src/lib/storage/modelCache.ts`                 | **Modified**: Added version field to CachedModel |
+| `src/lib/piper/piperR2.ts`                      | **Modified**: Added version checking logic       |
+| `public/tts-model/vi/versions.json`             | **NEW**: Version manifest file                   |
 
 ### Version Checking Flow
 
@@ -133,6 +133,7 @@ Users need voice models cached locally for faster subsequent use. Additionally, 
 ### Updating Models
 
 To update a voice model on the server:
+
 1. Upload new `.onnx` and `.onnx.json` files to R2
 2. Update `versions.json` with new version (e.g., `"banmai": "1.0.2"`)
 3. On next user visit, cache will be automatically invalidated and re-downloaded

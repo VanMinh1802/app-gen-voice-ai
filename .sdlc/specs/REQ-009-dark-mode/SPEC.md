@@ -2,15 +2,15 @@
 
 ## 📋 Metadata
 
-| Field              | Value                                                  |
-| ------------------ | ------------------------------------------------------ |
-| **Feature ID**     | REQ-009                                               |
-| **Feature Name**   | Dark Mode                                             |
-| **Status**         | ✅ Completed                                          |
-| **Priority**       | P1 (High)                                             |
-| **Owner**          | Development Team                                      |
-| **Created**        | 2026-03-10                                           |
-| **Target Release** | v1.1.0                                               |
+| Field              | Value            |
+| ------------------ | ---------------- |
+| **Feature ID**     | REQ-009          |
+| **Feature Name**   | Dark Mode        |
+| **Status**         | ✅ Completed     |
+| **Priority**       | P1 (High)        |
+| **Owner**          | Development Team |
+| **Created**        | 2026-03-10       |
+| **Target Release** | v1.1.0           |
 
 ---
 
@@ -71,11 +71,11 @@ Users need to switch between light and dark theme for comfortable use in differe
 
 ### Files Created
 
-| File | Description |
-| ---- | ----------- |
-| `src/lib/hooks/useTheme.ts` | Theme management hook |
-| `src/components/ThemeToggle.tsx` | Theme toggle button |
-| `src/app/layout.tsx` | Theme provider integration |
+| File                             | Description                |
+| -------------------------------- | -------------------------- |
+| `src/lib/hooks/useTheme.ts`      | Theme management hook      |
+| `src/components/ThemeToggle.tsx` | Theme toggle button        |
+| `src/app/layout.tsx`             | Theme provider integration |
 
 ---
 
