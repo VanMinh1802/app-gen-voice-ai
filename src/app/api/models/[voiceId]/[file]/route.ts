@@ -16,6 +16,7 @@ const R2_BUCKET_VAR = "VIETVOICE_MODELS";
 const ALLOWED_VOICE_IDS = [
   "anhkhoi",
   "banmai",
+  "baouyen",
   "chieuthanh",
   "lacphi",
   "maiphuong",

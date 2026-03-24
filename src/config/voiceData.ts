@@ -39,6 +39,16 @@ export const voiceMetadata: VoiceMetadata[] = [
     avatarColor: "#ec4899",
   },
   {
+    id: "baouyen",
+    name: "Bảo Uyên",
+    region: "Miền Bắc",
+    gender: "Nữ",
+    style: "Truyền cảm",
+    description:
+      "Giọng nữ dịu dàng, rõ ràng, phù hợp podcast và audio books.",
+    avatarColor: "#ec4899",
+  },
+  {
     id: "banmai",
     name: "Ban Mai",
     region: "Miền Bắc",
