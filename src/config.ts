@@ -11,7 +11,7 @@ export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
 /** Map voiceId (app) → tên file (không đuôi .onnx) khi khác với voiceId (vd: namminh → namminh_tram) */
 export const VOICE_ID_TO_MODEL_FILE: Record<string, string> = {
   namminh: "namminh_tram",
-  baouyen: "baouyen_5550",
+  baouyen: "baouyen_6388",
 };
 
 export function getR2FolderForVoice(voiceId: string): string {
