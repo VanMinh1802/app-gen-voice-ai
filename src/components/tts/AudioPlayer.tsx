@@ -24,11 +24,17 @@ import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 interface AudioPlayerProps {
   isVisible?: boolean;
   onClose?: () => void;
+  /** Desktop: sidebar thu gọn → thanh phát căn theo mép nội dung (không để hở dưới sidebar) */
+  sidebarCollapsed?: boolean;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
-export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
+export function AudioPlayer({
+  isVisible = true,
+  onClose,
+  sidebarCollapsed = false,
+}: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const {
@@ -425,7 +431,12 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
   const subtitle = subtitleParts.join(" • ");
 
   return (
-    <footer className="bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed bottom-0 left-0 right-0 lg:left-64 animate-fade-up">
+    <footer
+      className={cn(
+        "bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed bottom-0 left-0 right-0 animate-fade-up",
+        sidebarCollapsed ? "lg:left-[4.5rem]" : "lg:left-64",
+      )}
+    >
       <audio ref={audioRef} src={currentAudioUrl} preload="metadata" />
 
       {/* Dưới lg: xếp dọc để không đè lên nhau; từ lg: lưới 3 cột */}

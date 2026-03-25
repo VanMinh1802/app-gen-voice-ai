@@ -182,8 +182,8 @@ function HomeContentInner() {
             />
 
             {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
-            <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-28 sm:pb-24">
-              <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-screen-2xl min-h-0">
+            <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-4 sm:pb-6">
+              <div className="mx-auto w-full max-w-screen-2xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 {activeTab === "dashboard" ? (
                   <MainContent
                     text={inputText}
@@ -203,6 +203,13 @@ function HomeContentInner() {
                   <VoiceSettings />
                 ) : null}
               </div>
+              {/* Spacer cố định: flex+overflow đôi khi làm padding-bottom không đủ vùng cuộn; spacer đảm bảo Dashboard / Lịch sử / Thư viện không bị che bởi thanh phát fixed */}
+              {currentAudioUrl ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-none shrink-0 select-none h-[18rem] sm:h-[16rem] lg:h-[14rem]"
+                />
+              ) : null}
             </main>
 
             {/* Audio Player */}
@@ -210,6 +217,7 @@ function HomeContentInner() {
               <AudioPlayer
                 isVisible={playerVisible}
                 onClose={() => setPlayerVisible(false)}
+                sidebarCollapsed={sidebarCollapsed}
               />
             )}
           </div>
