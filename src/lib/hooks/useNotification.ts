@@ -65,8 +65,8 @@ export function useNotification(): UseNotificationReturn {
 
       try {
         const notification = new Notification(title, {
-          icon: "/logo.png",
-          badge: "/logo.png",
+          icon: "/logo_3D_rmbr.png",
+          badge: "/logo_3D_rmbr.png",
           silent: options?.silent ?? true,
           ...options,
         });
@@ -105,8 +105,8 @@ export function notify(title: string, options?: NotificationOptions): void {
 
   if (Notification.permission === "granted") {
     new Notification(title, {
-      icon: "/logo.png",
-      badge: "/logo.png",
+      icon: "/logo_3D_rmbr.png",
+      badge: "/logo_3D_rmbr.png",
       silent: options?.silent ?? true,
       ...options,
     });

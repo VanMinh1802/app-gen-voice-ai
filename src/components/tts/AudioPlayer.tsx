@@ -425,29 +425,30 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
   const subtitle = subtitleParts.join(" • ");
 
   return (
-    <footer className="bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-6 py-3 z-50 fixed bottom-0 left-0 right-0 lg:left-64 animate-fade-up">
+    <footer className="bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed bottom-0 left-0 right-0 lg:left-64 animate-fade-up">
       <audio ref={audioRef} src={currentAudioUrl} preload="metadata" />
 
-      <div className="grid grid-cols-12 gap-3 items-center">
-        {/* Left: Track Info */}
-        <div className="col-span-12 sm:col-span-4 xl:col-span-3 flex items-center gap-3 min-w-0">
-          <div className="size-12 sm:size-14 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shrink-0">
-            <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
+      {/* Dưới lg: xếp dọc để không đè lên nhau; từ lg: lưới 3 cột */}
+      <div className="flex flex-col gap-3 min-w-0 lg:grid lg:grid-cols-12 lg:gap-x-4 lg:gap-y-0 lg:items-center">
+        {/* Track info */}
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3 lg:col-span-3">
+          <div className="size-11 shrink-0 rounded-2xl bg-primary sm:size-14 flex items-center justify-center text-primary-foreground shadow-lg">
+            <Mic className="w-5 h-5 sm:w-7 sm:h-7" />
           </div>
           <div className="min-w-0 flex-1">
             <h4
-              className="font-bold text-foreground text-sm sm:text-base truncate"
+              className="truncate text-sm font-bold text-foreground sm:text-base"
               title={titleIsTruncated ? (nowPlaying?.text ?? "").trim() : undefined}
             >
-              {title}{titleIsTruncated ? "…" : ""}
+              {title}
+              {titleIsTruncated ? "…" : ""}
             </h4>
-            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium truncate">
+            <p className="truncate text-[11px] font-medium text-muted-foreground sm:text-xs">
               {subtitle}
             </p>
           </div>
           <button
             onClick={() => {
-              // Pause audio before closing (gapless + HTMLAudio)
               if (streamingDuration > 0) {
                 gaplessPlayer.current?.pause();
               } else {
@@ -455,19 +456,19 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               }
               onClose?.();
             }}
-            className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors text-muted-foreground hover:text-foreground lg:hidden"
+            className="shrink-0 rounded-xl p-2 text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5 lg:hidden"
             aria-label="Đóng"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Center: Controls + Progress */}
-        <div className="col-span-12 sm:col-span-5 xl:col-span-6 flex flex-col items-center gap-2">
-          <div className="flex items-center justify-center gap-3 sm:gap-6">
+        {/* Transport + timeline — full width, controls có thể xuống dòng */}
+        <div className="flex min-w-0 flex-col gap-2 lg:col-span-6">
+          <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:gap-x-4">
             <button
               onClick={handleShuffle}
-              className="hidden sm:inline-flex text-muted-foreground hover:text-primary transition-colors p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="hidden shrink-0 p-2 text-muted-foreground transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 md:inline-flex"
               aria-label="Phát ngẫu nhiên"
               disabled={history.length === 0}
             >
@@ -475,28 +476,28 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </button>
             <button
               onClick={handlePreviousTrack}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              className="shrink-0 p-2 text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Bài trước / Lùi 10s"
             >
               <SkipBack className="w-5 h-5" />
             </button>
             <button
               onClick={togglePlay}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 disabled:cursor-not-allowed"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95 disabled:cursor-not-allowed sm:h-14 sm:w-14"
               aria-label={isPlaying ? "Tạm dừng" : "Phát"}
               disabled={isBuffering}
             >
               {isBuffering ? (
-                <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
               ) : isPlaying ? (
-                <Pause className="w-6 h-6 sm:w-7 sm:h-7" />
+                <Pause className="h-6 w-6 sm:h-7 sm:w-7" />
               ) : (
-                <Play className="w-6 h-6 sm:w-7 sm:h-7 ml-1" />
+                <Play className="ml-0.5 h-6 w-6 sm:h-7 sm:w-7" />
               )}
             </button>
             <button
               onClick={handleNextTrack}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              className="shrink-0 p-2 text-muted-foreground transition-colors hover:text-foreground"
               aria-label="Bài sau / Tiến 30s"
             >
               <SkipForward className="w-5 h-5" />
@@ -504,7 +505,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <button
               onClick={() => setIsLooping(!isLooping)}
               className={cn(
-                "hidden sm:inline-flex text-muted-foreground hover:text-primary transition-colors p-2",
+                "hidden shrink-0 p-2 text-muted-foreground transition-colors hover:text-primary md:inline-flex",
                 isLooping && "text-primary",
               )}
               aria-label="Lặp"
@@ -513,27 +514,25 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </button>
           </div>
 
-          <div className="w-full flex items-center gap-3 sm:gap-4">
-            <span className="text-[10px] font-mono font-bold text-muted-foreground w-10 text-right">
+          <div className="flex w-full min-w-0 items-center gap-2 sm:gap-3">
+            <span className="w-9 shrink-0 text-right font-mono text-[10px] font-bold text-muted-foreground tabular-nums sm:w-10">
               {formatTime(displayCurrentTime)}
             </span>
             <div
               ref={progressRef}
-              className="flex-1 h-2 bg-black/15 dark:bg-slate-800 rounded-full relative cursor-pointer group"
+              className="group relative h-2 min-w-0 flex-1 cursor-pointer rounded-full bg-black/15 dark:bg-slate-800"
               onClick={handleProgressClick}
             >
-              {/* Buffering: pulsing background */}
               {isBuffering && (
-                <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
+                <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20" />
               )}
               <div
-                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all group-hover:brightness-110"
+                className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all group-hover:brightness-110"
                 style={{ width: `${progressPercent}%` }}
               />
-              {/* Thumb — always rendered but pointer-events-none so it never blocks progress bar clicks */}
               <div
                 className={cn(
-                  "absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg pointer-events-none transition-opacity",
+                  "pointer-events-none absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white shadow-lg transition-opacity",
                   isBuffering
                     ? "opacity-0"
                     : progressPercent > 0 && progressPercent < 100
@@ -551,32 +550,32 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
                 onChange={handleSeek}
                 onMouseDown={() => setIsDragging(true)}
                 onMouseUp={() => setIsDragging(false)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 aria-label="Thanh tiến trình"
               />
             </div>
             {isBuffering ? (
-              <span className="text-[10px] font-mono font-bold text-primary w-10 animate-pulse">
+              <span className="w-9 shrink-0 animate-pulse font-mono text-[10px] font-bold text-primary tabular-nums sm:w-10">
                 •••
               </span>
             ) : (
-              <span className="text-[10px] font-mono font-bold text-muted-foreground w-10">
+              <span className="w-9 shrink-0 font-mono text-[10px] font-bold text-muted-foreground tabular-nums sm:w-10">
                 {formatTime(displayDuration)}
               </span>
             )}
           </div>
         </div>
 
-        {/* Right: Extra Controls */}
-        <div className="col-span-12 sm:col-span-3 xl:col-span-3 flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="hidden xl:inline text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+        {/* Tốc độ, âm lượng, tải — hàng riêng trên mobile/tablet, không chen vào cột giữa */}
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-2 border-t border-border/40 pt-2 lg:col-span-3 lg:border-t-0 lg:pt-0 lg:justify-end">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden text-[10px] font-bold uppercase tracking-tighter text-muted-foreground xl:inline">
               Tốc độ
             </span>
             <select
               value={settings.speed}
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-              className="bg-muted/80 border border-border/50 rounded-xl text-xs font-bold py-1.5 px-2 text-foreground focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer hover:bg-muted"
+              className="min-h-[2.25rem] min-w-[3.25rem] cursor-pointer rounded-xl border border-border/50 bg-muted/80 px-2 py-1.5 text-xs font-bold text-foreground transition-all hover:bg-muted focus:border-primary focus:ring-2 focus:ring-primary"
               aria-label="Tốc độ phát"
             >
               {SPEED_OPTIONS.map((speed) => (
@@ -587,34 +586,31 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             </select>
           </div>
 
-          {/* Pitch indicator */}
           {settings.pitch !== 0 && (
-            <div className="hidden xl:flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20">
-              <Waves className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="text-[10px] font-bold text-primary tabular-nums">
+            <div className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 xl:flex">
+              <Waves className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="font-mono text-[10px] font-bold tabular-nums text-primary">
                 {settings.pitch > 0 ? `+${settings.pitch}` : settings.pitch}
               </span>
             </div>
           )}
 
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Volume Button - always visible */}
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              className="shrink-0 p-2 text-muted-foreground transition-colors hover:text-foreground"
               aria-label={isMuted ? "Bật âm" : "Tắt âm"}
             >
               {isMuted ? (
-                <VolumeX className="w-4 h-4" />
+                <VolumeX className="h-4 w-4" />
               ) : (
-                <Volume2 className="w-4 h-4" />
+                <Volume2 className="h-4 w-4" />
               )}
             </button>
-            {/* Volume Slider - visible on sm+ screens */}
-            <div className="hidden sm:flex items-center gap-2 w-24">
-              <div className="flex-1 h-1.5 bg-black/15 dark:bg-slate-800 rounded-full overflow-hidden relative group">
+            <div className="flex w-20 shrink-0 items-center gap-2 sm:w-24">
+              <div className="group relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-black/15 dark:bg-slate-800">
                 <div
-                  className="bg-muted-foreground/70 h-full transition-all group-hover:bg-foreground"
+                  className="h-full bg-muted-foreground/70 transition-all group-hover:bg-foreground"
                   style={{ width: `${isMuted ? 0 : volume * 100}%` }}
                 />
                 <input
@@ -624,7 +620,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
                   step={0.1}
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   aria-label="Âm lượng"
                 />
               </div>
@@ -633,10 +629,10 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
 
           <button
             onClick={handleDownload}
-            className="text-muted-foreground hover:text-primary transition-colors p-2 hover:bg-primary/10 rounded-xl"
+            className="shrink-0 rounded-xl p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             aria-label="Tải xuống"
           >
-            <Download className="w-4 h-4" />
+            <Download className="h-4 w-4" />
           </button>
         </div>
       </div>

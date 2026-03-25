@@ -1113,39 +1113,40 @@ export function GenerationSuccess({
               />
             </div>
 
-            {/* Audio info & playback hint — animated with stepped effects */}
+            {/* Audio info — quick play/pause; thanh dưới là điều khiển chính */}
             <div
               className={cn(
-                "relative overflow-hidden rounded-lg bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border p-4 transition-all duration-500 hover:border-primary/30",
+                "relative overflow-hidden rounded-xl bg-card/80 border p-4 sm:p-4 transition-colors",
                 status === "playing" && !pausedStreaming
-                  ? "border-primary/40 animate-border-pulse-stepped"
-                  : "border-primary/20"
+                  ? "border-primary/35 ring-1 ring-primary/15"
+                  : "border-border",
               )}
             >
-              {/* Animated background wave effect when playing - stepped */}
               {status === "playing" && !pausedStreaming && (
-                <div className="absolute inset-0 opacity-25">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/40 to-transparent animate-shimmer-stepped" />
+                <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer-stepped" />
                 </div>
               )}
 
-              <div className="relative flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* Animated icon container - stepped bounce */}
-                  <div className="flex items-center gap-2 shrink-0">
+              <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                {/* Hàng 1 mobile: icon + sóng + nút (không kéo giãn khoảng trống giữa chữ và nút) */}
+                <div className="flex items-center justify-between gap-3 sm:contents">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     <div
                       className={cn(
-                        "size-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 relative",
+                        "size-11 sm:size-12 rounded-xl flex items-center justify-center transition-all duration-300",
                         status === "playing" && !pausedStreaming
-                          ? "bg-primary/25 scale-110 animate-icon-bounce-stepped"
-                          : "bg-primary/10 hover:bg-primary/15"
+                          ? "bg-primary/20 text-primary animate-icon-bounce-stepped"
+                          : "bg-muted/80 text-primary",
                       )}
                     >
-                      <Headphones className="w-6 h-6 text-primary relative z-10" />
+                      <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    {/* Sound waves animation - positioned outside icon */}
                     {status === "playing" && !pausedStreaming && (
-                      <div className="flex items-center gap-1 h-8">
+                      <div
+                        className="flex items-center gap-1 h-8"
+                        aria-hidden
+                      >
                         {[1, 2, 3, 4].map((i) => (
                           <div
                             key={i}
@@ -1160,50 +1161,51 @@ export function GenerationSuccess({
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        Giọng {voiceName}
-                      </p>
-                      {status === "playing" && !pausedStreaming && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/25 text-primary text-[10px] font-semibold animate-badge-pulse-stepped border border-primary/30">
-                          <div className="w-2 h-2 rounded-full bg-primary" />
-                          Đang phát
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Điều khiển phát nhạc ở thanh dưới màn hình
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={togglePlay}
+                    className={cn(
+                      "inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-colors shrink-0 sm:order-3 sm:ml-auto",
+                      "border-primary bg-background/90 text-primary hover:bg-primary/10",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    )}
+                    aria-label={
+                      status === "playing" && !pausedStreaming
+                        ? "Tạm dừng"
+                        : "Phát"
+                    }
+                  >
+                    {status === "playing" && !pausedStreaming ? (
+                      <>
+                        <Pause className="w-4 h-4 shrink-0" />
+                        <span>Tạm dừng</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 shrink-0 ml-0.5" />
+                        <span>Phát</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
-                {/* Animated play button - stepped scale */}
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  className={cn(
-                    "px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 text-sm shrink-0",
-                    status === "playing" && !pausedStreaming
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 hover:bg-primary/90"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95"
-                  )}
-                  aria-label={
-                    status === "playing" && !pausedStreaming ? "Tạm dừng" : "Phát"
-                  }
-                >
-                  {status === "playing" && !pausedStreaming ? (
-                    <>
-                      <Pause className="w-4 h-4" />
-                      <span className="hidden sm:inline">Tạm dừng</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 ml-0.5" />
-                      <span className="hidden sm:inline">Phát</span>
-                    </>
-                  )}
-                </button>
+                <div className="min-w-0 sm:flex-1 sm:min-w-0 sm:order-2">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Giọng {voiceName}
+                    </p>
+                    {status === "playing" && !pausedStreaming && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                        <span className="size-1.5 rounded-full bg-primary" />
+                        Đang phát
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-xs leading-relaxed text-foreground/80 dark:text-foreground/75">
+                    Nút bên cạnh chỉ phát / tạm dừng nhanh. Âm lượng, tiến độ và
+                    tải file dùng thanh phát cố định phía dưới màn hình.
+                  </p>
+                </div>
               </div>
             </div>
 

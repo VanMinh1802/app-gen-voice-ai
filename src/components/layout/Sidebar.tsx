@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/components/AuthProvider";
 import { PLAN_ACCESS, isProPlanCode } from "@/lib/hooks";
@@ -101,17 +102,16 @@ export function Sidebar({
           >
             <div className="logo-3d-wrapper shrink-0">
               <div className="logo-3d-inner">
-                <video
-                  src="/logo_3d_rmbr.mp4"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
+                <Image
+                  src="/logo_3D_rmbr.png"
+                  alt="GenVoice AI Logo"
+                  width={128}
+                  height={128}
+                  priority
                   className={cn(
                     "rounded-xl object-contain shadow-lg",
-                    collapsed ? "w-10 h-10" : "w-16 h-16",
+                    collapsed ? "size-10" : "size-16",
                   )}
-                  aria-label="GenVoice AI Logo"
                 />
               </div>
             </div>
