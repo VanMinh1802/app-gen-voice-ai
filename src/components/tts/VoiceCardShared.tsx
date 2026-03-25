@@ -111,19 +111,11 @@ export function VoiceCardShared({
           </p>
         </div>
         {isActive && onPreview && (
-          <span
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               if (!isPreviewing) onPreview();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isPreviewing) onPreview();
-              }
             }}
             className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
@@ -138,7 +130,7 @@ export function VoiceCardShared({
             ) : (
               <Play className="w-4 h-4" />
             )}
-          </span>
+          </button>
         )}
       </button>
     );

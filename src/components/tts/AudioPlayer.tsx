@@ -555,7 +555,10 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
               />
             </div>
             {isBuffering ? (
-              <span className="w-9 shrink-0 animate-pulse font-mono text-[10px] font-bold text-primary tabular-nums sm:w-10">
+              <span
+                className="w-9 shrink-0 animate-pulse font-mono text-[10px] font-bold text-primary tabular-nums sm:w-10"
+                aria-label="Đang tải audio, vui lòng đợi"
+              >
                 •••
               </span>
             ) : (
@@ -610,7 +613,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <div className="flex w-20 shrink-0 items-center gap-2 sm:w-24">
               <div className="group relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-black/15 dark:bg-slate-800">
                 <div
-                  className="h-full bg-muted-foreground/70 transition-all group-hover:bg-foreground"
+                  className="h-full bg-foreground/30 transition-all group-hover:bg-foreground"
                   style={{ width: `${isMuted ? 0 : volume * 100}%` }}
                 />
                 <input

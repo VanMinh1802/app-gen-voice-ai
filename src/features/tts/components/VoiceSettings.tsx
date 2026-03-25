@@ -157,7 +157,7 @@ export function VoiceSettings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-primary/10 gap-8 mb-8 overflow-x-auto whitespace-nowrap pb-4">
+      <div className="flex border-b border-border gap-8 mb-8 overflow-x-auto whitespace-nowrap pb-4">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -383,29 +383,6 @@ export function VoiceSettings() {
                   Tùy chỉnh giao diện
                 </h3>
                 <div className="space-y-6">
-                  {/* Hidden: i18n not implemented yet */}
-                  {false && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Globe className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            Ngôn ngữ hiển thị
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Tiếng Việt
-                          </p>
-                        </div>
-                      </div>
-                      <select
-                        className="bg-background border border-primary/10 rounded-lg text-xs text-foreground px-2 py-1"
-                        value="vi"
-                      >
-                        <option value="vi">Tiếng Việt</option>
-                        <option value="en">English</option>
-                      </select>
-                    </div>
-                  )}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Moon className="w-5 h-5 text-muted-foreground" />
@@ -664,7 +641,7 @@ export function VoiceSettings() {
                     <span className="text-sm font-medium text-foreground block">
                       Xác thực 2 yếu tố (2FA)
                     </span>
-                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">
+                    <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider">
                       Chưa kích hoạt
                     </span>
                   </div>

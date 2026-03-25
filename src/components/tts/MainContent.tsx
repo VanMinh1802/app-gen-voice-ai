@@ -88,13 +88,14 @@ export function TextInput({
             <span>Enter</span>
           </kbd>
           <span
-            className={`text-xs font-medium px-2 py-1 rounded-lg ${
+            className={cn(
+              "text-xs font-medium px-2 py-1 rounded-lg",
               isOverLimit
                 ? "bg-red-500/20 text-red-400"
                 : characterCount > maxLength * 0.8
                   ? "bg-amber-500/20 text-amber-500"
-                  : "text-muted-foreground"
-            }`}
+                  : "text-muted-foreground",
+            )}
           >
             {characterCount.toLocaleString()} / {maxLength.toLocaleString()}
           </span>

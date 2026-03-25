@@ -115,6 +115,7 @@ export function ConfirmDialog({
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : "bg-primary text-primary-foreground hover:opacity-90",
             )}
+            aria-label={destructive ? `Xác nhận ${confirmLabel}` : confirmLabel}
           >
             {confirmLabel}
           </button>

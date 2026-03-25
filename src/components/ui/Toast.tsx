@@ -97,29 +97,10 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
     info: Info,
   };
 
-  // Error toast style - matching mockup with red background #ef4444
-  if (toast.type === "error") {
-    return (
-      <div
-        className="flex items-start gap-3 p-4 rounded-xl border animate-fade-in bg-[#ef4444] border-[#ef4444] text-white shadow-lg"
-        role="alert"
-      >
-        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-        <p className="flex-1 text-sm font-medium">{toast.message}</p>
-        <button
-          onClick={() => onClose(toast.id)}
-          className="w-6 h-6 rounded hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
-          aria-label="Đóng thông báo"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  }
-
-  const colors = {
+  const colors: Record<ToastType, string> = {
     success: "bg-green-500/10 border-green-500/30 text-green-400",
     info: "bg-blue-500/10 border-blue-500/30 text-blue-400",
+    error: "bg-destructive/10 border-destructive/30 text-destructive",
   };
 
   const Icon = icons[toast.type];
@@ -127,16 +108,16 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 p-4 rounded-xl border animate-fade-in",
-        colors[toast.type as "success" | "info"],
+        "flex items-start gap-3 p-4 rounded-xl border animate-fade-in",
+        colors[toast.type],
       )}
       role="alert"
     >
-      <Icon className="w-5 h-5 flex-shrink-0" />
-      <p className="flex-1 text-sm">{toast.message}</p>
+      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+      <p className="flex-1 text-sm font-medium">{toast.message}</p>
       <button
         onClick={() => onClose(toast.id)}
-        className="w-6 h-6 rounded hover:bg-white/10 flex items-center justify-center transition-colors"
+        className="w-6 h-6 rounded hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
         aria-label="Đóng thông báo"
       >
         <X className="w-4 h-4" />

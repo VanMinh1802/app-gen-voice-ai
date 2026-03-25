@@ -293,7 +293,7 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
           {/* Icon Container with badge */}
           <div className="relative">
             <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center border border-primary/10">
-              <History className="w-12 h-12 text-muted-foreground/40" />
+              <History className="w-12 h-12 text-muted-foreground" aria-hidden="true" />
             </div>
           </div>
 
@@ -408,7 +408,7 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
                   </div>
                   {/* Text */}
                   <p className="text-sm text-foreground line-clamp-2 leading-relaxed">
-                    {item.text || "(No text)"}
+                    {item.text || "—"}
                   </p>
                 </div>
 

@@ -160,8 +160,8 @@ export function TtsGenerator({
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label htmlFor="voice" className="text-sm font-medium">
-            {t("voiceModel")}
+          <label htmlFor="languageFilter" className="text-sm font-medium">
+            {t("languageFilter") || "Ngôn ngữ"}
           </label>
           <select
             id="languageFilter"
@@ -174,6 +174,9 @@ export function TtsGenerator({
             <option value="en">{t("english")}</option>
           </select>
         </div>
+        <label htmlFor="voice" className="text-sm font-medium">
+          {t("voiceModel")}
+        </label>
         <select
           id="voice"
           value={settings?.voice ?? config.tts.defaultVoice}

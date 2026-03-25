@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   description:
     "Browser-based Text-to-Speech for Vietnamese and English using Piper TTS",
   icons: {
-    icon: "/logo_3D_rmbr.png",
-    apple: "/logo_3D_rmbr.png",
+    icon: "/logo_3D.png",
+    apple: "/logo_3D.png",
   },
 };
 

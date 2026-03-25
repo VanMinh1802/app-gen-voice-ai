@@ -149,7 +149,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         </div>
 
         {/* Region Filter Buttons */}
-        <div className="flex items-center bg-card border border-primary/10 rounded-lg p-1">
+        <div className="flex items-center bg-card border border-primary/10 rounded-xl p-1">
           {(["all", "Miền Bắc", "Miền Trung", "Miền Nam"] as const).map(
             (region) => (
               <button

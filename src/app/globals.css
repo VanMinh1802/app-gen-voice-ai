@@ -251,59 +251,9 @@
     background-color: hsl(var(--muted));
   }
 
-  /* Micro-interactions: Hover lift effect */
-  .hover-lift {
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px hsl(var(--foreground) / 0.08);
-  }
-
-  /* Micro-interactions: Scale on hover */
-  .hover-scale {
-    transition: transform 0.2s ease;
-  }
-
-  .hover-scale:hover {
-    transform: scale(1.02);
-  }
-
-  /* Micro-interactions: Glow effect on hover */
-  .hover-glow {
-    transition: box-shadow 0.3s ease;
-  }
-
-  .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-  }
-
-  /* Micro-interactions: Subtle brightness change */
-  .hover-brightness {
-    transition: filter 0.2s ease;
-  }
-
-  .hover-brightness:hover {
-    filter: brightness(1.05);
-  }
-
   /* Cursor pointer for clickable elements */
   .cursor-pointer {
     cursor: pointer;
-  }
-
-  /* Smooth transitions for interactive elements */
-  .transition-smooth {
-    transition: all 0.2s ease;
-  }
-
-  /* Focus ring utility */
-  .focus-ring:focus-visible {
-    outline: 2px solid hsl(var(--primary));
-    outline-offset: 2px;
   }
 }
 
@@ -547,6 +497,12 @@
 }
 
 /* Shimmer loading effect */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @layer utilities {
   .shimmer {
     position: relative;
@@ -570,12 +526,6 @@
     animation: shimmer 2s infinite;
     content: "";
   }
-
-  @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
-  }
 }
 
 /* Smooth transitions */
@@ -583,13 +533,9 @@
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  .transition-smooth-fast {
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  }
 }
 
-/* Hover lift effect */
+/* Hover lift effect — includes active: translateY(0) for tactile feedback */
 @layer utilities {
   .hover-lift {
     transition:
@@ -942,14 +888,6 @@
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Badge pulse - "Đang phát" badge animation */
-@keyframes badge-pulse-stepped {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  25% { opacity: 0.8; transform: scale(1.05); }
-  50% { opacity: 1; transform: scale(1.1); }
-  75% { opacity: 0.8; transform: scale(1.05); }
-}
-
 /* Animation utility classes */
 .animate-shimmer-stepped {
   animation: shimmer-stepped 2s steps(4, end) infinite;
@@ -972,38 +910,14 @@
   animation: card-entrance-stepped 0.6s steps(3, end) forwards;
 }
 
-.animate-badge-pulse-stepped {
-  animation: badge-pulse-stepped 1.5s steps(4, end) infinite;
-}
-
 /* ============================================
    3. LEGACY/WAVEFORM ANIMATIONS
-   Kept for backward compatibility
+   Removed — definitions consolidated into section 1 and 2 above.
+   Kept for reference only:
+   - .gen-voice-waveform-pulse keyframe moved to section 1 (line 311)
+   - .waveform-bar moved to section 1 (line 323)
+   - .gen-voice-waveform .waveform-bar moved to section 1 (line 337)
    ============================================ */
-
-/* Waveform animation - thanh sóng (tên unique để tránh conflict) */
-@keyframes gen-voice-waveform-pulse {
-  0%, 100% { transform: scaleY(0.45); opacity: 0.75; }
-  50% { transform: scaleY(1); opacity: 1; }
-}
-
-.waveform-bar {
-  width: 3px;
-  min-width: 3px;
-  background-color: hsl(var(--primary));
-  border-radius: 99px;
-  margin: 0 1px;
-  transform-origin: center bottom;
-  animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite;
-  -webkit-animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite;
-  will-change: transform;
-}
-
-/* Ép animation chạy (độ ưu tiên cao, tránh bị ghi đè) */
-.gen-voice-waveform .waveform-bar {
-  animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite !important;
-  -webkit-animation: gen-voice-waveform-pulse 1.2s ease-in-out infinite !important;
-}
 
 /* ============================================
    4. STAGGER ANIMATIONS

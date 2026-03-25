@@ -103,7 +103,7 @@ export function Sidebar({
             <div className="logo-3d-wrapper shrink-0">
               <div className="logo-3d-inner">
                 <Image
-                  src="/logo_3D_rmbr.png"
+                  src="/logo_3D.png"
                   alt="GenVoice AI Logo"
                   width={128}
                   height={128}
@@ -120,7 +120,7 @@ export function Sidebar({
                 <span className="text-xl font-bold tracking-tight text-foreground">
                   GenVoice <span className="text-primary">AI</span>
                 </span>
-                <span className="text-[10px] text-slate-500 -mt-1">
+                <span className="text-[10px] text-muted-foreground -mt-1">
                   Text to Speech
                 </span>
               </div>
@@ -293,7 +293,7 @@ export function Sidebar({
                             e.preventDefault();
                             upgradeToPlan("PRO");
                           }}
-                          className="mt-2 w-full py-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-lg transition-colors"
+                          className="mt-2 w-full py-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-xl transition-colors"
                         >
                           Nâng cấp Pro
                         </button>
