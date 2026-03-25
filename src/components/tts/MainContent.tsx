@@ -229,7 +229,7 @@ export function VoiceSelection({
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom - 16;
     const vh70 = Math.floor(0.7 * window.innerHeight);
-    const maxHeight = Math.max(280, Math.min(520, vh70, spaceBelow));
+    const maxHeight = Math.max(400, Math.min(520, vh70, spaceBelow));
     const width = Math.min(
       Math.max(rect.width, 300),
       window.innerWidth - rect.left - 16,
@@ -697,8 +697,8 @@ export function AudioCustomization({
               <span>0</span>
               <span>+12 (cao)</span>
             </div>
-            <p className="text-[10px] text-muted-foreground/70 mt-1">
-              Âm thanh thấp hơn → giọng trầm hơn, cao hơn → giọng bổng hơn
+            <p className="text-[10px] text-muted-foreground/70 mt-1 hidden sm:block">
+              Âm thanh thấp hơn → giọng trầm, cao hơn → giọng bổng
             </p>
           </div>
         </div>
@@ -795,7 +795,7 @@ export function GenerateButton({
             : "Tạo giọng nói ngay"}
         </span>
         {!disabled && (
-          <div className="ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium text-primary-foreground">
+          <div className="hidden sm:ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium text-primary-foreground">
             Ctrl + Enter
           </div>
         )}

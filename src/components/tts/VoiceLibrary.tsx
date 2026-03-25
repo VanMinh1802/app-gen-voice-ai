@@ -121,7 +121,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
           Thư viện giọng
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Khám phá hơn {voiceMetadata.length} giọng đọc AI chuyên nghiệp với
+          Khám phá {voiceMetadata.length} giọng đọc AI chuyên nghiệp với
           nhiều vùng miền và phong cách khác nhau cho dự án của bạn.
         </p>
       </div>
@@ -129,19 +129,19 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center gap-3 mb-8">
         {/* Search Input */}
-        <div className="relative w-full sm:w-auto sm:min-w-[200px]">
+        <div className="relative w-full min-w-0 sm:w-auto sm:min-w-[200px] flex-1 sm:flex-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm giọng nói..."
-            className="w-full sm:w-auto pl-10 pr-4 py-2 bg-card border border-primary/10 text-muted-foreground text-xs rounded-lg focus:ring-primary focus:border-primary outline-none placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-10 py-2 bg-card border border-primary/10 text-foreground text-xs rounded-lg focus:ring-primary focus:border-primary outline-none placeholder:text-muted-foreground"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded"
             >
               ×
             </button>

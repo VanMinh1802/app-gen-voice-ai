@@ -3,7 +3,6 @@
 import { useCallback, useState, useEffect } from "react";
 import {
   History,
-  Ban,
   Plus,
   Download,
   Play,
@@ -13,7 +12,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   HardDrive,
-  Trash,
 } from "lucide-react";
 import { useTtsStore, type StorageInfo } from "../store";
 import { useTts } from "../context/TtsContext";
@@ -295,10 +293,7 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
           {/* Icon Container with badge */}
           <div className="relative">
             <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center border border-primary/10">
-              <History className="w-12 h-12 text-muted-foreground/50" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-background border-4 border-background rounded-full flex items-center justify-center">
-              <Ban className="w-6 h-6 text-red-500" />
+              <History className="w-12 h-12 text-muted-foreground/40" />
             </div>
           </div>
 

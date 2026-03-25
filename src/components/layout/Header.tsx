@@ -83,7 +83,7 @@ export function Header({
   const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <header className="h-14 sm:h-16 border-b border-border glass-card flex items-center justify-between gap-3 px-3 sm:px-6 lg:px-8 sticky top-0 z-30">
+    <header className="h-14 sm:h-16 border-b border-border glass-card flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-30">
       <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
         {leftContent}
         <h1

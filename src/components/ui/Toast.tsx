@@ -101,21 +101,18 @@ function ToastItem({ toast, onClose }: ToastItemProps) {
   if (toast.type === "error") {
     return (
       <div
-        className="flex flex-col gap-3 p-4 rounded-xl border animate-fade-in bg-[#ef4444] border-[#ef4444] text-white shadow-lg"
+        className="flex items-start gap-3 p-4 rounded-xl border animate-fade-in bg-[#ef4444] border-[#ef4444] text-white shadow-lg"
         role="alert"
       >
-        <div className="flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="flex-1 text-sm font-medium">{toast.message}</p>
-        </div>
-        <div className="flex items-center gap-2 ml-8">
-          <button
-            onClick={() => onClose(toast.id)}
-            className="px-4 py-2 text-sm font-medium bg-white text-[#ef4444] rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            Đóng
-          </button>
-        </div>
+        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+        <p className="flex-1 text-sm font-medium">{toast.message}</p>
+        <button
+          onClick={() => onClose(toast.id)}
+          className="w-6 h-6 rounded hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
+          aria-label="Đóng thông báo"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     );
   }

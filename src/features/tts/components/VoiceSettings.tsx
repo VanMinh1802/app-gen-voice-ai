@@ -285,7 +285,14 @@ export function VoiceSettings() {
                         {isProPlanCode(activePlanCode) && " (Cá nhân)"}
                       </p>
                     </div>
-                    {hasActiveLicense ? (
+                    {isProPlanCode(activePlanCode) ? (
+                      <Link
+                        href="/pricing"
+                        className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all inline-block"
+                      >
+                        Quản lý gói
+                      </Link>
+                    ) : hasActiveLicense ? (
                       <button
                         type="button"
                         onClick={() => upgradeToPlan("PRO")}
@@ -298,7 +305,7 @@ export function VoiceSettings() {
                         href="/pricing"
                         className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all inline-block"
                       >
-                        Nâng cấp
+                        Nâng cấp Pro
                       </Link>
                     )}
                   </div>
@@ -628,7 +635,7 @@ export function VoiceSettings() {
             <h3 className="text-lg font-bold text-foreground mb-6">
               Bảo mật tài khoản
             </h3>
-            <p className="text-muted-foreground text-sm mb-4">
+            <p className="text-muted-foreground text-sm mb-6">
               Đổi mật khẩu, xác thực 2 yếu tố và xóa tài khoản được quản lý tại
               tài khoản Genation. Bấm vào từng mục để mở trang quản lý.
             </p>
@@ -667,7 +674,7 @@ export function VoiceSettings() {
               <button
                 type="button"
                 onClick={() => handleSecurityAction("delete")}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-red-900/10 transition-all group"
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-background transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <Trash2 className="w-5 h-5 text-muted-foreground group-hover:text-red-500 transition-colors" />

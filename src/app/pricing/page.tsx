@@ -67,7 +67,7 @@ function PlanCard({
       className={cn(
         "relative flex flex-col p-6 rounded-3xl border-2 transition-all duration-300",
         plan.popular
-          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 md:scale-105"
+          ? "border-primary bg-primary/5 shadow-lg shadow-primary/20 lg:scale-105"
           : "border-border bg-card hover:border-primary/50 hover:shadow-lg",
       )}
     >
@@ -209,8 +209,8 @@ export default function PricingPage() {
       </section>
 
       <section className="pb-16 sm:pb-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-start max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 items-start max-w-4xl mx-auto">
             {PLANS.map((plan) => (
               <PlanCard
                 key={plan.code}

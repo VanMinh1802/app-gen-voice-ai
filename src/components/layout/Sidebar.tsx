@@ -109,7 +109,7 @@ export function Sidebar({
                   playsInline
                   className={cn(
                     "rounded-xl object-contain shadow-lg",
-                    collapsed ? "w-16 h-35 md:w-10 md:h-10" : "w-16 h-35",
+                    collapsed ? "w-10 h-10" : "w-16 h-16",
                   )}
                   aria-label="GenVoice AI Logo"
                 />

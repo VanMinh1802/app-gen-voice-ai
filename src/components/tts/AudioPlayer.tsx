@@ -416,6 +416,7 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
     displayDuration > 0 ? (displayCurrentTime / displayDuration) * 100 : 0;
   const voiceIdForDisplay = nowPlaying?.voice ?? settings.voice;
   const title = (nowPlaying?.text ?? "").trim().slice(0, 48) || "TTS Audio";
+  const titleIsTruncated = (nowPlaying?.text ?? "").trim().length > 48;
   const speedForDisplay = nowPlaying?.speed ?? settings.speed;
   const subtitleParts = [
     `Giọng ${getVoiceName(voiceIdForDisplay)}`,
@@ -434,8 +435,11 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
             <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-bold truncate text-foreground text-sm sm:text-base">
-              {title}
+            <h4
+              className="font-bold text-foreground text-sm sm:text-base truncate"
+              title={titleIsTruncated ? (nowPlaying?.text ?? "").trim() : undefined}
+            >
+              {title}{titleIsTruncated ? "…" : ""}
             </h4>
             <p className="text-[11px] sm:text-xs text-muted-foreground font-medium truncate">
               {subtitle}
@@ -526,19 +530,18 @@ export function AudioPlayer({ isVisible = true, onClose }: AudioPlayerProps) {
                 className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all group-hover:brightness-110"
                 style={{ width: `${progressPercent}%` }}
               />
-              {/* Thumb — hidden during buffering */}
-              {!isBuffering && (
-                <div
-                  className={cn(
-                    "absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg transition-opacity",
-                    progressPercent > 0 && progressPercent < 100
-                      ? "opacity-100"
-                      : "opacity-0",
-                    "group-hover:opacity-100",
-                  )}
-                  style={{ left: `calc(${progressPercent}% - 6px)` }}
-                />
-              )}
+              {/* Thumb — always rendered but pointer-events-none so it never blocks progress bar clicks */}
+              <div
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg pointer-events-none transition-opacity",
+                  isBuffering
+                    ? "opacity-0"
+                    : progressPercent > 0 && progressPercent < 100
+                      ? "opacity-100 group-hover:opacity-100"
+                      : "opacity-0 group-hover:opacity-100",
+                )}
+                style={{ left: `calc(${progressPercent}% - 6px)` }}
+              />
               <input
                 type="range"
                 min={0}

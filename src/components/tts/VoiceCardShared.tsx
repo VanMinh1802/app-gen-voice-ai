@@ -128,7 +128,7 @@ export function VoiceCardShared({
             className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
               isPreviewing
-                ? "bg-primary text-primary-foreground animate-pulse cursor-wait"
+                ? "bg-primary text-primary-foreground cursor-wait animate-pulse"
                 : "bg-black/10 dark:bg-white/10 hover:bg-primary text-muted-foreground hover:text-primary-foreground cursor-pointer",
             )}
             aria-label={isPreviewing ? "Đang phát..." : "Nghe thử"}

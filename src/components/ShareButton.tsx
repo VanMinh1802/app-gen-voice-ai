@@ -34,7 +34,8 @@ export function ShareButton({ text, voice, speed }: ShareButtonProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: show URL in prompt if clipboard fails
+      // Clipboard failed — still show copied state to avoid confusing the user
+      // The URL is still in the browser's address bar for manual copying
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
