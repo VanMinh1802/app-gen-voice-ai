@@ -1,4 +1,4 @@
----
+﻿---
 description: Security guidelines for TTS App (client-side)
 alwaysApply: true
 ---
@@ -19,19 +19,48 @@ Unlike server-side apps, TTS runs entirely in the browser. This changes our secu
 | **Method** | Genation SDK authentication |
 | **Scope** | User identification only in MVP |
 
-```tsx
-// Example: Simple auth check
-import { useAuth } from '@features/auth/hooks/useAuth';
+This app uses **Next.js App Router** â€” auth components are client components inside
+the App Router tree. See \src/components/AuthProvider.tsx\ and \src/lib/hooks/useAuth.ts\
+for the actual implementation pattern:
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+\\\	sx
+// src/components/AuthProvider.tsx  (Next.js App Router â€” 'use client')
+'use client';
 
-  if (isLoading) return <Loading />;
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { User } from "@/lib/hooks/useAuth";
+
+interface AuthContext {
+  user: User | null;
+  isLoading: boolean;
+  login: () => void;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContext | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize Genation SDK session here
+    // Sets user + isLoading based on SDK response
+  }, []);
+
+  if (isLoading) return null; // or a loading fallback
+
   if (!user) return <LoginPrompt />;
 
-  return <>{children}</>;
+  return <AuthContext.Provider value={{ user, isLoading, login, logout }}>{children}</AuthContext.Provider>;
 }
-```
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  return context;
+}
+\\\
 
 ### What's NOT Needed (MVP)
 
@@ -46,14 +75,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 Always validate user input before TTS processing:
 
-```tsx
+\\\	sx
 function sanitizeText(text: string): string {
   return text
-    .slice(0, MAX_TEXT_LENGTH)      // Limit length
-    .replace(/[\u0000-\u001F]/g, '') // Remove control chars
+    .slice(0, MAX_TEXT_LENGTH)       // Limit length
+    .replace(/[\u0000-\u001F]/g, "") // Remove control chars
     .trim();
 }
-```
+\\\
 
 ### Model Loading Security
 
@@ -65,17 +94,17 @@ function sanitizeText(text: string): string {
 
 ### Audio Processing
 
-```tsx
+\\\	sx
 // Validate audio output
 function validateAudio(audio: ArrayBuffer): ArrayBuffer {
   const view = new DataView(audio);
   // Verify WAV header
-.getUint32(  if (view0) !== 0x46464952) { // 'RIFF'
-    throw new Error('Invalid audio format');
+  if (view.getUint32(0) !== 0x46464952) { // 'RIFF'
+    throw new Error("Invalid audio format");
   }
   return audio;
 }
-```
+\\\
 
 ## Network Security
 
@@ -89,14 +118,14 @@ function validateAudio(audio: ArrayBuffer): ArrayBuffer {
 
 ### R2 Access
 
-```ts
+\\\	s
 // Only expose necessary paths via API
-const ALLOWED_PREFIXES = ['piper/vi/', 'piper/en/'];
+const ALLOWED_PREFIXES = ["piper/vi/", "piper/en/"];
 
 function validatePath(path: string): boolean {
-  return ALLOWED_PREFIXES.some(prefix => path.startsWith(prefix));
+  return ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
-```
+\\\
 
 ## Privacy Considerations
 
@@ -119,13 +148,13 @@ function validatePath(path: string): boolean {
 
 ### Voice Model Usage
 
-```tsx
+\\\	sx
 // Disclaimer for users
-const DISCLAIMER = `
-Users are responsible for complying with voice and content laws 
+const DISCLAIMER = \
+Users are responsible for complying with voice and content laws
 when using generated audio.
-`.trim();
-```
+\.trim();
+\\\
 
 ### Recommendations
 
@@ -140,7 +169,7 @@ when using generated audio.
 1. Stores sensitive data in localStorage/IndexedDB
 2. Exposes API keys or secrets
 3. Skips input validation
-4. Uses `eval()` or similar
+4. Uses \eval()\ or similar
 5. Creates XSS vulnerabilities
 
 ### Always Include:

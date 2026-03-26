@@ -1,6 +1,6 @@
----
+﻿---
 description: TypeScript and React coding standards for TTS App
-globs: **/*.{ts,tsx}
+globs: '**/*.{ts,tsx}'
 alwaysApply: false
 ---
 
@@ -10,22 +10,22 @@ alwaysApply: false
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Components | `{name}.tsx` | `TtsPlayer.tsx` |
-| Hooks | `use{name}.ts` | `useTtsGenerate.ts` |
-| Services | `{name}.ts` | `piperTts.ts` |
-| Types | `types.ts` | `features/tts/types.ts` |
-| Utils | `{name}.ts` | `text-cleaner.ts` |
-| Workers | `{name}.worker.ts` | `tts.worker.ts` |
+| Components | {name}.tsx | AudioPlayer.tsx |
+| Hooks | use{name}.ts | useTtsGenerate.ts |
+| Services | {name}.ts | piperTts.ts |
+| Types | 	ypes.ts | eatures/tts/types.ts |
+| Utils | {name}.ts | 	ext-cleaner.ts |
+| Workers | {name}.worker.ts | 	ts.worker.ts |
 
 ## Component Structure
 
 ### Feature Component
 
-```tsx
+\\\	sx
 // src/features/tts/components/TtsGenerator.tsx
 import { useCallback, useState } from "react";
-import { useTtsGenerate } from "../hooks/useTtsGenerate";
-import type { TtsRequest, TtsResponse } from "../types";
+import { useTtsGenerate } from "@/features/tts/hooks/useTtsGenerate";
+import type { TtsRequest, TtsResponse } from "@/features/tts/types";
 
 interface TtsGeneratorProps {
   defaultModel?: string;
@@ -45,19 +45,19 @@ export function TtsGenerator({ defaultModel, onComplete }: TtsGeneratorProps) {
     <div>
       <textarea value={text} onChange={(e) => setText(e.target.value)} />
       <button onClick={handleGenerate} disabled={isGenerating}>
-        {isGenerating ? `Generating... ${progress}%` : "Generate"}
+        {isGenerating ? Generating... % : "Generate"}
       </button>
     </div>
   );
 }
-```
+\\\
 
 ### Hook Pattern
 
-```tsx
+\\\	sx
 // src/features/tts/hooks/useTtsGenerate.ts
 import { useCallback, useState } from "react";
-import type { TtsRequest, TtsResponse } from "../types";
+import type { TtsRequest, TtsResponse } from "@/features/tts/types";
 
 export function useTtsGenerate() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -80,19 +80,19 @@ export function useTtsGenerate() {
 
   return { generate, isGenerating, progress };
 }
-```
+\\\
 
 ## State Management
 
 ### Local State (Default)
 
-```tsx
+\\\	sx
 const [value, setValue] = useState(initial);
-```
+\\\
 
 ### Feature State (Zustand)
 
-```tsx
+\\\	sx
 // stores/tts-store.ts
 import { create } from "zustand";
 
@@ -113,54 +113,64 @@ export const useTtsStore = create<TtsStore>((set) => ({
   setVoice: (voice) => set({ voice }),
   setSpeed: (speed) => set({ speed }),
 }));
-```
+\\\
 
 ### Context (Auth/Session)
 
-```tsx
-// context/auth-context.tsx
+\\\	sx
+// src/components/AuthProvider.tsx
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-}
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { User } from "@/lib/hooks/useAuth";
 
 interface AuthContext {
   user: User | null;
-  login: () => Promise<void>;
+  isLoading: boolean;
+  login: () => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContext | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Implementation
-  return <AuthContext.Provider value={...}>{children}</AuthContext.Provider>;
+  // Uses Genation SDK â€” see useAuth hook for implementation
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize Genation SDK session
+    // Sets user + isLoading based on SDK response
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login: () => {}, logout: () => {} }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
+export function useAuthContext() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) throw new Error("useAuthContext must be used within AuthProvider");
   return context;
 }
-```
+\\\
 
 ## Styling (Tailwind CSS)
 
 ### Use clsx for Conditional Classes
 
-```tsx
-import { clsx } from "clsx";
+\\\	sx
+// src/lib/utils.ts â€” already has cn() implemented
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-function cn(...inputs: (string | boolean | undefined)[]) {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Usage
+// Usage â€” DO NOT recreate cn() in individual files
 <div
   className={cn(
     "p-4 rounded-lg",
@@ -168,21 +178,36 @@ function cn(...inputs: (string | boolean | undefined)[]) {
     isDisabled && "opacity-50",
   )}
 />;
-```
+\\\
+
+### Project CSS Patterns
+
+This project uses custom glass/gradient utilities in \globals.css\:
+
+\\\	sx
+// Glass card pattern â€” use for elevated surfaces
+<div className="glass-card rounded-2xl p-6 border border-border">
+
+// Glass input â€” use for text inputs
+<textarea className="glass-input border border-border rounded-xl">
+
+// Gradient text â€” use for accent headings
+<span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+\\\
 
 ### Responsive Design
 
-```tsx
+\\\	sx
 // Mobile-first approach
 <div className="flex flex-col sm:flex-row gap-2">
   <input className="w-full sm:w-auto flex-1" />
   <button className="w-full sm:w-auto">Generate</button>
 </div>;
-```
+\\\
 
 ## Import Order
 
-```tsx
+\\\	sx
 // 1. React/Next imports
 import { useCallback, useState } from "react";
 import Link from "next/link";
@@ -193,30 +218,103 @@ import { useDebounce } from "use-debounce";
 
 // 3. Internal shared
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/lib/hooks/use-toast";
+import { useToast } from "@/lib/hooks/useToast";
 
-// 4. Feature imports (absolute)
-import { useTtsGenerate } from "@features/tts/hooks/useTtsGenerate";
-import type { TtsRequest } from "@features/tts/types";
+// 4. Feature imports (absolute path â€” NOTE: @/features/ not @features/)
+import { useTtsGenerate } from "@/features/tts/hooks/useTtsGenerate";
+import type { TtsRequest } from "@/features/tts/types";
 
 // 5. Relative (within same feature)
 import { formatDuration } from "../utils/format";
-```
+\\\
 
 ## TypeScript Rules
 
-- **No `any`** without justification
+- **No \ny\** without justification
 - Use strict typing everywhere
 - Export types for reuse
 - Use interfaces for object shapes
 
+## Client-Side Data Patterns
+
+This project does NOT use a server-side database. All persistence is browser-native:
+
+### IndexedDB (History / Audio Metadata)
+
+\\\	sx
+// src/lib/storage/history.ts
+import { openDB, type IDBPDatabase } from "idb";
+
+interface HistoryItem {
+  id: string;
+  text: string;
+  voice: string;
+  speed: number;
+  duration: number;
+  audioUrl: string;
+  createdAt: number;
+}
+
+const db = await openDB<{ history: HistoryItem }>("tts-db", 1, {
+  upgrade(db) {
+    db.createObjectStore("history", { keyPath: "id" });
+  },
+});
+
+// CRUD operations â€” follow this pattern
+export async function getHistory(): Promise<HistoryItem[]> {
+  return db.getAll("history");
+}
+\\\
+
+### localStorage (Settings)
+
+\\\	sx
+// Persisted via Zustand persist middleware â€” no direct localStorage calls needed
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export const useTtsStore = create(
+  persist(
+    (set) => ({
+      settings: { voice: "default", speed: 1 },
+      setSettings: (newSettings) =>
+        set((state) => ({ settings: { ...state.settings, ...newSettings } })),
+    }),
+    { name: "tts-settings" },
+  ),
+);
+\\\
+
+### R2 (TTS Models)
+
+Models are downloaded lazily from Cloudflare R2 via signed URLs â€” no local file storage:
+
+\\\	sx
+// Only load from allowed R2 paths
+const ALLOWED_MODEL_PREFIXES = ["piper/vi/", "piper/en/"];
+
+function isAllowedModelPath(path: string): boolean {
+  return ALLOWED_MODEL_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+\\\
+
 ## Testing
 
-### Component Test (Vitest + Testing Library)
+> **Note:** This project currently has no test infrastructure (no Vitest, no Playwright,
+> no \*.test.ts\ files). Tests should be added alongside features as the test suite grows.
+> Until then, run \
+pm run build\ and \
+pm run lint\ as the primary verification gates.
 
-```tsx
-import { fireEvent, render, screen } from "@testing-library/react";
-import { TtsGenerator } from "./TtsGenerator";
+### When Adding Tests (Future)
+
+Follow this pattern for component tests:
+
+\\\	sx
+// tests/TtsGenerator.test.tsx
+import { render, screen, fireEvent } from "@testing-library/react";
+import { TtsGenerator } from "@/features/tts/components/TtsGenerator";
 
 describe("TtsGenerator", () => {
   it("should render textarea and button", () => {
@@ -228,59 +326,11 @@ describe("TtsGenerator", () => {
   it("should call onComplete when generation done", async () => {
     const onComplete = vi.fn();
     render(<TtsGenerator onComplete={onComplete} />);
-
     fireEvent.click(screen.getByRole("button"));
-    // Wait for async...
     expect(onComplete).toHaveBeenCalled();
   });
 });
-```
+\\\
 
-## Database (Drizzle ORM)
-
-### Schema Definition
-
-```typescript
-// src/db/schema/users.ts
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-
-export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
-  email: text('email').notNull().unique(),
-  name: text('name'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
-});
-
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-```
-
-### Query Usage
-
-```typescript
-// src/db/queries/users.ts
-import { db } from '@/db';
-import { users } from '@/db/schema/users';
-
-export async function getUserById(id: string) {
-  return db.select().from(users).where(eq(users.id, id));
-}
-
-export async function createUser(data: NewUser) {
-  return db.insert(users).values(data).returning();
-}
-```
-
-### Migration Commands
-
-```bash
-# Generate migration
-npm run db:generate
-
-# Push schema to database
-npm run db:push
-
-# Open drizzle studio
-npm run db:studio
-```
+Run tests with \
+pm run test\ once infrastructure is set up.

@@ -122,6 +122,8 @@ export function Header({
             }}
             className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
             aria-label="Thông báo"
+            aria-expanded={showNotifications}
+            aria-haspopup="menu"
           >
             <Bell className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             {unreadCount > 0 && (
@@ -131,7 +133,11 @@ export function Header({
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50">
+            <div
+              role="menu"
+              aria-label="Danh sách thông báo"
+              className="absolute right-0 top-full mt-2 w-80 glass-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-scale-in origin-top-right z-50"
+            >
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-bold text-foreground">Thông báo</h3>
                 {unreadCount > 0 && (
@@ -149,7 +155,15 @@ export function Header({
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
+                      role="menuitem"
+                      tabIndex={0}
                       onClick={() => markAsRead(notif.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          markAsRead(notif.id);
+                        }
+                      }}
                       className={cn(
                         "p-4 border-b border-border/50 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer",
                         !notif.read && "bg-primary/5",

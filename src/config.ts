@@ -1,6 +1,8 @@
 /** Prefix for custom model voice IDs (pre-trained .onnx from public/tts-model/vi/) */
 export const CUSTOM_MODEL_PREFIX = "custom:";
 
+import { validateConfig } from "@/config/schema";
+
 /** Map voiceId (app) → tên thư mục R2 khi khác nhau (vd: mytam2 → mytam) */
 export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
   mytam2: "mytam",
@@ -44,7 +46,12 @@ export const config = {
     minChunksForStreaming: 2,
     /** Approximate chars per chunk */
     charsPerChunk: 500,
-    /** Buffer this many chunks before starting playback to prevent gaps */
+    /**
+     * Number of chunks to buffer before starting playback.
+     * NOTE: buffering is currently handled by the GaplessStreamingPlayer via
+     * Web Audio scheduling. This config is reserved for future
+     * explicit pre-buffer queue implementation.
+     */
     bufferChunks: 2,
   },
   /**
@@ -102,9 +109,18 @@ export const popularVoiceIds: string[] = [
   "maiphuong",
 ];
 
-/** Voice ID type */
-export type VoiceId = (typeof config.voices)[number]["id"] | `custom:${string}`;
+/** Voice ID type — all voices use the "custom:" prefix */
+export type VoiceId = `custom:${string}`;
 
 /** Calculate minimum text length for streaming: minChunks * charsPerChunk */
 export const STREAMING_THRESHOLD_CHARS =
   config.streaming.minChunksForStreaming * config.streaming.charsPerChunk;
+
+// Validate config at startup (logs warnings on failure, does not throw)
+const { issues } = validateConfig(config);
+if (issues.length > 0) {
+  console.warn(
+    "[config] Validation issues detected:",
+    issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+  );
+}

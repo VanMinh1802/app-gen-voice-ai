@@ -4,7 +4,7 @@
  */
 
 import type { PiperVoiceConfig } from "@/lib/piper/piperCustom";
-
+export { isIndexedDBAvailable } from "@/lib/storage/indexedDb";
 const DB_NAME = "tts-model-cache";
 const DB_VERSION = 1;
 const STORE_NAME = "models";
@@ -224,12 +224,4 @@ export async function getCacheSize(): Promise<number> {
 
     request.onerror = () => reject(request.error);
   });
-}
-
-export function isIndexedDBAvailable(): boolean {
-  try {
-    return typeof indexedDB !== "undefined";
-  } catch {
-    return false;
-  }
 }

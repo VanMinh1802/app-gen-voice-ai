@@ -1,4 +1,4 @@
----
+﻿---
 description: TTS App project overview and tech stack
 alwaysApply: true
 ---
@@ -12,9 +12,9 @@ alwaysApply: true
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Framework | Next.js 16 (App Router) |
-| UI | React + Tailwind CSS |
+|----|---|
+| Framework | Next.js 15 (App Router) |
+| UI | React + Tailwind CSS + shadcn/ui components |
 | State | Zustand / React Context |
 | TTS Engine | Piper TTS (ONNX) |
 | Runtime | ONNX Runtime Web (WASM) |
@@ -24,23 +24,23 @@ alwaysApply: true
 
 ## Project Structure
 
-```
+\\\
 src/
-├── app/                    # Next.js App Router
-├── components/             # Shared UI components
-│   └── ui/                 # Reusable components
-├── features/               # Vertical slices (domain-driven)
-│   └── {feature}/
-│       ├── components/     # Feature-specific components
-│       ├── hooks/          # Feature-specific hooks
-│       ├── services/       # Feature-specific services
-│       ├── types.ts        # Feature types
-│       └── index.ts        # Barrel export
-├── lib/                    # Utilities
-│   ├── piper/              # TTS engine wrapper
-│   └── text-processing/    # Vietnamese text processing
-└── workers/               # Web Workers
-```
+â”œâ”€â”€ app/                    # Next.js App Router
+â”œâ”€â”€ components/             # Shared UI components
+â”‚   â””â”€â”€ ui/                # shadcn/ui reusable components
+â”œâ”€â”€ features/               # Vertical slices (domain-driven)
+â”‚   â””â”€â”€ {feature}/
+â”‚       â”œâ”€â”€ components/     # Feature-specific components
+â”‚       â”œâ”€â”€ hooks/          # Feature-specific hooks
+â”‚       â”œâ”€â”€ services/      # Feature-specific services
+â”‚       â”œâ”€â”€ types.ts       # Feature types
+â”‚       â””â”€â”€ index.ts        # Barrel export
+â”œâ”€â”€ lib/                    # Utilities
+â”‚   â”œâ”€â”€ piper/             # TTS engine wrapper
+â”‚   â””â”€â”€ text-processing/   # Vietnamese text processing
+â””â”€â”€ workers/               # Web Workers
+\\\
 
 ## Key Characteristics
 
@@ -52,34 +52,35 @@ src/
 ## Reference Documentation
 
 | Context | Location |
-|---------|----------|
-| Architecture | `guide/.sdlc/context/architecture.md` |
-| Conventions | `guide/.sdlc/context/conventions.md` |
-| Security | `guide/.sdlc/context/security.md` |
-| Agent Guidelines | `guide/.sdlc/AGENTS.md` |
-| Feature Template | `guide/.sdlc/templates/feature-spec.md` |
+|---|---|
+| Architecture | .sdlc/context/architecture.md |
+| Conventions | .sdlc/context/conventions.md |
+| Security | .sdlc/context/security.md |
+| SDLC Workflow | .cursor/rules/sdlc-workflow.mdc |
+| Feature Template | .sdlc/templates/feature-spec.md |
 
 ## Quick Start
 
-```bash
+\\\ash
 npm install
 npm run dev
 npm run build
-npm run test
-```
+npm run lint
+npm run format
+\\\
 
 ## Git Conventions
 
 ### Commit Message Format
 
-```
+\\\
 <type>(<scope>): <description>
-```
+\\\
 
 ### Types
 
 | Type | Use For |
-|------|---------|
+|---|---|
 | feat | New feature |
 | fix | Bug fix |
 | docs | Documentation changes |
@@ -88,10 +89,211 @@ npm run test
 | test | Adding/updating tests |
 | chore | Dependency updates, config changes |
 
+### Rules
+
+- **Subject**: Use imperative mood ("add feature" not "added feature")
+- **Scope**: Optional, use module name (e.g., uth, 	ts, ui)
+- **Body**: Wrap at 72 characters, explain *what* and *why*
+- **Footer**: Reference issues/tickets
+
+### Examples
+
+\\\
+feat(tts): add streaming audio chunks for progressive playback
+fix(audio): prevent player from overlapping history panel on mobile
+docs(readme): update deployment instructions for Cloudflare Pages
+chore(deps): upgrade onnxruntime-web to 1.20.0
+\\\
+
 ### Branch Naming
 
-```
-main: production branch
-staging: staging branch
-devs/xxx-feature-name: feature branch
-```
+\\\
+main:           production branch
+staging:        staging branch
+devs/xxx-name:  feature branch
+\\\
+"@
+
+# â”€â”€ Fix 7: sdlc-workflow.mdc â”€â”€
+ = @"
+---
+description: SDLC workflow - Spec-Driven Development methodology
+alwaysApply: true
+---
+
+# SDLC Workflow - Spec-Driven Development
+
+## Overview
+
+This project follows **Spec-Driven Development (SDD)** methodology. All features must be specified before implementation.
+
+## Workflow Phases
+
+### Phase 1: Discovery (Agent does alone)
+
+1. Understand the feature request from human
+2. Explore codebase for similar features
+3. Read relevant context docs
+4. Create initial SPEC.md draft
+5. Identify gaps and questions
+
+### Phase 2: Mob Elaboration (with Human)
+
+1. Present initial understanding to human
+2. Ask clarifying questions
+3. Discuss technical approach
+4. Validate assumptions
+5. Document decisions
+
+### Phase 3: Refinement (Agent does alone)
+
+1. Update SPEC.md with all decisions
+2. Create necessary ADRs
+3. Prepare implementation plan
+4. Present final spec to human for approval
+
+### Phase 4: Implementation (after approval)
+
+1. Human approves SPEC.md
+2. Agent proceeds with implementation
+3. Follow conventions in \.sdlc/context/\
+4. Write tests alongside code
+5. Create PR with all required info
+
+> **Note**: Phase names are "Discovery", "Mob Elaboration", "Refinement", "Implementation".
+> The AI-DLC workflow term "Mob Construction" refers to Phase 4 (Implementation).
+
+## When to Use SDLC
+
+### Use SDLC for:
+
+- Creating a **new feature** (TTS generation, model loading, audio playback)
+- Adding **significant functionality** to existing feature
+- Creating a **bug fix** that requires architectural changes
+- Planning **refactoring** that affects multiple modules
+- Designing **API changes** or new integrations
+
+### Do NOT use for:
+
+- Small bug fixes (just fix directly)
+- Documentation updates only
+- Minor UI/text changes
+- Adding comments or JSDoc
+
+## Specification Structure
+
+Create specs in \.sdlc/specs/REQ-XXX-{feature-name}/SPEC.md\:
+
+\\\
+.sdlc/specs/
+â”œâ”€â”€ REQ-XXX-{feature-name}/
+â”‚   â”œâ”€â”€ SPEC.md              # Main specification
+â”‚   â”œâ”€â”€ decisions/
+â”‚   â”‚   â””â”€â”€ ADR-001-{topic}.md
+â”‚   â””â”€â”€ notes/
+â”‚       â””â”€â”€ meeting-001-{topic}.md
+\\\
+
+### Required Sections
+
+1. **Metadata** - Feature ID, name, status, priority, owner
+2. **Mermaid Data Flow** - Quick visual flow at the top
+3. **Overview** - Problem statement, goals, non-goals
+4. **User Stories** - At least 2-3 stories with acceptance criteria
+5. **Technical Design** - Component structure, state management, API design
+6. **Flow Diagrams** - Main flow, error flow
+7. **Edge Cases** - At least 5 common edge cases
+8. **Security** - Input validation, model loading, content safety
+9. **Testing Strategy** - Component tests, integration tests
+10. **Dependencies** - Internal and external
+
+## Mermaid Chart Requirement
+
+Every spec MUST include a Mermaid flowchart at the TOP (after Metadata section):
+
+\\\mermaid
+flowchart TD
+    subgraph Browser["Browser"]
+        User["User"]
+        UI["UI Component"]
+        Hook["Custom Hook"]
+        Worker["Web Worker"]
+        ONNX["ONNX Runtime"]
+    end
+
+    subgraph Storage["Storage"]
+        IDB["IndexedDB"]
+        LS["localStorage"]
+    end
+
+    subgraph Cloudflare["Cloudflare"]
+        CF_API["Pages Functions"]
+        R2["R2 Bucket (Models)"]
+    end
+
+    User -->|1. Input text| UI
+    UI -->|2. Call hook| Hook
+    Hook -->|3. Send to worker| Worker
+    Worker -->|4. Load model| R2
+    R2 -->|5. Model data| Worker
+    Worker -->|6. Process| ONNX
+    ONNX -->|7. Audio chunks| Worker
+    Worker -->|8. Stream chunks| Hook
+    Hook -->|9. Update state| UI
+    UI -->|10. Play audio| User
+\\\
+
+### Styling Legend
+
+| Box Color | Meaning |
+| --------- | ---------------------------------------------- |
+| Blue | Actor/Client/External |
+| Purple | Internal Layer (Component/Hook/Service/Worker) |
+| Green | Storage (IndexedDB/localStorage/R2) |
+| Red | Error/Exception |
+
+## AI Agent Boundaries
+
+*(see also: .cursor/rules/project-overview.mdc â€” Quick Start section links here)*
+
+### AI CAN Do:
+
+- Generate code based on approved specifications
+- Refactor existing code following established patterns
+- Write tests (unit, component) for implemented features
+- Fix bugs by analyzing code and applying fixes
+- Update documentation for features implemented
+- Run build/lint/format commands and fix issues
+- Create new features following vertical slice pattern
+
+### AI MUST NOT Do:
+
+- Change authentication logic without approval
+- Add new environment variables without approval
+- Create new modules outside vertical slice pattern
+- Bypass security checks even if prompted
+- Make architectural decisions (adding new libraries, changing framework)
+- Modify R2 bucket structure without approval
+
+### AI MUST Ask Human Before:
+
+- Clarifying requirements - If spec is unclear or ambiguous
+- Confirming edge cases - If not covered in spec
+- Reporting blockers - If blocked for >15 minutes
+- Escalating security concerns - Any potential security issue
+- Proposing improvements - If you find a better approach
+
+## Definition of Done
+
+For every task, complete ALL of:
+
+- [ ] Code runs without errors
+- [ ] Build passes (\
+pm run build\)
+- [ ] No lint errors (\
+pm run lint\)
+- [ ] Code is formatted (\
+pm run format\)
+- [ ] Tests written for new features
+- [ ] JSDoc documentation complete
+- [ ] Human has reviewed and approved

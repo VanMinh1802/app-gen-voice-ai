@@ -1,4 +1,4 @@
----
+﻿---
 name: writing-plans
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
@@ -15,7 +15,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** \.sdlc/specs/REQ-XXX-{feature-name}/\ (NOT \docs/plans/\ â€” use the SDLC spec directory)
 
 ## Bite-Sized Task Granularity
 
@@ -31,63 +31,77 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Every plan MUST start with this header:**
 
-```markdown
+\\\markdown
 # [Feature Name] Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task.
 
 **Goal:** [One sentence describing what this builds]
 
 **Architecture:** [2-3 sentences about approach]
 
-**Tech Stack:** [Key technologies/libraries]
+**Tech Stack:** [Key technologies/libraries â€” this project: Next.js 15, React, Tailwind CSS, Zustand, ONNX Runtime Web, IndexedDB, Cloudflare R2]
 
 ---
-```
+\\\
 
 ## Task Structure
 
-````markdown
+\\\markdown
 ### Task N: [Component Name]
 
 **Files:**
 
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
+- Create: \exact/path/to/file.tsx\
+- Modify: \exact/path/to/existing.tsx:123-145\
+- Test: \	ests/exact/path/to/test.tsx\ (note: project has NO test infra yet â€” add test infrastructure first if needed)
 
 **Step 1: Write the failing test**
 
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
-```
+> **Note:** If test infrastructure doesn't exist yet (Vitest/Playwright not configured),
+> skip RED phase and go directly to implementing the feature. Document in the plan.
+
+\\\	ypescript
+// tests/path/component.test.tsx
+import { render, screen } from "@testing-library/react";
+import { ComponentName } from "@/features/xxx/components/ComponentName";
+
+describe("ComponentName", () => {
+  it("renders correctly", () => {
+    render(<ComponentName />);
+    expect(screen.getByRole("button")).toBeInTheDocument();
+  });
+});
+\\\
 
 **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
+Run: \
+pm run test -- --run tests/path/component.test.tsx\
+Expected: FAIL with "module not found" (no test infra) or "ComponentName not defined"
 
 **Step 3: Write minimal implementation**
 
-```python
-def function(input):
-    return expected
-```
+\\\	ypescript
+// src/features/xxx/components/ComponentName.tsx
+export function ComponentName() {
+  return <button>Click me</button>;
+}
+\\\
 
 **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/path/test.py::test_name -v`
+Run: \
+pm run test -- --run tests/path/component.test.tsx\
 Expected: PASS
 
 **Step 5: Commit**
 
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
-````
+\\\ash
+git add src/features/xxx/components/ComponentName.tsx tests/path/component.test.tsx
+git commit --trailer "Made-with: Cursor" -m "feat(xxx): add ComponentName"
+\\\
+\\\
 
 ## Remember
 
@@ -95,13 +109,14 @@ git commit -m "feat: add specific feature"
 - Complete code in plan (not "add validation")
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
-- DRY, YAGNI, TDD, frequent commits
+- DRY, YAGNI, TDD (or document if test infra missing), frequent commits
+- **Save path is \.sdlc/specs/REQ-XXX-feature-name/\** not \docs/plans/\
 
 ## Execution Handoff
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to \.sdlc/specs/REQ-XXX-feature-name/\. Two execution options:**
 
 **1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
 

@@ -300,13 +300,7 @@ export async function clearHistory(): Promise<void> {
   });
 }
 
-export function isIndexedDBAvailable(): boolean {
-  try {
-    return typeof indexedDB !== "undefined";
-  } catch {
-    return false;
-  }
-}
+export { isIndexedDBAvailable } from "@/lib/storage/indexedDb";
 
 /**
  * Estimates available storage quota using Navigator.storage.estimate()

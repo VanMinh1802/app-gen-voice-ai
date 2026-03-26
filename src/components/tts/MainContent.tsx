@@ -631,7 +631,7 @@ export function AudioCustomization({
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <label className="text-xs font-medium text-muted-foreground">
+              <label htmlFor="speed-slider" className="text-xs font-medium text-muted-foreground">
                 Tốc độ
               </label>
             </div>
@@ -641,6 +641,7 @@ export function AudioCustomization({
           </div>
           <div className="relative">
             <input
+              id="speed-slider"
               type="range"
               min="0.5"
               max="2"
@@ -649,6 +650,7 @@ export function AudioCustomization({
               onChange={(e) => onSpeedChange(parseFloat(e.target.value))}
               disabled={disabled}
               className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+              aria-label="Tốc độ phát"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
               <span>0.5x</span>
@@ -674,7 +676,7 @@ export function AudioCustomization({
                   d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
                 />
               </svg>
-              <label className="text-xs font-medium text-muted-foreground">
+              <label htmlFor="pitch-slider" className="text-xs font-medium text-muted-foreground">
                 Cao độ
               </label>
             </div>
@@ -684,6 +686,7 @@ export function AudioCustomization({
           </div>
           <div className="relative">
             <input
+              id="pitch-slider"
               type="range"
               min="-12"
               max="12"
@@ -692,6 +695,7 @@ export function AudioCustomization({
               onChange={(e) => onPitchChange(parseInt(e.target.value))}
               disabled={disabled}
               className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+              aria-label="Cao độ âm thanh"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
               <span>-12 (thấp)</span>

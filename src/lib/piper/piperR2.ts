@@ -12,6 +12,7 @@ import {
   type PiperCustomSession,
   type PiperVoiceConfig,
 } from "./piperCustom";
+import { concatFloat32Arrays } from "@/lib/audio/wav";
 import {
   saveModelToCache,
   loadModelFromCache,
@@ -191,6 +192,7 @@ export async function loadPiperWithCache(
 
 /**
  * Load Piper model from ArrayBuffer (cached or fresh).
+ * This is the core ONNX inference logic shared by all R2-based voice loading.
  */
 async function loadFromArrayBuffer(
   voiceId: string,
@@ -219,7 +221,6 @@ async function loadFromArrayBuffer(
   }
 
   async function runPiperPhonemize(text: string): Promise<number[] | null> {
-    // Increase timeout for long text (2000+ characters can take longer to process)
     const timeoutMs = 60000;
     try {
       const phonemizeChunkUrl =
@@ -278,15 +279,58 @@ async function loadFromArrayBuffer(
     }
   }
 
+  async function predict(
+    text: string,
+    options?: {
+      speakerId?: number;
+      lengthScale?: number;
+      onProgress?: (progress: number) => void;
+    },
+  ): Promise<Float32Array> {
+    const trimmed = text.trim();
+    if (!trimmed) return new Float32Array(0);
+
+    const lengthScale = 1 / (options?.lengthScale ?? lengthScaleDefault);
+    const speakerId = options?.speakerId ?? 0;
+    const onProgress = options?.onProgress;
+
+    // Use sentence-aware chunking for long text to avoid memory issues
+    const chunks = splitTextIntoChunks(trimmed, 500);
+
+    if (chunks.length === 1) {
+      onProgress?.(50);
+      return processSingleChunk(chunks[0]!, lengthScale, speakerId);
+    }
+
+    const audioChunks: Float32Array[] = [];
+    const totalChunks = chunks.length;
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]!;
+      const chunkProgress = 40 + Math.round((i / totalChunks) * 40);
+      onProgress?.(chunkProgress);
+
+      const audioChunk = await processSingleChunk(
+        chunk,
+        lengthScale,
+        speakerId,
+      );
+      audioChunks.push(audioChunk);
+    }
+
+    onProgress?.(90);
+    return concatFloat32Arrays(audioChunks);
+  }
+
   /**
-   * Split text into chunks (by sentences or paragraphs) for processing.
+   * Split text into chunks (by sentences or words) for TTS processing.
    * Each chunk is processed separately and concatenated.
+   * Uses `charsPerChunk` from config (default 500).
    */
   function splitTextIntoChunks(
     text: string,
     maxChunkSize: number = 500,
   ): string[] {
-    // Split by common sentence endings first
     const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
 
     const chunks: string[] = [];
@@ -299,7 +343,6 @@ async function loadFromArrayBuffer(
         if (currentChunk) {
           chunks.push(currentChunk.trim());
         }
-        // If a single sentence is longer than maxChunkSize, split it by words
         if (sentence.length > maxChunkSize) {
           const words = sentence.split(/\s+/);
           currentChunk = "";
@@ -326,64 +369,6 @@ async function loadFromArrayBuffer(
     return chunks;
   }
 
-  async function predict(
-    text: string,
-    options?: {
-      speakerId?: number;
-      lengthScale?: number;
-      onProgress?: (progress: number) => void;
-    },
-  ): Promise<Float32Array> {
-    const trimmed = text.trim();
-    if (!trimmed) return new Float32Array(0);
-
-    const lengthScale = 1 / (options?.lengthScale ?? lengthScaleDefault);
-    const speakerId = options?.speakerId ?? 0;
-    const onProgress = options?.onProgress;
-
-    // Use chunking for long text to avoid memory issues
-    const chunks = splitTextIntoChunks(trimmed, 500);
-
-    if (chunks.length === 1) {
-      // Single chunk - process normally
-      onProgress?.(50); // Starting inference
-      return processSingleChunk(chunks[0], lengthScale, speakerId);
-    }
-
-    // Multiple chunks - process each and concatenate
-    const audioChunks: Float32Array[] = [];
-    const totalChunks = chunks.length;
-
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      // Progress: 40-80% based on chunk progress
-      const chunkProgress = 40 + Math.round((i / totalChunks) * 40);
-      onProgress?.(chunkProgress);
-
-      const audioChunk = await processSingleChunk(
-        chunk,
-        lengthScale,
-        speakerId,
-      );
-      audioChunks.push(audioChunk);
-    }
-
-    // Concatenate all chunks
-    const totalLength = audioChunks.reduce(
-      (sum, chunk) => sum + chunk.length,
-      0,
-    );
-    const result = new Float32Array(totalLength);
-    let offset = 0;
-    for (const chunk of audioChunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
-    }
-
-    onProgress?.(90); // Almost done
-    return result;
-  }
-
   /**
    * Process a single chunk of text through the TTS model.
    */
@@ -396,10 +381,7 @@ async function loadFromArrayBuffer(
 
     if (phonemeType === "text") {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds(
-        [Array.from(normalized)],
-        config.phoneme_id_map,
-      );
+      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
     } else if (phonemeType === "espeak") {
       const { normalizeVietnamese } =
         await import("@/lib/text-processing/vietnameseNormalizer");
@@ -409,17 +391,11 @@ async function loadFromArrayBuffer(
         phonemeIds = wasmIds;
       } else {
         const normalized = preprocessed.normalize("NFD").toLowerCase();
-        phonemeIds = phonemesToIds(
-          [Array.from(normalized)],
-          config.phoneme_id_map,
-        );
+        phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
       }
     } else {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds(
-        [Array.from(normalized)],
-        config.phoneme_id_map,
-      );
+      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
     }
 
     const Tensor = ort.Tensor;
@@ -467,10 +443,7 @@ async function loadFromArrayBuffer(
     return output.data;
   }
 
-  return {
-    predict,
-    sampleRate,
-  };
+  return { predict, sampleRate };
 }
 
 function phonemesToIds(

@@ -10,6 +10,7 @@ import { R2_PUBLIC_URL } from "@/lib/config/r2Config";
 import type { PiperCustomSession } from "@/lib/piper/piperCustom";
 import { loadPiperWithCache } from "@/lib/piper/piperR2";
 import { pitchShift } from "@/lib/audio/pitchShift";
+import { encodeWav, concatFloat32Arrays, decodeWav } from "@/lib/audio/wav";
 import { STREAMING_THRESHOLD_CHARS } from "@/config";
 
 /** Prefer same-origin /onnx/ so .mjs is served with correct MIME (avoids blob fetch issues in worker). */
@@ -66,10 +67,6 @@ async function initCustomSession(voiceId: string): Promise<PiperCustomSession> {
   }
   const modelName = getCustomModelName(voiceId);
 
-  // Determine base URL for model fetching
-  // - R2_PUBLIC_URL (inlined trong worker) hoặc r2PublicUrlFromMain (main thread gửi sau workerReady)
-  // - Nếu có: fetch trực tiếp R2, không qua API
-  // - Nếu không: dùng /api/models (Cloudflare Pages với R2 binding)
   const directUrl = R2_PUBLIC_URL || r2PublicUrlFromMain;
   const baseUrl = directUrl
     ? `${directUrl.replace(/\/$/, "")}/vi`
@@ -104,7 +101,7 @@ function sendChunk(
   index: number,
   sampleRate: number = 24000,
 ) {
-  const wavBuffer = float32ToWav(audio, sampleRate);
+  const wavBuffer = encodeWav(audio, sampleRate);
   const message: TtsWorkerChunk = {
     type: "chunk",
     audio: wavBuffer,
@@ -131,7 +128,7 @@ function sendComplete(
   sampleRate: number = 24000,
   wasStreaming?: boolean,
 ) {
-  const wavBuffer = float32ToWav(audio, sampleRate);
+  const wavBuffer = encodeWav(audio, sampleRate);
   const duration = audio.length / sampleRate;
 
   const message: TtsWorkerOutgoingMessage = {
@@ -148,64 +145,9 @@ function sendError(error: string) {
   self.postMessage(message);
 }
 
-function float32ToWav(
-  float32Array: Float32Array,
-  sampleRate: number,
-): ArrayBuffer {
-  const numChannels = 1;
-  const bitsPerSample = 16;
-  const bytesPerSample = bitsPerSample / 8;
-  const blockAlign = numChannels * bytesPerSample;
-  const byteRate = sampleRate * blockAlign;
-  const dataSize = float32Array.length * bytesPerSample;
-  const bufferSize = 44 + dataSize;
-
-  const buffer = new ArrayBuffer(bufferSize);
-  const view = new DataView(buffer);
-
-  const writeString = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i));
-    }
-  };
-
-  writeString(0, "RIFF");
-  view.setUint32(4, bufferSize - 8, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, byteRate, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitsPerSample, true);
-  writeString(36, "data");
-  view.setUint32(40, dataSize, true);
-
-  const int16Array = new Int16Array(float32Array.length);
-  for (let i = 0; i < float32Array.length; i++) {
-    const sample = Math.max(-1, Math.min(1, float32Array[i]));
-    int16Array[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-  }
-
-  const dataView = new DataView(buffer, 44);
-  for (let i = 0; i < int16Array.length; i++) {
-    dataView.setInt16(i * 2, int16Array[i], true);
-  }
-
-  return buffer;
-}
-
-function concatenateFloat32Arrays(arrays: Float32Array[]): Float32Array {
-  const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
-  const result = new Float32Array(totalLength);
-  let offset = 0;
-  for (const arr of arrays) {
-    result.set(arr, offset);
-    offset += arr.length;
-  }
-  return result;
+async function blobToFloat32Array(blob: Blob): Promise<Float32Array> {
+  const arrayBuffer = await blob.arrayBuffer();
+  return decodeWav(arrayBuffer).float32;
 }
 
 self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
@@ -237,7 +179,6 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
           useStreaming &&
           chunks.length >= config.streaming.minChunksForStreaming
         ) {
-          // Streaming mode: process chunks and send each as it completes
           const allAudio: Float32Array[] = [];
           let sampleRate = 24000;
 
@@ -250,7 +191,7 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
             for (let i = 0; i < chunks.length; i++) {
               if (isCancelled) return;
 
-              const chunkAudio = await custom.predict(chunks[i], {
+              const chunkAudio = await custom.predict(chunks[i]!, {
                 lengthScale,
               });
               allAudio.push(chunkAudio);
@@ -269,8 +210,10 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
             for (let i = 0; i < chunks.length; i++) {
               if (isCancelled) return;
 
-              const audioBlob = await session.predict(chunks[i]);
-              const chunkAudio = await blobToFloat32Array(audioBlob);
+              const audioBlob = await session.predict(chunks[i]!);
+              const { float32: chunkAudio } = decodeWav(
+                await audioBlob.arrayBuffer(),
+              );
               allAudio.push(chunkAudio);
 
               if (!isCancelled) {
@@ -284,20 +227,17 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
 
           if (isCancelled) return;
 
-          // Apply pitch shift to all chunks if needed
           if (pitch !== 0 && Number.isFinite(pitch)) {
             const clampedPitch = Math.max(-12, Math.min(12, pitch));
             for (let i = 0; i < allAudio.length; i++) {
-              allAudio[i] = pitchShift(allAudio[i], clampedPitch);
+              allAudio[i] = pitchShift(allAudio[i]!, clampedPitch);
             }
           }
 
-          // Concatenate all chunks for full audio (for history)
-          const fullAudio = concatenateFloat32Arrays(allAudio);
+          const fullAudio = concatFloat32Arrays(allAudio);
           sendProgress(95);
           sendComplete(fullAudio, sampleRate, true);
         } else {
-          // Fallback mode: process all at once (existing behavior)
           let float32Audio: Float32Array;
           let sampleRate: number;
 
@@ -318,8 +258,9 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
             const session = await initSession(effectiveVoice);
             sendProgress(40);
             const audioBlob = await session.predict(text);
-            float32Audio = await blobToFloat32Array(audioBlob);
-            sampleRate = 24000;
+            const result = decodeWav(await audioBlob.arrayBuffer());
+            float32Audio = result.float32;
+            sampleRate = result.sampleRate;
           }
 
           if (pitch !== 0 && Number.isFinite(pitch)) {
@@ -387,82 +328,6 @@ self.onmessage = async (event: MessageEvent<TtsWorkerMessage>) => {
     sendError(errorMessage);
   }
 };
-
-async function blobToFloat32Array(blob: Blob): Promise<Float32Array> {
-  const arrayBuffer = await blob.arrayBuffer();
-  return wavToFloat32(arrayBuffer);
-}
-
-function wavToFloat32(wavBuffer: ArrayBuffer): Float32Array {
-  const view = new DataView(wavBuffer);
-  const riff = String.fromCharCode(
-    view.getUint8(0),
-    view.getUint8(1),
-    view.getUint8(2),
-    view.getUint8(3),
-  );
-
-  if (riff !== "RIFF") {
-    throw new Error("Invalid WAV file: missing RIFF header");
-  }
-
-  let offset = 12;
-  let dataOffset = 0;
-  let dataSize = 0;
-  let sampleRate = 24000;
-  let numChannels = 1;
-
-  while (offset < wavBuffer.byteLength - 8) {
-    const chunkId = String.fromCharCode(
-      view.getUint8(offset),
-      view.getUint8(offset + 1),
-      view.getUint8(offset + 2),
-      view.getUint8(offset + 3),
-    );
-    const chunkSize = view.getUint32(offset + 4, true);
-
-    if (chunkId === "fmt ") {
-      numChannels = view.getUint16(offset + 10, true);
-      sampleRate = view.getUint32(offset + 12, true);
-    } else if (chunkId === "data") {
-      dataOffset = offset + 8;
-      dataSize = chunkSize;
-      break;
-    }
-
-    offset += 8 + chunkSize;
-    if (chunkSize % 2 !== 0) offset++;
-  }
-
-  if (dataOffset === 0) {
-    throw new Error("Invalid WAV file: no data chunk found");
-  }
-
-  const bytesPerSample = 2;
-  const numSamples = Math.floor(dataSize / (numChannels * bytesPerSample));
-  const float32Array = new Float32Array(numSamples);
-
-  const dataView = new DataView(wavBuffer, dataOffset, dataSize);
-
-  for (let i = 0; i < numSamples; i++) {
-    const sample = dataView.getInt16(i * 2, true);
-    float32Array[i] = sample / 32768;
-  }
-
-  if (numChannels > 1) {
-    const mono = new Float32Array(numSamples);
-    for (let i = 0; i < numSamples; i++) {
-      let sum = 0;
-      for (let ch = 0; ch < numChannels; ch++) {
-        sum += float32Array[i * numChannels + ch];
-      }
-      mono[i] = sum / numChannels;
-    }
-    return mono;
-  }
-
-  return float32Array;
-}
 
 // Báo cho main thread biết worker đã sẵn sàng nhận lệnh (script đã chạy xong)
 self.postMessage({ type: "workerReady" } as TtsWorkerOutgoingMessage);

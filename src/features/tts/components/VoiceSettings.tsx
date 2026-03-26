@@ -11,7 +11,6 @@ import {
   ShieldAlert,
   Trash2,
   ChevronRight,
-  Globe,
   Moon,
   Bell,
   Mic,
@@ -38,19 +37,8 @@ type SettingsTab = "personal" | "subscription" | "customization" | "security";
 
 function detectGender(voiceId: string): "male" | "female" {
   const maleKeywords = [
-    "nam",
-    "hung",
-    "quang",
-    "thanh",
-    "khoi",
-    "dung",
-    "duy",
-    "minh",
-    "anh",
-    "hoang",
-    "phong",
-    "son",
-    "hieu",
+    "nam", "hung", "quang", "thanh", "khoi", "dung",
+    "duy", "minh", "anh", "hoang", "phong", "son", "hieu",
   ];
   return maleKeywords.some((kw) => voiceId.toLowerCase().includes(kw))
     ? "male"
@@ -69,12 +57,12 @@ export function VoiceSettings() {
     licenses,
     isLoading: isLicenseLoading,
     upgradeToPlan,
+    signIn,
   } = useAuthContext();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<SettingsTab>("personal");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Customization state
   const { theme, setTheme } = useTheme();
   const darkMode = theme === "dark";
   const [notifications, setNotifications] = useState(true);
@@ -157,13 +145,41 @@ export function VoiceSettings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border gap-8 mb-8 overflow-x-auto whitespace-nowrap pb-4">
-        {tabs.map((tab) => {
+      <div
+        role="tablist"
+        aria-label="Cài đặt"
+        className="flex border-b border-border gap-8 mb-8 overflow-x-auto whitespace-nowrap pb-4"
+      >
+        {tabs.map((tab, index) => {
           const Icon = tab.icon;
+          const isSelected = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={isSelected}
+              aria-controls={`panel-${tab.id}`}
+              tabIndex={isSelected ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight") {
+                  const next = tabs[(index + 1) % tabs.length];
+                  setActiveTab(next.id);
+                  document.getElementById(`tab-${next.id}`)?.focus();
+                } else if (e.key === "ArrowLeft") {
+                  const prev = tabs[(index - 1 + tabs.length) % tabs.length];
+                  setActiveTab(prev.id);
+                  document.getElementById(`tab-${prev.id}`)?.focus();
+                } else if (e.key === "Home") {
+                  setActiveTab(tabs[0].id);
+                  document.getElementById(`tab-${tabs[0].id}`)?.focus();
+                } else if (e.key === "End") {
+                  const last = tabs[tabs.length - 1];
+                  setActiveTab(last.id);
+                  document.getElementById(`tab-${last.id}`)?.focus();
+                }
+              }}
               className={cn(
                 "flex items-center gap-2 font-semibold transition-all border-b-2 px-1 -mb-4",
                 activeTab === tab.id
@@ -179,9 +195,16 @@ export function VoiceSettings() {
       </div>
 
       {/* Tab content */}
-      <section className="space-y-6">
+      <div className="space-y-6">
+
         {/* Thông tin cá nhân */}
-        {activeTab === "personal" && (
+        <div
+          role="tabpanel"
+          id="panel-personal"
+          aria-labelledby="tab-personal"
+          tabIndex={0}
+          className={cn(activeTab !== "personal" && "hidden")}
+        >
           <div className="bg-card border border-primary/10 rounded-xl p-6">
             {!isAuthenticated ? (
               <div className="flex items-start gap-4">
@@ -193,12 +216,13 @@ export function VoiceSettings() {
                     Đăng nhập để xem thông tin cá nhân. Hồ sơ được quản lý qua
                     tài khoản Genation.
                   </p>
-                  <Link
-                    href="/login"
+                  <button
+                    type="button"
+                    onClick={() => signIn()}
                     className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all"
                   >
                     Đăng nhập
-                  </Link>
+                  </button>
                 </div>
               </div>
             ) : (
@@ -248,10 +272,16 @@ export function VoiceSettings() {
               </div>
             )}
           </div>
-        )}
+        </div>
 
         {/* Gói đăng ký */}
-        {activeTab === "subscription" && (
+        <div
+          role="tabpanel"
+          id="panel-subscription"
+          aria-labelledby="tab-subscription"
+          tabIndex={0}
+          className={cn(activeTab !== "subscription" && "hidden")}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-card border border-primary/10 rounded-xl p-6">
               {!isAuthenticated ? (
@@ -372,242 +402,273 @@ export function VoiceSettings() {
               </Link>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Tùy chỉnh */}
-        {activeTab === "customization" && (
-          <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-card border border-primary/10 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-foreground mb-6">
-                  Tùy chỉnh giao diện
-                </h3>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Moon className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          Chế độ tối
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Giảm mỏi mắt ban đêm
-                        </p>
-                      </div>
+        <div
+          role="tabpanel"
+          id="panel-customization"
+          aria-labelledby="tab-customization"
+          tabIndex={0}
+          className={cn(activeTab !== "customization" && "hidden")}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-card border border-primary/10 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-foreground mb-6">
+                Tùy chỉnh giao diện
+              </h3>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Moon className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Chế độ tối
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Giảm mỏi mắt ban đêm
+                      </p>
                     </div>
-                    <button
-                      role="switch"
-                      aria-checked={darkMode}
-                      onClick={() => setTheme(darkMode ? "light" : "dark")}
-                      className={cn(
-                        "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                        darkMode ? "bg-primary" : "bg-muted",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
-                          darkMode && "translate-x-5",
-                        )}
-                      />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Bell className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          Thông báo đẩy
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Cập nhật tiến độ xử lý
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      role="switch"
-                      aria-checked={notifications}
-                      onClick={() => setNotifications(!notifications)}
-                      className={cn(
-                        "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                        notifications ? "bg-primary" : "bg-muted",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
-                          notifications && "translate-x-5",
-                        )}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-card border border-primary/10 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Mic className="w-5 h-5 text-primary" />
-                  Giọng nói mặc định
-                </h3>
-                <div className="space-y-3">
-                  {config.customModels
-                    .filter((voice) => config.activeVoiceIds.includes(voice.id))
-                    .map((voice) => {
-                      const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}`;
-                      const isSelected = settings.voice === voiceId;
-                      const isLockedForPlan = !canUseVoiceForPlan({
-                        planCode: activePlanCode,
-                        voiceId: voice.id,
-                      });
-                      const gender = detectGender(voice.id);
-                      const initials = voice.name
-                        .replace(" (custom)", "")
-                        .split(" ")
-                        .map((n) => n[0])
-                        .slice(0, 2)
-                        .join("")
-                        .toUpperCase();
-                      const avatarBg =
-                        gender === "female"
-                          ? "from-pink-500 to-pink-400"
-                          : "from-blue-500 to-blue-400";
-                      return (
-                        <label
-                          key={voiceId}
-                          className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
-                            isSelected
-                              ? "border-primary bg-primary/10"
-                              : "border-primary/10 hover:border-primary/30",
-                            isLockedForPlan && "opacity-60 cursor-not-allowed",
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="voice"
-                            value={voiceId}
-                            checked={isSelected}
-                            onChange={() => {
-                              if (!isLockedForPlan) handleVoiceSelect(voiceId);
-                            }}
-                            className="sr-only"
-                          />
-                          <div
-                            className={cn(
-                              "w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-primary-foreground font-bold text-sm",
-                              avatarBg,
-                            )}
-                          >
-                            {initials}
-                          </div>
-                          <span className="text-sm font-medium text-foreground flex-1">
-                            {voice.name.replace(" (custom)", "")}
-                            {isLockedForPlan && (
-                              <span className="ml-2 text-[10px] font-bold text-primary/80">
-                                Pro
-                              </span>
-                            )}
-                          </span>
-                          {isSelected && (
-                            <Check className="w-5 h-5 text-primary" />
-                          )}
-                        </label>
-                      );
-                    })}
-                </div>
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Gauge className="w-4 h-4" /> Tốc độ
-                    </span>
-                    <span className="text-foreground font-medium">
-                      {speedValue.toFixed(1)}x
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="2"
-                    step="0.1"
-                    value={speedValue}
-                    onChange={(e) =>
-                      handleSpeedChange(parseFloat(e.target.value))
-                    }
-                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
-                  />
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Waves className="w-4 h-4" /> Cao độ
-                    </span>
-                    <span className="text-foreground font-medium">
-                      {pitchValue > 0 ? `+${pitchValue}` : pitchValue}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-12"
-                    max="12"
-                    step="1"
-                    value={pitchValue}
-                    onChange={(e) =>
-                      handlePitchChange(parseInt(e.target.value))
-                    }
-                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
-                  />
-                  <p className="text-[10px] text-muted-foreground/70 -mt-1">
-                    Âm = thấp hơn, Dương = cao hơn
-                  </p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Volume2 className="w-4 h-4" /> Âm lượng
-                    </span>
-                    <span className="text-foreground font-medium">
-                      {Math.round(volumeValue * 100)}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={volumeValue}
-                    onChange={(e) =>
-                      handleVolumeChange(parseFloat(e.target.value))
-                    }
-                    className="w-full accent-primary h-1.5 bg-muted rounded-lg"
-                  />
-                </div>
-                <label className="flex items-center justify-between mt-4 p-3 rounded-lg bg-background/50 border border-primary/5">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-foreground">
-                      Chuẩn hóa văn bản
-                    </span>
                   </div>
                   <button
                     role="switch"
-                    aria-checked={normalizeTextValue}
-                    onClick={() => handleNormalizeToggle(!normalizeTextValue)}
+                    aria-checked={darkMode}
+                    aria-label="Chế độ tối"
+                    onClick={() => setTheme(darkMode ? "light" : "dark")}
                     className={cn(
                       "relative w-11 h-6 rounded-full transition-colors shrink-0",
-                      normalizeTextValue ? "bg-primary" : "bg-muted",
+                      darkMode ? "bg-primary" : "bg-muted",
                     )}
                   >
                     <span
                       className={cn(
-                        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
-                        normalizeTextValue && "translate-x-5",
+                        "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
+                        darkMode && "translate-x-5",
                       )}
                     />
                   </button>
-                </label>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Bell className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Thông báo đẩy
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Cập nhật tiến độ xử lý
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={notifications}
+                    aria-label="Thông báo đẩy"
+                    onClick={() => setNotifications(!notifications)}
+                    className={cn(
+                      "relative w-11 h-6 rounded-full transition-colors shrink-0",
+                      notifications ? "bg-primary" : "bg-muted",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-[2px] left-[2px] w-5 h-5 rounded-full bg-white transition-transform",
+                        notifications && "translate-x-5",
+                      )}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
-          </>
-        )}
+
+            <div className="bg-card border border-primary/10 rounded-xl p-6">
+              <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+                <Mic className="w-5 h-5 text-primary" />
+                Giọng nói mặc định
+              </h3>
+              <div className="space-y-3">
+                {config.customModels
+                  .filter((voice) => config.activeVoiceIds.includes(voice.id))
+                  .map((voice) => {
+                    const voiceId = `${CUSTOM_MODEL_PREFIX}${voice.id}`;
+                    const isSelected = settings.voice === voiceId;
+                    const isLockedForPlan = !canUseVoiceForPlan({
+                      planCode: activePlanCode,
+                      voiceId: voice.id,
+                    });
+                    const gender = detectGender(voice.id);
+                    const initials = voice.name
+                      .replace(" (custom)", "")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase();
+                    const avatarBg =
+                      gender === "female"
+                        ? "from-pink-500 to-pink-400"
+                        : "from-blue-500 to-blue-400";
+                    return (
+                      <label
+                        key={voiceId}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary/10"
+                            : "border-primary/10 hover:border-primary/30",
+                          isLockedForPlan && "opacity-60 cursor-not-allowed",
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="voice"
+                          value={voiceId}
+                          checked={isSelected}
+                          onChange={() => {
+                            if (!isLockedForPlan) handleVoiceSelect(voiceId);
+                          }}
+                          className="sr-only"
+                        />
+                        <div
+                          className={cn(
+                            "w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-primary-foreground font-bold text-sm",
+                            avatarBg,
+                          )}
+                        >
+                          {initials}
+                        </div>
+                        <span className="text-sm font-medium text-foreground flex-1">
+                          {voice.name.replace(" (custom)", "")}
+                          {isLockedForPlan && (
+                            <span className="ml-2 text-[10px] font-bold text-primary/80">
+                              Pro
+                            </span>
+                          )}
+                        </span>
+                        {isSelected && (
+                          <Check className="w-5 h-5 text-primary" />
+                        )}
+                      </label>
+                    );
+                  })}
+              </div>
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <label
+                    htmlFor="settings-speed-slider"
+                    className="text-muted-foreground flex items-center gap-2 cursor-pointer"
+                  >
+                    <Gauge className="w-4 h-4" /> Tốc độ
+                  </label>
+                  <span className="text-foreground font-medium">
+                    {speedValue.toFixed(1)}x
+                  </span>
+                </div>
+                <input
+                  id="settings-speed-slider"
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={speedValue}
+                  onChange={(e) =>
+                    handleSpeedChange(parseFloat(e.target.value))
+                  }
+                  className="w-full accent-primary h-1.5 bg-muted rounded-lg"
+                  aria-label="Tốc độ mặc định"
+                />
+                <div className="flex items-center justify-between text-sm">
+                  <label
+                    htmlFor="settings-pitch-slider"
+                    className="text-muted-foreground flex items-center gap-2 cursor-pointer"
+                  >
+                    <Waves className="w-4 h-4" /> Cao độ
+                  </label>
+                  <span className="text-foreground font-medium">
+                    {pitchValue > 0 ? `+${pitchValue}` : pitchValue}
+                  </span>
+                </div>
+                <input
+                  id="settings-pitch-slider"
+                  type="range"
+                  min="-12"
+                  max="12"
+                  step="1"
+                  value={pitchValue}
+                  onChange={(e) =>
+                    handlePitchChange(parseInt(e.target.value))
+                  }
+                  className="w-full accent-primary h-1.5 bg-muted rounded-lg"
+                  aria-label="Cao độ mặc định"
+                />
+                <p className="text-[10px] text-muted-foreground/70 -mt-1">
+                  Âm = thấp hơn, Dương = cao hơn
+                </p>
+                <div className="flex items-center justify-between text-sm">
+                  <label
+                    htmlFor="settings-volume-slider"
+                    className="text-muted-foreground flex items-center gap-2 cursor-pointer"
+                  >
+                    <Volume2 className="w-4 h-4" /> Âm lượng
+                  </label>
+                  <span className="text-foreground font-medium">
+                    {Math.round(volumeValue * 100)}%
+                  </span>
+                </div>
+                <input
+                  id="settings-volume-slider"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volumeValue}
+                  onChange={(e) =>
+                    handleVolumeChange(parseFloat(e.target.value))
+                  }
+                  className="w-full accent-primary h-1.5 bg-muted rounded-lg"
+                  aria-label="Âm lượng mặc định"
+                />
+              </div>
+              <div className="flex items-center justify-between mt-4 p-3 rounded-lg bg-background/50 border border-primary/5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span
+                    id="normalize-label"
+                    className="text-sm text-foreground"
+                  >
+                    Chuẩn hóa văn bản
+                  </span>
+                </div>
+                <button
+                  role="switch"
+                  aria-checked={normalizeTextValue}
+                  aria-labelledby="normalize-label"
+                  onClick={() => handleNormalizeToggle(!normalizeTextValue)}
+                  className={cn(
+                    "relative w-11 h-6 rounded-full transition-colors shrink-0",
+                    normalizeTextValue ? "bg-primary" : "bg-muted",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                      normalizeTextValue && "translate-x-5",
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Bảo mật */}
-        {activeTab === "security" && (
+        <div
+          role="tabpanel"
+          id="panel-security"
+          aria-labelledby="tab-security"
+          tabIndex={0}
+          className={cn(activeTab !== "security" && "hidden")}
+        >
           <div className="bg-card border border-primary/10 rounded-xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-6">
               Bảo mật tài khoản
@@ -632,7 +693,16 @@ export function VoiceSettings() {
               </button>
               <button
                 type="button"
-                onClick={() => handleSecurityAction("2fa")}
+                onClick={() => {
+                  addToast({
+                    type: "info",
+                    message: "Mở tài khoản Genation để quản lý xác thực 2 yếu tố.",
+                    duration: 5000,
+                  });
+                  if (typeof window !== "undefined") {
+                    window.open(GENATION_ACCOUNT_URL, "_blank");
+                  }
+                }}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-primary/10 hover:bg-background transition-all group"
               >
                 <div className="flex items-center gap-3">
@@ -642,7 +712,7 @@ export function VoiceSettings() {
                       Xác thực 2 yếu tố (2FA)
                     </span>
                     <span className="text-[10px] text-orange-500 font-bold uppercase tracking-wider">
-                      Chưa kích hoạt
+                      Quản lý tại Genation
                     </span>
                   </div>
                 </div>
@@ -663,9 +733,9 @@ export function VoiceSettings() {
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Về ứng dụng - hiển thị ở mọi tab phía dưới */}
+        {/* Về ứng dụng */}
         <div className="bg-card border border-primary/10 rounded-xl p-6 flex items-start gap-3 pb-20">
           <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
@@ -680,7 +750,8 @@ export function VoiceSettings() {
             </p>
           </div>
         </div>
-      </section>
+
+      </div>
 
       {/* Delete account confirmation dialog */}
       <ConfirmDialog
