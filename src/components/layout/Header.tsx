@@ -24,12 +24,15 @@ import { useNotificationStore } from "@/lib/storage/notifications";
 
 interface HeaderProps {
   title?: string;
+  /** Nhãn phụ phía trên tiêu đề (ngữ cảnh trang) — ẩn trên mobile rất hẹp nếu cần */
+  eyebrow?: string;
   /** Nội dung bên trái (vd: nút menu mobile) — hiển thị trong header để layout responsive đúng */
   leftContent?: React.ReactNode;
 }
 
 export function Header({
   title = "Tạo giọng nói mới",
+  eyebrow,
   leftContent,
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -83,22 +86,38 @@ export function Header({
   const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <header className="h-14 sm:h-16 border-b border-border glass-card flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-30">
+    <header className="min-h-14 sm:min-h-16 border-b border-border/80 glass-card flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-2 sm:py-0 sticky top-0 z-30 shadow-sm shadow-black/[0.03] dark:shadow-black/20">
       <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
         {leftContent}
-        <h1
-          className="text-base sm:text-lg font-bold text-foreground truncate min-w-0"
-          title={title}
-        >
-          {title}
-        </h1>
+        <div className="flex flex-col min-w-0 justify-center py-0.5 sm:py-1">
+          {eyebrow ? (
+            <p
+              className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90 truncate"
+              id="header-eyebrow"
+            >
+              {eyebrow}
+            </p>
+          ) : null}
+          <h1
+            className={cn(
+              "font-bold text-foreground truncate min-w-0 leading-tight",
+              eyebrow
+                ? "text-[15px] sm:text-lg mt-0.5"
+                : "text-base sm:text-lg",
+            )}
+            title={title}
+            aria-describedby={eyebrow ? "header-eyebrow" : undefined}
+          >
+            {title}
+          </h1>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
+          className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label={
             theme === "dark"
               ? "Chuyển sang chế độ sáng"
@@ -120,7 +139,7 @@ export function Header({
               setShowNotifications(!showNotifications);
               setShowUserMenu(false);
             }}
-            className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group"
+            className="p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label="Thông báo"
             aria-expanded={showNotifications}
             aria-haspopup="menu"
@@ -224,7 +243,7 @@ export function Header({
                 setShowUserMenu(!showUserMenu);
                 setShowNotifications(false);
               }}
-              className="flex items-center gap-2 p-1.5 pr-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
+              className="flex items-center gap-2 p-1.5 pr-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/25">
                 {userInitial}
@@ -292,7 +311,7 @@ export function Header({
                   // Client-side sign in: SDK lấy URL Genation rồi redirect (không qua /api/auth/signin)
                   await signIn();
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <Sparkles className="w-4 h-4" />
                 <span className="text-sm">Đăng nhập</span>

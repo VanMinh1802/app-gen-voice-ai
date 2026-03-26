@@ -137,6 +137,15 @@ function HomeContentInner() {
     clearInputText();
   }, [clearInputText]);
 
+  const headerEyebrow =
+    activeTab === "dashboard"
+      ? "Trang chủ"
+      : activeTab === "voice_library"
+        ? "Thư viện"
+        : activeTab === "history"
+          ? "Lịch sử"
+          : "Tài khoản";
+
   return (
     <>
       <GlobalToastListener addToast={addToast} />
@@ -161,6 +170,7 @@ function HomeContentInner() {
           >
             {/* Header — nút menu gần trong header để title không bị đè/tràn khi resize */}
             <Header
+              eyebrow={headerEyebrow}
               title={
                 activeTab === "dashboard"
                   ? "Tạo giọng nói mới"

@@ -84,8 +84,8 @@ export function Sidebar({
         {/* Logo — header gọn, không kèm nút thu gọn */}
         <div
           className={cn(
-            "shrink-0 border-b border-border/30",
-            collapsed ? "p-3 md:px-2 md:py-3" : "p-6 pb-4",
+            "shrink-0 border-b border-border/40",
+            collapsed ? "p-3 md:px-2 md:py-3" : "px-5 pt-5 pb-4",
           )}
         >
           <button
@@ -96,6 +96,7 @@ export function Sidebar({
             }}
             className={cn(
               "w-full flex items-center rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors -m-2 p-2",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               collapsed ? "md:justify-center md:gap-0 gap-3" : "gap-3",
             )}
             aria-label={collapsed ? "GenVoice AI — Về Dashboard" : undefined}
@@ -120,7 +121,7 @@ export function Sidebar({
                 <span className="text-xl font-bold tracking-tight text-foreground">
                   GenVoice <span className="text-primary">AI</span>
                 </span>
-                <span className="text-[10px] text-muted-foreground -mt-1">
+                <span className="text-[11px] text-foreground/55 dark:text-foreground/50 -mt-0.5">
                   Text to Speech
                 </span>
               </div>
@@ -129,12 +130,13 @@ export function Sidebar({
         </div>
 
         <div className="flex flex-1 flex-col min-h-0">
-          {/* Navigation */}
+          {/* Navigation — cùng min-height mọi mục; active nhẹ (không khối primary cao) */}
           <nav
             className={cn(
-              "shrink-0 space-y-2 mt-2",
-              collapsed ? "px-2 md:px-2" : "px-4",
+              "shrink-0 space-y-1 mt-1",
+              collapsed ? "px-2 md:px-2" : "px-3",
             )}
+            aria-label="Điều hướng chính"
           >
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
@@ -149,59 +151,59 @@ export function Sidebar({
                   title={collapsed ? item.label : undefined}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "w-full flex items-center rounded-xl transition-all duration-200 relative overflow-hidden group",
+                    "w-full flex items-center rounded-xl transition-colors duration-200 relative group",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    "min-h-[44px]",
                     collapsed
-                      ? "md:justify-center md:px-0 md:py-3 gap-3 px-4 py-3"
-                      : "gap-3 px-4 py-3",
+                      ? "md:justify-center md:px-0 md:py-2 gap-0 px-3 py-2.5"
+                      : "gap-3 px-3 py-2.5",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                      : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
+                      ? "bg-primary/14 text-foreground ring-1 ring-inset ring-primary/25 shadow-sm dark:bg-primary/[0.18]"
+                      : "text-foreground/72 dark:text-foreground/68 hover:text-foreground hover:bg-black/[0.06] dark:hover:bg-white/[0.07]",
                   )}
                 >
-                  {/* Active indicator */}
+                  {/* Thanh nhấn trái — mỏng, đồng chiều cao với item */}
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
+                    <span
+                      className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-primary"
+                      aria-hidden
+                    />
                   )}
 
-                  {/* Hover background */}
                   <div
                     className={cn(
-                      "absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded-xl transition-opacity duration-200",
-                      isHovered && !isActive ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-
-                  <div
-                    className={cn(
-                      "relative z-10 flex items-center w-full min-w-0",
-                      collapsed ? "md:justify-center md:w-auto gap-3" : "gap-3",
-                      isActive && !collapsed ? "translate-x-1" : "",
+                      "relative flex items-center w-full min-w-0",
+                      collapsed ? "md:justify-center md:w-auto gap-0" : "gap-3",
                     )}
                   >
                     <div
                       className={cn(
-                        "p-2 rounded-xl transition-all duration-200 shrink-0",
+                        "flex size-9 items-center justify-center rounded-lg transition-colors duration-200 shrink-0",
                         isActive
-                          ? "bg-white/20 text-primary-foreground"
-                          : "bg-black/5 dark:bg-white/5 text-muted-foreground group-hover:bg-black/10 dark:group-hover:bg-white/10 group-hover:text-foreground",
+                          ? "bg-primary/25 text-primary dark:text-primary"
+                          : "bg-black/[0.06] dark:bg-white/[0.08] text-foreground/55 group-hover:bg-black/10 dark:group-hover:bg-white/12 group-hover:text-foreground",
                       )}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-[18px] h-[18px]" strokeWidth={2} />
                     </div>
                     {!collapsed && (
-                      <span className="font-medium truncate">{item.label}</span>
+                      <span className="font-medium text-sm truncate">
+                        {item.label}
+                      </span>
                     )}
                   </div>
 
-                  {/* Chevron indicator - ẩn khi thu gọn */}
                   {!collapsed && (
                     <ChevronRight
                       className={cn(
-                        "w-4 h-4 ml-auto shrink-0 transition-transform duration-200",
-                        isActive || isHovered
-                          ? "text-primary translate-x-1"
-                          : "text-muted-foreground opacity-70",
+                        "w-4 h-4 ml-auto shrink-0 transition-all duration-200",
+                        isActive
+                          ? "text-primary opacity-90"
+                          : isHovered
+                            ? "text-foreground/50 translate-x-0.5"
+                            : "text-foreground/30",
                       )}
+                      aria-hidden
                     />
                   )}
                 </button>
@@ -211,96 +213,90 @@ export function Sidebar({
 
           <div className="flex-1 min-h-0 shrink-0" aria-hidden />
 
-          {/* Plan Card - real license data */}
+          {/* Plan card — gọn chiều cao, vẫn đủ thông tin */}
           <div
-            className={cn("mt-auto shrink-0", collapsed ? "p-2 md:p-2" : "p-4")}
+            className={cn("mt-auto shrink-0", collapsed ? "p-2" : "p-3 pb-4")}
           >
             <Link
               href="/pricing"
               className={cn(
-                "block w-full glass-card-hover rounded-2xl group transition-all",
+                "block w-full glass-card-hover rounded-xl group transition-all border border-border/50",
                 collapsed
-                  ? "md:p-3 md:flex md:flex-col md:items-center p-5 text-left"
-                  : "p-5 text-left",
+                  ? "md:p-2.5 md:flex md:flex-col md:items-center p-4 text-left"
+                  : "p-3.5 text-left",
               )}
-              title="Gói của bạn"
+              title="Gói của bạn — xem chi tiết"
             >
               <div
                 className={cn(
-                  "flex items-center justify-between",
-                  collapsed && "md:flex-col md:gap-2 md:mb-0 mb-3",
+                  "flex items-start gap-2.5",
+                  collapsed && "md:flex-col md:items-center md:gap-1.5 mb-0",
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg shrink-0">
-                    <CreditCard className="text-white w-3.5 h-3.5" />
-                  </div>
-                  {!collapsed && (
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Gói của bạn
-                    </p>
-                  )}
+                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center shadow-md shrink-0">
+                  <CreditCard className="text-white w-3.5 h-3.5" />
                 </div>
                 {!collapsed && (
-                  <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-[-4px] group-hover:translate-x-0">
-                    Xem gói →
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold text-foreground/50 dark:text-foreground/45 uppercase tracking-[0.14em]">
+                      Gói của bạn
+                    </p>
+                    {isLicenseLoading ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground/50 shrink-0" />
+                        <span className="text-xs text-foreground/60">
+                          Đang tải...
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-bold text-foreground leading-tight mt-0.5 truncate">
+                          {planName}
+                        </p>
+                        {hasActiveLicense && expiresAt ? (
+                          <p className="text-[11px] text-foreground/55 mt-0.5 line-clamp-1">
+                            Hết hạn{" "}
+                            {new Date(expiresAt).toLocaleDateString("vi-VN")}
+                          </p>
+                        ) : !isAuthenticated ? (
+                          <p className="text-[11px] text-foreground/55 mt-0.5 line-clamp-1">
+                            Đăng nhập để xem gói
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-foreground/55 mt-0.5 line-clamp-1">
+                            Chưa có gói trả phí
+                          </p>
+                        )}
+                        {!isProPlanCode(activePlanCode) && isAuthenticated && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              upgradeToPlan("PRO");
+                            }}
+                            className="mt-2 w-full py-2 px-3 bg-primary/15 hover:bg-primary/25 text-primary text-xs font-semibold rounded-lg transition-colors border border-primary/20"
+                          >
+                            Nâng cấp Pro
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
-              {isLicenseLoading ? (
-                <div
-                  className={cn(
-                    "flex items-center gap-2 py-2",
-                    collapsed && "md:justify-center",
-                  )}
-                >
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
-                  {!collapsed && (
-                    <span className="text-sm text-muted-foreground">
-                      Đang tải...
+              {collapsed && (
+                <div className="hidden md:flex flex-col items-center gap-1 mt-1.5 w-full px-0.5">
+                  {isLicenseLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-foreground/50" />
+                  ) : (
+                    <span
+                      className="text-[9px] font-bold text-center text-foreground leading-tight line-clamp-2 break-words w-full"
+                      title={planName}
+                    >
+                      {planName}
                     </span>
                   )}
                 </div>
-              ) : (
-                <>
-                  <p
-                    className={cn(
-                      "text-base font-bold mb-1 text-foreground flex items-center gap-2",
-                      collapsed && "md:justify-center md:mb-0 md:text-sm",
-                    )}
-                  >
-                    {planName}
-                  </p>
-                  {!collapsed && (
-                    <>
-                      {hasActiveLicense && expiresAt ? (
-                        <p className="text-xs text-muted-foreground">
-                          Hết hạn:{" "}
-                          {new Date(expiresAt).toLocaleDateString("vi-VN")}
-                        </p>
-                      ) : !isAuthenticated ? (
-                        <p className="text-xs text-muted-foreground">
-                          Đăng nhập để xem gói
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Chưa có gói trả phí
-                        </p>
-                      )}
-                      {!isProPlanCode(activePlanCode) && isAuthenticated && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            upgradeToPlan("PRO");
-                          }}
-                          className="mt-2 w-full py-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-xl transition-colors"
-                        >
-                          Nâng cấp Pro
-                        </button>
-                      )}
-                    </>
-                  )}
-                </>
               )}
             </Link>
           </div>
@@ -317,6 +313,7 @@ export function Sidebar({
               "bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-600/80",
               "text-slate-700 dark:text-zinc-200 shadow-md shadow-slate-900/8",
               "hover:bg-slate-50 dark:hover:bg-zinc-800 hover:border-slate-300 dark:hover:border-zinc-500 transition-colors active:scale-95",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             )}
             aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
             title={collapsed ? "Mở rộng" : "Thu gọn"}

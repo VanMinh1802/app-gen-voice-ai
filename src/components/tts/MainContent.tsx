@@ -990,65 +990,59 @@ export function GenerationSuccess({
 
   return (
     <div className="space-y-5">
-      {/* Success banner — improved UX: shows saved to history + quick action */}
-      <div className="animate-in fade-in duration-300 rounded-xl border border-green-500/20 bg-green-500/5 overflow-hidden">
-        <div className="flex items-start gap-3 px-4 py-3.5">
-          <Check className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-sm font-semibold text-green-700 dark:text-green-300">
-              Tạo giọng nói thành công!
-            </p>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      {/* Success banner — một hàng rõ ràng: thông điệp + CTA */}
+      <div className="animate-in fade-in duration-300 rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-500/[0.06] to-emerald-500/[0.02] dark:from-emerald-500/10 dark:to-transparent overflow-hidden shadow-sm">
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <Check className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                Tạo giọng nói thành công!
+              </p>
               {isHistorySaved ? (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
-                  <span>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="inline-flex items-center gap-1.5 text-foreground/90">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     Đã lưu vào{" "}
                     <span className="font-medium text-foreground">Lịch sử</span>
                   </span>
-                </div>
+                  <span className="hidden sm:inline"> · </span>
+                  <span className="block sm:inline mt-0.5 sm:mt-0">
+                    Nghe và tải ở thanh phát phía dưới.
+                  </span>
+                </p>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Loader2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0 animate-spin" />
-                  <span>
-                    Đang lưu vào{" "}
-                    <span className="font-medium text-foreground">Lịch sử</span>
-                    ...
-                  </span>
-                </div>
-              )}
-              {isHistorySaved && (
-                <>
-                  <span className="hidden sm:inline text-xs text-muted-foreground/60">
-                    •
-                  </span>
-                  <p className="text-xs text-muted-foreground">
-                    Sẵn sàng để nghe và tải ở thanh dưới màn hình
-                  </p>
-                </>
-              )}
-              {onViewHistory && isHistorySaved && (
-                <button
-                  type="button"
-                  onClick={onViewHistory}
-                  className="ml-auto sm:ml-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-green-700 dark:text-green-300 bg-green-500/10 hover:bg-green-500/20 transition-colors border border-green-500/30 hover:border-green-500/50"
-                  aria-label="Xem trong Lịch sử"
-                >
-                  <History className="w-3.5 h-3.5" />
-                  Xem Lịch sử
-                </button>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 animate-spin" />
+                  Đang lưu vào{" "}
+                  <span className="font-medium text-foreground">Lịch sử</span>
+                  …
+                </p>
               )}
             </div>
           </div>
+          {onViewHistory && isHistorySaved && (
+            <button
+              type="button"
+              onClick={onViewHistory}
+              className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/35 bg-background/80 px-4 py-2.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/10 transition-colors w-full sm:w-auto"
+              aria-label="Xem trong Lịch sử"
+            >
+              <History className="w-3.5 h-3.5" />
+              Xem Lịch sử
+            </button>
+          )}
         </div>
       </div>
 
       {/* Result: text + quick actions + primary actions — collapsible */}
-      <div className="bg-card rounded-xl border border-border shadow-sm flex flex-col overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border/80 shadow-md shadow-black/[0.04] dark:shadow-black/20 flex flex-col overflow-hidden">
         {/* Collapsible header with quick actions */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border/70 bg-muted/20">
           <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
               Văn bản nội dung
             </h3>
             {!isCollapsed && (
@@ -1118,113 +1112,135 @@ export function GenerationSuccess({
               />
             </div>
 
-            {/* Audio info — quick play/pause; thanh dưới là điều khiển chính */}
+            {/* Thẻ phát nhanh: layout ngang cố định — icon | thông tin | nút (giống media player) */}
             <div
               className={cn(
-                "relative overflow-hidden rounded-xl bg-card/80 border p-4 sm:p-4 transition-colors",
+                "relative overflow-hidden rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4 transition-all",
+                "bg-primary/[0.06] dark:bg-primary/10",
                 status === "playing" && !pausedStreaming
-                  ? "border-primary/35 ring-1 ring-primary/15"
-                  : "border-border",
+                  ? "border-primary/40 shadow-sm shadow-primary/10 ring-1 ring-primary/15"
+                  : "border-primary/20",
               )}
             >
               {status === "playing" && !pausedStreaming && (
-                <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer-stepped" />
+                <div className="pointer-events-none absolute inset-0 opacity-[0.08] dark:opacity-[0.12]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-shimmer-stepped" />
                 </div>
               )}
 
-              <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                {/* Hàng 1 mobile: icon + sóng + nút (không kéo giãn khoảng trống giữa chữ và nút) */}
-                <div className="flex items-center justify-between gap-3 sm:contents">
-                  <div className="flex items-center gap-2.5 shrink-0">
-                    <div
-                      className={cn(
-                        "size-11 sm:size-12 rounded-xl flex items-center justify-center transition-all duration-300",
-                        status === "playing" && !pausedStreaming
-                          ? "bg-primary/20 text-primary animate-icon-bounce-stepped"
-                          : "bg-muted/80 text-primary",
-                      )}
-                    >
-                      <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    {status === "playing" && !pausedStreaming && (
-                      <div
-                        className="flex items-center gap-1 h-8"
-                        aria-hidden
-                      >
-                        {[1, 2, 3, 4].map((i) => (
-                          <div
-                            key={i}
-                            className="w-1 bg-primary rounded-full animate-waveform-pulse-stepped"
-                            style={{
-                              height: `${6 + i * 3}px`,
-                              animationDelay: `${i * 0.15}s`,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={togglePlay}
+              <div className="relative flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div
                     className={cn(
-                      "inline-flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-colors shrink-0 sm:order-3 sm:ml-auto",
-                      "border-primary bg-background/90 text-primary hover:bg-primary/10",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                    )}
-                    aria-label={
+                      "size-11 sm:size-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm",
                       status === "playing" && !pausedStreaming
-                        ? "Tạm dừng"
-                        : "Phát"
-                    }
-                  >
-                    {status === "playing" && !pausedStreaming ? (
-                      <>
-                        <Pause className="w-4 h-4 shrink-0" />
-                        <span>Tạm dừng</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 shrink-0 ml-0.5" />
-                        <span>Phát</span>
-                      </>
+                        ? "bg-primary text-primary-foreground animate-icon-bounce-stepped"
+                        : "bg-primary/15 text-primary",
                     )}
-                  </button>
+                  >
+                    <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  {status === "playing" && !pausedStreaming && (
+                    <div
+                      className="flex items-center gap-0.5 h-8 pl-0.5"
+                      aria-hidden
+                    >
+                      {[1, 2, 3, 4].map((i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-primary rounded-full animate-waveform-pulse-stepped"
+                          style={{
+                            height: `${6 + i * 3}px`,
+                            animationDelay: `${i * 0.15}s`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="min-w-0 sm:flex-1 sm:min-w-0 sm:order-2">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <p className="text-sm font-semibold text-foreground">
+                    <p className="text-sm font-bold text-foreground tracking-tight">
                       Giọng {voiceName}
                     </p>
                     {status === "playing" && !pausedStreaming && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                        <span className="size-1.5 rounded-full bg-primary" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        <span className="size-1.5 rounded-full bg-primary animate-pulse" />
                         Đang phát
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-xs leading-relaxed text-foreground/80 dark:text-foreground/75">
-                    Nút bên cạnh chỉ phát / tạm dừng nhanh. Âm lượng, tiến độ và
-                    tải file dùng thanh phát cố định phía dưới màn hình.
-                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground">
+                    {streamingDuration > 0 ? (
+                      <span className="tabular-nums text-foreground/80 font-semibold">
+                        {formatTime(streamingCurrentTime)}
+                        <span className="text-muted-foreground/80 font-normal">
+                          {" "}
+                          / {formatTime(streamingDuration)}
+                        </span>
+                      </span>
+                    ) : durationProp > 0 ? (
+                      <span className="tabular-nums text-foreground/80 font-medium">
+                        Thời lượng ~{formatTime(durationProp)}
+                      </span>
+                    ) : null}
+                    {(streamingDuration > 0 || durationProp > 0) && (
+                      <span className="hidden sm:inline text-muted-foreground/50">
+                        ·
+                      </span>
+                    )}
+                    <span className="leading-snug">
+                      Phát nhanh tại đây — âm lượng, tiến độ, tải file ở thanh
+                      dưới.
+                    </span>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 rounded-xl border-2 px-3.5 py-2.5 sm:px-4 text-sm font-bold transition-colors shrink-0",
+                    "border-primary bg-background/95 text-primary hover:bg-primary/10",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  )}
+                  aria-label={
+                    status === "playing" && !pausedStreaming
+                      ? "Tạm dừng"
+                      : "Phát"
+                  }
+                >
+                  {status === "playing" && !pausedStreaming ? (
+                    <>
+                      <Pause className="w-4 h-4 shrink-0" />
+                      <span className="hidden min-[380px]:inline">Tạm dừng</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 shrink-0 ml-0.5" />
+                      <span className="hidden min-[380px]:inline">Phát</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
             {/* Primary actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground order-2 sm:order-1">
-                Tạo lượt mới để nhập văn bản khác • Tạo lại để phát lại với cùng
-                nội dung
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-border/70">
+              <p className="text-[11px] sm:text-xs text-muted-foreground order-2 sm:order-1 leading-relaxed max-w-md">
+                <span className="text-foreground/80 font-medium">
+                  Tạo lượt mới
+                </span>{" "}
+                — nhập văn khác.{" "}
+                <span className="text-foreground/80 font-medium">Tạo lại</span>{" "}
+                — cùng nội dung, giọng hiện tại.
               </p>
               <div className="flex flex-wrap gap-2 sm:gap-3 order-1 sm:order-2">
                 <button
                   type="button"
                   onClick={onRegenerate}
-                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-lg border border-border text-muted-foreground font-medium hover:bg-muted/50 hover:text-foreground transition-colors text-sm flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl border border-border/80 text-muted-foreground font-semibold hover:bg-muted/60 hover:text-foreground transition-colors text-sm flex items-center justify-center gap-2"
                   aria-label="Tạo lại với văn bản này"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -1233,7 +1249,7 @@ export function GenerationSuccess({
                 <button
                   type="button"
                   onClick={onClear}
-                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm shadow-sm"
+                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-primary/20"
                   aria-label="Thoát về màn nhập văn bản, tạo lượt mới"
                 >
                   <Sparkles className="w-4 h-4" />
