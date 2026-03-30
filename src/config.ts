@@ -27,6 +27,11 @@ export function getModelFileName(voiceId: string): string {
 
 /** Voice IDs must match PATH_MAP in @mintplex-labs/piper-tts-web (HuggingFace diffusionstudio/piper-voices) */
 export const config = {
+  /**
+   * Gói trả phí / trang pricing / tab "Gói đăng ký". Tắt tạm khi mọi tính năng miễn phí.
+   * Bật lại: `showSubscriptionUi: true`
+   */
+  showSubscriptionUi: false,
   tts: {
     maxTextLength: 5000,
     // Custom-only mode: default to first custom voice
@@ -55,8 +60,8 @@ export const config = {
     bufferChunks: 2,
   },
   /**
-   * Free plan: only these 2 voices can be used for generation.
-   * Others are previewable via sample, but generation requires Pro.
+   * Free tier: all voices are currently available to everyone.
+   * TODO: Re-enable voice restrictions when billing is ready.
    */
   freeAllowedVoiceIds: ["manhdung", "ngochuyen"] as const,
   storage: {

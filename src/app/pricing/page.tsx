@@ -5,11 +5,14 @@
  */
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Sparkles, Crown, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthContext } from "@/components/AuthProvider";
 import { isProPlanCode } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
+import { config } from "@/config";
 
 interface PlanData {
   code: string;
@@ -154,6 +157,7 @@ function PlanCard({
 }
 
 export default function PricingPage() {
+  const router = useRouter();
   const {
     isAuthenticated,
     signIn,
@@ -161,6 +165,20 @@ export default function PricingPage() {
     isLoading: isLicenseLoading,
     upgradeToPlan,
   } = useAuthContext();
+
+  useEffect(() => {
+    if (!config.showSubscriptionUi) {
+      router.replace("/");
+    }
+  }, [router]);
+
+  if (!config.showSubscriptionUi) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground text-sm">
+        Đang chuyển hướng...
+      </div>
+    );
+  }
 
   const handleSelectPlan = async (planCode: string) => {
     if (!isAuthenticated) {

@@ -18,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { config } from "@/config";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAuthContext } from "@/components/AuthProvider";
 import { useNotificationStore } from "@/lib/storage/notifications";
@@ -45,7 +46,6 @@ export function Header({
     isLoading,
     isAuthenticated,
     isConfigured,
-    activePlanCode,
     canAccessPro,
     signIn,
     signOut,
@@ -250,7 +250,7 @@ export function Header({
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-bold text-foreground">{userName}</p>
-                {canAccessPro && (
+                {config.showSubscriptionUi && canAccessPro && (
                   <p className="text-[10px] text-amber-500 font-medium">PRO</p>
                 )}
               </div>

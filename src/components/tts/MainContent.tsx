@@ -1631,9 +1631,7 @@ export function MainContent({
   const handleGenerate = useCallback(() => {
     if (!text.trim()) return;
     if (!canUseSelectedVoice) {
-      setError(
-        "Gói Miễn phí chỉ tạo được 1 giọng nam + 1 giọng nữ. Bạn vẫn có thể nghe sample, hoặc nâng cấp Pro để dùng tất cả giọng.",
-      );
+      setError("Vui lòng chọn một giọng nói trước khi tạo.");
       return;
     }
     generate(text);
@@ -1735,7 +1733,7 @@ export function MainContent({
                 </div>
               </div>
             )}
-            {!canUseSelectedVoice ? (
+            {!canUseSelectedVoice && config.showSubscriptionUi ? (
               <div className="flex justify-center pt-4">
                 <button
                   onClick={() => {

@@ -93,17 +93,14 @@ export function isProPlanCode(planCode: string | null): boolean {
 
 /**
  * Voice access by plan.
- * - Free: only 2 allowed voices can be used for generation
- * - Pro: all voices can be used
+ * Temporarily disabled: all voices are available to everyone (Free for all).
+ * TODO: Re-enable plan restrictions when billing is ready.
  */
-export function canUseVoiceForPlan(opts: {
+export function canUseVoiceForPlan(_opts: {
   planCode: string | null;
   voiceId: string;
 }): boolean {
-  const { planCode, voiceId } = opts;
-  if (isProPlanCode(planCode)) return true;
-  // Treat null/unknown as FREE for MVP
-  return (FREE_ALLOWED_VOICE_IDS as readonly string[]).includes(voiceId);
+  return true;
 }
 
 /**

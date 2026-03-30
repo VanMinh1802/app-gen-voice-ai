@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
@@ -126,12 +126,25 @@ export function VoiceSettings() {
   const expiresAt = activeLicense?.expiresAt;
   const hasActiveLicense = !!activeLicense;
 
-  const tabs: { id: SettingsTab; label: string; icon: React.ElementType }[] = [
+  const allTabs: {
+    id: SettingsTab;
+    label: string;
+    icon: React.ElementType;
+  }[] = [
     { id: "personal", label: "Thông tin cá nhân", icon: User },
     { id: "subscription", label: "Gói đăng ký", icon: CreditCard },
     { id: "customization", label: "Tùy chỉnh", icon: SlidersHorizontal },
     { id: "security", label: "Bảo mật", icon: Shield },
   ];
+  const tabs = config.showSubscriptionUi
+    ? allTabs
+    : allTabs.filter((t) => t.id !== "subscription");
+
+  useEffect(() => {
+    if (!config.showSubscriptionUi && activeTab === "subscription") {
+      setActiveTab("personal");
+    }
+  }, [activeTab]);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -275,6 +288,7 @@ export function VoiceSettings() {
         </div>
 
         {/* Gói đăng ký */}
+        {config.showSubscriptionUi && (
         <div
           role="tabpanel"
           id="panel-subscription"
@@ -403,6 +417,7 @@ export function VoiceSettings() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Tùy chỉnh */}
         <div

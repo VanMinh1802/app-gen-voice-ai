@@ -29,6 +29,8 @@ const StorageSchema = z.object({
 });
 
 export const ConfigSchema = z.object({
+  /** Sidebar plan card, settings "Gói đăng ký" tab, /pricing page, upgrade CTAs */
+  showSubscriptionUi: z.boolean(),
   tts: TtsSchema,
   streaming: StreamingSchema,
   freeAllowedVoiceIds: z.array(z.string()),

@@ -10,6 +10,7 @@
 import { useState } from "react";
 import { LogIn, LogOut, Loader2, Sparkles, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { config } from "@/config";
 import { useAuth, useLicense, PLAN_ACCESS } from "@/lib/hooks";
 
 interface LoginButtonProps {
@@ -94,7 +95,7 @@ export function LoginButton({
             <p className="text-sm font-medium text-foreground">
               {user.name || user.email?.split("@")[0] || "User"}
             </p>
-            {showPlanBadge && activePlanCode && (
+            {showPlanBadge && config.showSubscriptionUi && activePlanCode && (
               <p className="text-[10px] text-amber-500 font-medium flex items-center gap-1">
                 <Crown className="w-3 h-3" />
                 {planInfo?.name || activePlanCode}

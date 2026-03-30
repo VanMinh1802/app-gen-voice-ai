@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { config } from "@/config";
 import { useAuthContext } from "@/components/AuthProvider";
 import { PLAN_ACCESS, isProPlanCode } from "@/lib/hooks";
 
@@ -213,10 +214,13 @@ export function Sidebar({
 
           <div className="flex-1 min-h-0 shrink-0" aria-hidden />
 
-          {/* Plan card — gọn chiều cao, vẫn đủ thông tin */}
-          <div
-            className={cn("mt-auto shrink-0", collapsed ? "p-2" : "p-3 pb-4")}
-          >
+          {config.showSubscriptionUi && (
+            <div
+              className={cn(
+                "mt-auto shrink-0",
+                collapsed ? "p-2" : "p-3 pb-4",
+              )}
+            >
             <Link
               href="/pricing"
               className={cn(
@@ -299,7 +303,8 @@ export function Sidebar({
                 </div>
               )}
             </Link>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Chỉ mũi tên, nằm đúng mép phải sidebar (desktop) */}

@@ -44,72 +44,79 @@ export function VoiceCardShared({
 
   if (variant === "compact") {
     return (
-      <button
-        type="button"
-        onClick={isActive && !disabled ? onSelect : undefined}
-        disabled={disabled}
+      <div
         className={cn(
           "w-full flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all duration-200 relative",
           isSelected
             ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-lg shadow-primary/15"
             : "border-border hover:border-border/80 glass-card-hover",
-          disabled && "opacity-60 cursor-not-allowed",
-          !disabled && isActive && "cursor-pointer",
+          disabled && "opacity-60",
         )}
       >
-        {isSelected && (
-          <div
-            className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 absolute left-2.5 top-2.5 ring-2 ring-background shadow-md"
-            aria-hidden
-          >
-            <svg
-              className="w-3.5 h-3.5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-        )}
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg"
-          style={{ backgroundColor: voice.avatarColor || "#2563eb" }}
+        <button
+          type="button"
+          onClick={isActive && !disabled ? onSelect : undefined}
+          disabled={disabled || !isActive}
+          className={cn(
+            "flex flex-1 min-w-0 items-center gap-3 text-left rounded-xl -m-1 p-1 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            disabled && "cursor-not-allowed",
+            !disabled && isActive && "cursor-pointer",
+          )}
         >
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold truncate text-foreground">
-              {voice.name}
-            </p>
-            {showPopularBadge && (
-              <span className="shrink-0 px-1.5 py-0.5 bg-amber-500/20 text-amber-500 text-[9px] font-bold rounded-full flex items-center gap-0.5">
-                <svg
-                  className="w-2.5 h-2.5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                HOT
-              </span>
-            )}
-          </div>
-          <p
-            className={cn(
-              "text-[11px] mt-0.5",
-              isSelected ? "text-primary font-medium" : "text-muted-foreground",
-            )}
+          {isSelected && (
+            <div
+              className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 absolute left-2.5 top-2.5 ring-2 ring-background shadow-md"
+              aria-hidden
+            >
+              <svg
+                className="w-3.5 h-3.5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          )}
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg"
+            style={{ backgroundColor: voice.avatarColor || "#2563eb" }}
           >
-            {voice.region} • {voice.gender}
-          </p>
-        </div>
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold truncate text-foreground">
+                {voice.name}
+              </p>
+              {showPopularBadge && (
+                <span className="shrink-0 px-1.5 py-0.5 bg-amber-500/20 text-amber-500 text-[9px] font-bold rounded-full flex items-center gap-0.5">
+                  <svg
+                    className="w-2.5 h-2.5"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  HOT
+                </span>
+              )}
+            </div>
+            <p
+              className={cn(
+                "text-[11px] mt-0.5",
+                isSelected ? "text-primary font-medium" : "text-muted-foreground",
+              )}
+            >
+              {voice.region} • {voice.gender}
+            </p>
+          </div>
+        </button>
         {isActive && onPreview && (
           <button
             type="button"
@@ -132,7 +139,7 @@ export function VoiceCardShared({
             )}
           </button>
         )}
-      </button>
+      </div>
     );
   }
 
