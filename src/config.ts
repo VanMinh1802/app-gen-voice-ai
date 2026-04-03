@@ -13,7 +13,9 @@ export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
 /** Map voiceId (app) → tên file (không đuôi .onnx) khi khác với voiceId (vd: namminh → namminh_tram) */
 export const VOICE_ID_TO_MODEL_FILE: Record<string, string> = {
   namminh: "namminh_tram",
-  baouyen: "baouyen_6000",
+  baouyen: "baouyen_6019",
+  /** R2: vi/vietcuong/vietcuong_5225.onnx */
+  vietcuong: "vietcuong_5225",
 };
 
 export function getR2FolderForVoice(voiceId: string): string {
@@ -97,6 +99,7 @@ export const config = {
     { id: "chieuthanh", name: "Chiếu Thành (custom)" },
     { id: "mytam2", name: "Mỹ Tâm (custom)" },
     { id: "anhkhoi", name: "Anh Khôi (custom)" },
+    { id: "vietcuong", name: "Việt Cường (custom)" },
   ],
   // Built-in voices removed (custom-only)
   voices: [],

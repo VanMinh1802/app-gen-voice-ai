@@ -27,6 +27,7 @@ const ALLOWED_VOICE_IDS = [
   "mytam2",
   "ngocngan",
   "ngochuyen",
+  "vietcuong",
 ] as const;
 
 type VoiceId = (typeof ALLOWED_VOICE_IDS)[number];

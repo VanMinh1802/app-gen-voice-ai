@@ -130,6 +130,16 @@ export const voiceMetadata: VoiceMetadata[] = [
     description: "Trẻ trung và năng động, phù hợp cho nội dung mạng xã hội.",
     avatarColor: "#3b82f6",
   },
+  {
+    id: "vietcuong",
+    name: "Việt Cường",
+    region: "Miền Bắc",
+    gender: "Nam",
+    style: "Đa dụng",
+    description:
+      "Giọng nam rõ ràng, phù hợp đọc tin, thuyết minh và nội dung tổng hợp.",
+    avatarColor: "#2563eb",
+  },
 ];
 
 /**
