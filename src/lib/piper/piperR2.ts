@@ -213,7 +213,10 @@ async function loadFromArrayBuffer(
   const lengthScaleDefault = config.inference?.length_scale ?? 1.0;
   const noiseW = config.inference?.noise_w ?? 0.8;
   const espeakVoice = config.espeak?.voice ?? "vi";
-  const phonemeType = config.phoneme_type;
+  /** Piper JSON thường có `phoneme_type`; nếu thiếu nhưng có `espeak.voice` thì phải dùng espeak (không được coi là "text"). */
+  const phonemeType =
+    config.phoneme_type ??
+    (config.espeak?.voice ? "espeak" : "text");
 
   function toId(value: number | number[] | undefined): number {
     if (value === undefined) return 0;

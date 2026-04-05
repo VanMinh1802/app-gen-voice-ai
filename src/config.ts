@@ -13,9 +13,9 @@ export const VOICE_ID_TO_R2_FOLDER: Record<string, string> = {
 /** Map voiceId (app) → tên file (không đuôi .onnx) khi khác với voiceId (vd: namminh → namminh_tram) */
 export const VOICE_ID_TO_MODEL_FILE: Record<string, string> = {
   namminh: "namminh_tram",
-  baouyen: "baouyen_6019",
-  /** R2: vi/vietcuong/vietcuong_5225.onnx */
-  vietcuong: "vietcuong_5225",
+  baouyen: "baouyen_6463",
+  /** R2: vi/vietcuong/vietcuong_6994.onnx */
+  vietcuong: "vietcuong_6994",
 };
 
 export function getR2FolderForVoice(voiceId: string): string {
@@ -84,6 +84,7 @@ export const config = {
     "mytam2",
     "ngocngan",
     "ngochuyen",
+    "vietcuong",
   ] as string[],
   /** Custom models: add .onnx + .onnx.json to public/tts-model/vi/ and list id (filename without extension) here */
   customModels: [

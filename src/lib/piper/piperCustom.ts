@@ -9,7 +9,8 @@
 import { normalizeVietnamese } from "@/lib/text-processing/vietnameseNormalizer";
 
 export interface PiperVoiceConfig {
-  phoneme_type: "text" | "espeak";
+  /** Thiếu trong một số file export; khi có `espeak.voice` app sẽ mặc định `espeak`. */
+  phoneme_type?: "text" | "espeak";
   espeak?: { voice: string };
   /** Values can be number or number[] (Piper export sometimes uses arrays). */
   phoneme_id_map: Record<string, number | number[]>;
@@ -103,6 +104,9 @@ export async function loadCustomPiper(
   const noiseW = voiceConfig.inference?.noise_w ?? 0.8;
 
   const espeakVoice = voiceConfig.espeak?.voice ?? "vi";
+  const effectivePhonemeType: "text" | "espeak" =
+    voiceConfig.phoneme_type ??
+    (voiceConfig.espeak?.voice ? "espeak" : "text");
 
   /** Resolve phoneme_id_map entry to a single number (supports both number and number[]). */
   function toId(value: number | number[] | undefined): number {
@@ -172,12 +176,12 @@ export async function loadCustomPiper(
     const trimmed = text.trim();
     if (!trimmed) return [];
 
-    if (voiceConfig.phoneme_type === "text") {
+    if (effectivePhonemeType === "text") {
       const normalized = trimmed.normalize("NFD");
       return phonemesToIds([Array.from(normalized)]);
     }
 
-    if (voiceConfig.phoneme_type === "espeak") {
+    if (effectivePhonemeType === "espeak") {
       const preprocessed = normalizeVietnamese(trimmed);
       const wasmIds = await runPiperPhonemize(preprocessed);
       if (wasmIds && wasmIds.length > 0) return wasmIds;
