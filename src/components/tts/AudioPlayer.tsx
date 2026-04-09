@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   Play,
   Pause,
@@ -431,9 +432,13 @@ export function AudioPlayer({
   const subtitle = subtitleParts.join(" • ");
 
   return (
-    <footer
+    <motion.footer
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
-        "bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed bottom-0 left-0 right-0 animate-fade-up",
+        "bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed",
+        "bottom-16 md:bottom-0 left-0 right-0",
         sidebarCollapsed ? "lg:left-[4.5rem]" : "lg:left-64",
       )}
     >
@@ -449,7 +454,9 @@ export function AudioPlayer({
           <div className="min-w-0 flex-1">
             <h4
               className="truncate text-sm font-bold text-foreground sm:text-base"
-              title={titleIsTruncated ? (nowPlaying?.text ?? "").trim() : undefined}
+              title={
+                titleIsTruncated ? (nowPlaying?.text ?? "").trim() : undefined
+              }
             >
               {title}
               {titleIsTruncated ? "…" : ""}
@@ -492,20 +499,38 @@ export function AudioPlayer({
             >
               <SkipBack className="w-5 h-5" />
             </button>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={togglePlay}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-primary/40 active:scale-95 disabled:cursor-not-allowed sm:h-14 sm:w-14"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-primary/40 disabled:cursor-not-allowed sm:h-14 sm:w-14"
               aria-label={isPlaying ? "Tạm dừng" : "Phát"}
               disabled={isBuffering}
             >
               {isBuffering ? (
-                <Loader2 className="h-6 w-6 animate-spin sm:h-7 sm:w-7" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <Loader2 className="h-6 w-6 sm:h-7 sm:w-7" />
+                </motion.div>
               ) : isPlaying ? (
-                <Pause className="h-6 w-6 sm:h-7 sm:w-7" />
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                >
+                  <Pause className="h-6 w-6 sm:h-7 sm:w-7" />
+                </motion.div>
               ) : (
-                <Play className="ml-0.5 h-6 w-6 sm:h-7 sm:w-7" />
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                >
+                  <Play className="ml-0.5 h-6 w-6 sm:h-7 sm:w-7" />
+                </motion.div>
               )}
-            </button>
+            </motion.button>
             <button
               onClick={handleNextTrack}
               className="shrink-0 p-2 text-muted-foreground transition-colors hover:text-foreground"
@@ -650,6 +675,6 @@ export function AudioPlayer({
           </button>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }

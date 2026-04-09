@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { SlidersHorizontal, SearchX, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { SlidersHorizontal, SearchX, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
 import { voiceMetadata, type VoiceMetadata } from "@/config/voiceData";
@@ -121,8 +122,8 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
           Thư viện giọng
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Khám phá {voiceMetadata.length} giọng đọc AI chuyên nghiệp với
-          nhiều vùng miền và phong cách khác nhau cho dự án của bạn.
+          Khám phá {voiceMetadata.length} giọng đọc AI chuyên nghiệp với nhiều
+          vùng miền và phong cách khác nhau cho dự án của bạn.
         </p>
       </div>
 
@@ -152,9 +153,10 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
         <div className="flex items-center bg-card border border-primary/10 rounded-xl p-1">
           {(["all", "Miền Bắc", "Miền Trung", "Miền Nam"] as const).map(
             (region) => (
-              <button
+              <motion.button
                 key={region}
                 onClick={() => setRegionFilter(region)}
+                whileTap={{ scale: 0.95 }}
                 className={cn(
                   "px-4 py-1.5 rounded-md text-xs font-semibold transition-colors",
                   regionFilter === region
@@ -163,7 +165,7 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
                 )}
               >
                 {region === "all" ? "Tất cả" : region}
-              </button>
+              </motion.button>
             ),
           )}
         </div>
@@ -252,35 +254,49 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
       </div>
 
       {/* Voice Grid - same card as "Chọn giọng đọc" (full variant) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredVoices.map((voice) => {
-          const isActive = config.activeVoiceIds.includes(voice.id);
-          const isSelected =
-            isActive && settings.voice === `${CUSTOM_MODEL_PREFIX}${voice.id}`;
-          const isPreviewing = previewingVoice === voice.id;
-          const isLockedForPlan =
-            isActive &&
-            !canUseVoiceForPlan({
-              planCode: activePlanCode,
-              voiceId: voice.id,
-            });
+      <motion.div
+        layout
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      >
+        <AnimatePresence mode="popLayout">
+          {filteredVoices.map((voice) => {
+            const isActive = config.activeVoiceIds.includes(voice.id);
+            const isSelected =
+              isActive &&
+              settings.voice === `${CUSTOM_MODEL_PREFIX}${voice.id}`;
+            const isPreviewing = previewingVoice === voice.id;
+            const isLockedForPlan =
+              isActive &&
+              !canUseVoiceForPlan({
+                planCode: activePlanCode,
+                voiceId: voice.id,
+              });
 
-          return (
-            <VoiceCardShared
-              key={voice.id}
-              voice={voice}
-              variant="full"
-              isSelected={!!isSelected}
-              isPreviewing={isPreviewing}
-              isActive={isActive}
-              disabled={isLockedForPlan}
-              showPopularBadge={false}
-              onSelect={() => handleSelectVoice(voice)}
-              onPreview={() => handlePreview(voice)}
-            />
-          );
-        })}
-      </div>
+            return (
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                key={voice.id}
+              >
+                <VoiceCardShared
+                  voice={voice}
+                  variant="full"
+                  isSelected={!!isSelected}
+                  isPreviewing={isPreviewing}
+                  isActive={isActive}
+                  disabled={isLockedForPlan}
+                  showPopularBadge={false}
+                  onSelect={() => handleSelectVoice(voice)}
+                  onPreview={() => handlePreview(voice)}
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Empty State */}
       {filteredVoices.length === 0 && (

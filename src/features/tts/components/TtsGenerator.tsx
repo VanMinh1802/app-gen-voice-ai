@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { motion } from "framer-motion";
 import { useTtsGenerate } from "../hooks/useTtsGenerate";
 import { useTtsStore } from "../store";
 import { config, CUSTOM_MODEL_PREFIX } from "@/config";
@@ -9,7 +10,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { DemoSamples } from "./DemoSamples";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { cn } from "@/lib/utils";
-import { Download } from "lucide-react";
+import { Download, X, Loader2 } from "lucide-react";
 
 export interface TtsGeneratorProps {
   /** When set (e.g. from History "load text back"), fill the text area and clear after apply. */
@@ -23,6 +24,7 @@ export function TtsGenerator({
 }: TtsGeneratorProps = {}) {
   const [text, setText] = useState("");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { settings, status, progress, error, generate, isReady } =
     useTtsGenerate();
   const { currentAudio, setSettings } = useTtsStore();
@@ -30,11 +32,27 @@ export function TtsGenerator({
 
   const [textError, setTextError] = useState<string | null>(null);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(160, textarea.scrollHeight)}px`;
+  }, [text]);
+
   // Text statistics
   const wordCount = useMemo(() => {
     const trimmed = text.trim();
     return trimmed ? trimmed.split(/\s+/).length : 0;
   }, [text]);
+
+  // Character count color based on limit
+  const charCountColor = useMemo(() => {
+    const ratio = text.length / config.tts.maxTextLength;
+    if (ratio > 0.9) return "text-red-500";
+    if (ratio > 0.75) return "text-amber-500";
+    return "text-muted-foreground";
+  }, [text.length]);
 
   // Download audio handler
   const handleDownload = useCallback(() => {
@@ -193,25 +211,51 @@ export function TtsGenerator({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="text" className="text-sm font-medium">
-          {t("text")}
-        </label>
-        <textarea
-          id="text"
-          value={text ?? ""}
-          onChange={handleTextChange}
-          placeholder={t("enterText")}
-          disabled={isGenerating}
-          className={cn(
-            "w-full h-40 px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50",
-            textError && "border-red-500",
+        <div className="flex items-center justify-between">
+          <label htmlFor="text" className="text-sm font-medium">
+            {t("text")}
+          </label>
+          {text.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setText("")}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear text"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
-        />
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>
+        </div>
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            id="text"
+            value={text ?? ""}
+            onChange={handleTextChange}
+            placeholder={t("enterText")}
+            disabled={isGenerating}
+            className={cn(
+              "w-full min-h-[160px] px-3 py-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50 transition-all",
+              textError && "border-red-500",
+              isGenerating && "opacity-50",
+            )}
+          />
+          {isGenerating && (
+            <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded-xl">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <Loader2 className="w-6 h-6 text-primary" />
+              </motion.div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">
             {wordCount} {t("words")} • {text.length} {t("characters")}
           </span>
-          <span className={textError ? "text-red-500" : ""}>
+          <span className={cn(textError ? "text-red-500" : charCountColor)}>
             {text.length} / {config.tts.maxTextLength}
           </span>
         </div>
@@ -260,17 +304,34 @@ export function TtsGenerator({
       </div>
 
       {isGenerating && (
-        <div className="space-y-2">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${progress}%` }}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-3 p-4 bg-primary/5 rounded-xl border border-primary/10"
+        >
+          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            <motion.div
+              className="absolute inset-y-0 left-0 bg-primary rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
+            <motion.div
+              className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-primary/30 to-transparent"
+              animate={{
+                x: ["0%", "400%"],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "linear",
+              }}
             />
           </div>
-          <p className="text-sm text-center text-muted-foreground">
+          <p className="text-sm text-center text-primary font-medium">
             {getStatusText()}
           </p>
-        </div>
+        </motion.div>
       )}
 
       {error && !isGenerating && (

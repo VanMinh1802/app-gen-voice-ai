@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Header, Sidebar } from "@/components/layout";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { MainContent, AudioPlayer, VoiceLibrary } from "@/components/tts";
 import {
   ToastContainer,
@@ -161,7 +162,7 @@ function HomeContentInner() {
             onCollapsedChange={setSidebarCollapsed}
           />
 
-          {/* Main Area - margin trái theo trạng thái thu gọn sidebar */}
+          {/* Main Area - margin trái theo trạng thái thu gọn sidebar (desktop only) */}
           <div
             className={cn(
               "flex-1 flex flex-col overflow-hidden",
@@ -192,7 +193,8 @@ function HomeContentInner() {
             />
 
             {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
-            <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-4 sm:pb-6">
+            {/* pb-20 for BottomNav on mobile, pb-4 sm:pb-6 on desktop */}
+            <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-20 md:pb-4 sm:pb-6">
               <div className="mx-auto w-full max-w-screen-2xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 {activeTab === "dashboard" ? (
                   <MainContent
@@ -213,11 +215,11 @@ function HomeContentInner() {
                   <VoiceSettings />
                 ) : null}
               </div>
-              {/* Spacer cố định: flex+overflow đôi khi làm padding-bottom không đủ vùng cuộn; spacer đảm bảo Dashboard / Lịch sử / Thư viện không bị che bởi thanh phát fixed */}
+              {/* Spacer cố định: flex+overflow đôi khi làm padding-bottom không đủ vùng cuộn; spacer đảm bảo Dashboard / Lịch sử / Thư viện không bị che bởi thanh phát fixed + BottomNav on mobile */}
               {currentAudioUrl ? (
                 <div
                   aria-hidden
-                  className="pointer-events-none shrink-0 select-none h-[18rem] sm:h-[16rem] lg:h-[14rem]"
+                  className="pointer-events-none shrink-0 select-none h-[22rem] sm:h-[16rem] lg:h-[14rem] md:h-[14rem]"
                 />
               ) : null}
             </main>
@@ -231,6 +233,9 @@ function HomeContentInner() {
               />
             )}
           </div>
+
+          {/* Bottom Navigation - Mobile only */}
+          <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
         {/* Toast notifications */}
