@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Play, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VoiceMetadata } from "@/config/voiceData";
@@ -110,7 +111,9 @@ export function VoiceCardShared({
             <p
               className={cn(
                 "text-[11px] mt-0.5",
-                isSelected ? "text-primary font-medium" : "text-muted-foreground",
+                isSelected
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground",
               )}
             >
               {voice.region} • {voice.gender}
@@ -118,7 +121,8 @@ export function VoiceCardShared({
           </div>
         </button>
         {isActive && onPreview && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -127,17 +131,24 @@ export function VoiceCardShared({
             className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0",
               isPreviewing
-                ? "bg-primary text-primary-foreground cursor-wait animate-pulse"
-                : "bg-black/10 dark:bg-white/10 hover:bg-primary text-muted-foreground hover:text-primary-foreground cursor-pointer",
+                ? "bg-primary text-primary-foreground cursor-wait"
+                : "bg-black/10 dark:bg-white/10 hover:bg-primary hover:text-primary-foreground text-muted-foreground cursor-pointer",
             )}
             aria-label={isPreviewing ? "Đang phát..." : "Nghe thử"}
           >
             {isPreviewing ? (
-              <Activity className="w-4 h-4" />
+              <motion.div
+                animate={{
+                  scaleY: [0.5, 1.2, 0.5, 1, 0.5],
+                }}
+                transition={{ repeat: Infinity, duration: 1 }}
+              >
+                <Activity className="w-4 h-4" />
+              </motion.div>
             ) : (
-              <Play className="w-4 h-4" />
+              <Play className="w-4 h-4 ml-0.5" />
             )}
-          </button>
+          </motion.button>
         )}
       </div>
     );
@@ -145,12 +156,14 @@ export function VoiceCardShared({
 
   // Full variant (Voice Library)
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
       className={cn(
-        "bg-card border rounded-xl p-5 transition-all group relative",
+        "bg-card border rounded-2xl p-5 transition-all group relative overflow-hidden",
         isSelected
-          ? "border-primary bg-primary/10 ring-2 ring-primary/50"
-          : "border-primary/10",
+          ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-lg shadow-primary/10"
+          : "border-primary/10 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
         disabled && "opacity-60",
       )}
     >
@@ -247,7 +260,8 @@ export function VoiceCardShared({
         &ldquo;{voice.description}&rdquo;
       </p>
       {isActive ? (
-        <button
+        <motion.button
+          whileTap={!disabled ? { scale: 0.95 } : undefined}
           type="button"
           onClick={(e) => {
             e.stopPropagation();
@@ -255,25 +269,40 @@ export function VoiceCardShared({
           }}
           disabled={disabled}
           className={cn(
-            "w-full border py-2 rounded-lg text-xs font-bold transition-colors",
+            "w-full border py-2 rounded-xl text-xs font-bold transition-all relative overflow-hidden",
             disabled
               ? "border-border bg-muted/30 text-muted-foreground cursor-not-allowed"
               : isSelected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-primary/20 text-muted-foreground hover:bg-muted",
+                ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                : "border-primary/20 text-muted-foreground hover:bg-primary/10 hover:border-primary/50",
           )}
         >
-          {disabled
-            ? "Chỉ nghe sample (cần Pro)"
-            : isSelected
-              ? "Đang chọn"
-              : "Chọn giọng này"}
-        </button>
+          {isSelected && (
+            <motion.div
+              className="absolute inset-0 bg-white/20"
+              initial={{ x: "-100%", skewX: 12 }}
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                repeatDelay: 2,
+              }}
+            />
+          )}
+          <span className="relative z-10">
+            {disabled
+              ? "Cần nâng cấp Pro"
+              : isSelected
+                ? "Đang chọn"
+                : "Chọn giọng đọc"}
+          </span>
+        </motion.button>
       ) : (
         <div className="w-full border border-border py-2 rounded-lg text-xs font-bold text-muted-foreground text-center bg-muted/30 cursor-not-allowed">
           Coming soon
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

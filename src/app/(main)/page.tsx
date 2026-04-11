@@ -165,8 +165,9 @@ function HomeContentInner() {
           {/* Main Area - margin trái theo trạng thái thu gọn sidebar (desktop only) */}
           <div
             className={cn(
-              "flex-1 flex flex-col overflow-hidden",
-              sidebarCollapsed ? "lg:ml-[4.5rem]" : "lg:ml-64",
+              "flex-1 flex flex-col overflow-hidden lg:transition-[margin] lg:duration-300 lg:ease-out",
+              "lg:pt-4 lg:pr-4 lg:pb-4",
+              sidebarCollapsed ? "lg:ml-[120px]" : "lg:ml-[320px]",
             )}
           >
             {/* Header — nút menu gần trong header để title không bị đè/tràn khi resize */}
@@ -194,7 +195,7 @@ function HomeContentInner() {
 
             {/* Main content — min-h-0 để flex shrink đúng, overflow-y-auto để scroll khi nội dung dài */}
             {/* pb-20 for BottomNav on mobile, pb-4 sm:pb-6 on desktop */}
-            <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-20 md:pb-4 sm:pb-6">
+            <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden custom-scrollbar main-content-scroll pb-20 md:pb-4 sm:pb-6 lg:pt-3">
               <div className="mx-auto w-full max-w-screen-2xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
                 {activeTab === "dashboard" ? (
                   <MainContent

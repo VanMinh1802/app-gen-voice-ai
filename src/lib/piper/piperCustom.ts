@@ -105,8 +105,7 @@ export async function loadCustomPiper(
 
   const espeakVoice = voiceConfig.espeak?.voice ?? "vi";
   const effectivePhonemeType: "text" | "espeak" =
-    voiceConfig.phoneme_type ??
-    (voiceConfig.espeak?.voice ? "espeak" : "text");
+    voiceConfig.phoneme_type ?? (voiceConfig.espeak?.voice ? "espeak" : "text");
 
   /** Resolve phoneme_id_map entry to a single number (supports both number and number[]). */
   function toId(value: number | number[] | undefined): number {

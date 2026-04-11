@@ -30,8 +30,9 @@ When building UI components:
 
 This project uses custom glass/gradient utilities in \globals.css\. Use these patterns:
 
-\\\	sx
+\\\ sx
 // Glass card â€” elevated surfaces, form containers
+
 <div className="glass-card rounded-2xl p-6 border border-border">
 
 // Glass input â€” text inputs and textareas
@@ -41,6 +42,7 @@ This project uses custom glass/gradient utilities in \globals.css\. Use these pa
 <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
 
 // Custom scrollbar â€” long lists and panels
+
 <div className="custom-scrollbar overflow-y-auto">
 \\\
 
@@ -67,13 +69,13 @@ Do NOT add microphone permission handling, recording indicators, or audio captur
 **Best Practices:**
 
 - Use \
-ext/image\ for images
+  ext/image\ for images
 - Implement proper loading states
 - Add skeleton loaders for async content (ONNX loading, model fetch)
 - Use React Server Components where possible (mostly client components in this app)
 - Minimize client-side JavaScript
 - Add \cursor-pointer\ to all clickable elements
-- Add \	ransition-colors\ or \	ransition-all\ to interactive elements
+- Add \ ransition-colors\ or \ ransition-all\ to interactive elements
 
 **Accessibility:**
 

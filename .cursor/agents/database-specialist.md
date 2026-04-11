@@ -5,6 +5,7 @@ description: DEPRECATED â€” This agent references the wrong tech stack. Do 
 
 > **âš ï¸ DEPRECATED** â€” This agent guides toward PostgreSQL/Prisma/Drizzle which are
 > NOT used in this project. This project is a **client-side browser app** that stores:
+>
 > - **TTS Models** â†’ Cloudflare R2 bucket (downloaded lazily)
 > - **History/Audio** â†’ IndexedDB (browser, user-managed)
 > - **Settings** â†’ localStorage (permanent, browser-local)

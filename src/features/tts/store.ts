@@ -340,9 +340,10 @@ export const useTtsStore = create<TtsState>()(
           const quota = await getStorageQuota();
 
           // Calculate history usage percent based on history limit, not browser quota
-          const historyUsagePercent = config.tts.historyLimit > 0
-            ? (state.history.length / config.tts.historyLimit) * 100
-            : 0;
+          const historyUsagePercent =
+            config.tts.historyLimit > 0
+              ? (state.history.length / config.tts.historyLimit) * 100
+              : 0;
 
           set({
             storageInfo: {

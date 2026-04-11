@@ -23,13 +23,14 @@ There is no Vitest, no Playwright, no \*.test.ts\ files, and no test script in \
 
 **Before using this skill:**
 
-1. Check \package.json\ for a \	est\ script â€” if none exists, test infrastructure is not set up
+1. Check \package.json\ for a \ est\ script â€” if none exists, test infrastructure is not set up
 2. If infrastructure is missing, DO NOT attempt RED phase â€” instead document the missing test setup
 3. Proceed with implementation using \
-pm run build\ and \
-pm run lint\ as verification gates
+   pm run build\ and \
+   pm run lint\ as verification gates
 
 **The RED-GREEN-REFACTOR cycle is still valuable for mental discipline:**
+
 - Think through the test before writing code (even if you can't run it)
 - Document what the test would verify
 - Write the code to pass that mental test
@@ -79,13 +80,13 @@ Write code before the test? Delete it. Start over.
 
 \\\dot
 digraph tdd_cycle {
-    rankdir=LR;
-    red [label="RED\nWrite failing test", shape=box, style=filled, fillcolor="#ffcccc"];
-    verify_red [label="Verify fails\ncorrectly", shape=diamond];
-    green [label="GREEN\nMinimal code", shape=box, style=filled, fillcolor="#ccffcc"];
-    verify_green [label="Verify passes\nAll green", shape=diamond];
-    refactor [label="REFACTOR\nClean up", shape=box, style=filled, fillcolor="#ccccff"];
-    next [label="Next", shape=ellipse];
+rankdir=LR;
+red [label="RED\nWrite failing test", shape=box, style=filled, fillcolor="#ffcccc"];
+verify_red [label="Verify fails\ncorrectly", shape=diamond];
+green [label="GREEN\nMinimal code", shape=box, style=filled, fillcolor="#ccffcc"];
+verify_green [label="Verify passes\nAll green", shape=diamond];
+refactor [label="REFACTOR\nClean up", shape=box, style=filled, fillcolor="#ccccff"];
+next [label="Next", shape=ellipse];
 
     red -> verify_red;
     verify_red -> green [label="yes"];
@@ -96,6 +97,7 @@ digraph tdd_cycle {
     refactor -> verify_green [label="stay\ngreen"];
     verify_green -> next;
     next -> red;
+
 }
 \\\
 
@@ -113,10 +115,10 @@ test("retries failed operations 3 times", async () => {
     return "success";
   };
 
-  const result = await retryOperation(operation);
+const result = await retryOperation(operation);
 
-  expect(result).toBe("success");
-  expect(attempts).toBe(3);
+expect(result).toBe("success");
+expect(attempts).toBe(3);
 });
 \\\
 Clear name, tests real behavior, one thing
@@ -232,11 +234,11 @@ Next failing test for next feature.
 
 ## Good Tests
 
-| Quality | Good | Bad |
-| --- | --- | --- |
-| **Minimal** | One thing. "and" in name? Split it. | \	est('validates email and domain and whitespace')\ |
-| **Clear** | Name describes behavior | \	est('test1')\ |
-| **Shows intent** | Demonstrates desired API | Obscures what code should do |
+| Quality          | Good                                | Bad                                                  |
+| ---------------- | ----------------------------------- | ---------------------------------------------------- |
+| **Minimal**      | One thing. "and" in name? Split it. | \ est('validates email and domain and whitespace')\  |
+| **Clear**        | Name describes behavior             | \ est('test1')\                                      |
+| **Shows intent** | Demonstrates desired API            | Obscures what code should do                         |
 
 ## Why Order Matters
 
@@ -294,20 +296,20 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 
 ## Common Rationalizations
 
-| Excuse | Reality |
-| --- | --- |
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-| "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-| "Already manually tested" | Ad-hoc â‰  systematic. No record, can't re-run. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
-| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
-| "Need to explore first" | Fine. Throw away exploration, start with TDD. |
-| "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
-| "TDD will slow me down" | TDD faster than debugging. Pragmatic = test-first. |
-| "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
-| "No test infrastructure here" | Write tests as comments documenting intent. RED-GREEN still guides mental discipline. |
+| Excuse                                 | Reality                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------- |
+| "Too simple to test"                   | Simple code breaks. Test takes 30 seconds.                                            |
+| "I'll test after"                      | Tests passing immediately prove nothing.                                              |
+| "Tests after achieve same goals"       | Tests-after = "what does this do?" Tests-first = "what should this do?"               |
+| "Already manually tested"              | Ad-hoc â‰  systematic. No record, can't re-run.                                       |
+| "Deleting X hours is wasteful"         | Sunk cost fallacy. Keeping unverified code is technical debt.                         |
+| "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete.                           |
+| "Need to explore first"                | Fine. Throw away exploration, start with TDD.                                         |
+| "Test hard = design unclear"           | Listen to test. Hard to test = hard to use.                                           |
+| "TDD will slow me down"                | TDD faster than debugging. Pragmatic = test-first.                                    |
+| "Manual test faster"                   | Manual doesn't prove edge cases. You'll re-test every change.                         |
+| "Existing code has no tests"           | You're improving it. Add tests for existing code.                                     |
+| "No test infrastructure here"          | Write tests as comments documenting intent. RED-GREEN still guides mental discipline. |
 
 ## Red Flags - STOP and Start Over
 
@@ -330,10 +332,10 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 
 **RED**
 
-\\\	ypescript
+\\\ ypescript
 test("rejects empty email", async () => {
-  const result = await submitForm({ email: "" });
-  expect(result.error).toBe("Email required");
+const result = await submitForm({ email: "" });
+expect(result.error).toBe("Email required");
 });
 \\\
 
@@ -346,12 +348,12 @@ FAIL: expected 'Email required', got undefined
 
 **GREEN**
 
-\\\	ypescript
+\\\ ypescript
 function submitForm(data: FormData) {
-  if (!data.email?.trim()) {
-    return { error: "Email required" };
-  }
-  // ...
+if (!data.email?.trim()) {
+return { error: "Email required" };
+}
+// ...
 }
 \\\
 
@@ -382,12 +384,12 @@ Can't check all boxes? You skipped TDD. Start over.
 
 ## When Stuck
 
-| Problem | Solution |
-| --- | --- |
-| Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner. |
-| Test too complicated | Design too complicated. Simplify interface. |
-| Must mock everything | Code too coupled. Use dependency injection. |
-| Test setup huge | Extract helpers. Still complex? Simplify design. |
+| Problem                | Solution                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner.           |
+| Test too complicated   | Design too complicated. Simplify interface.                                    |
+| Must mock everything   | Code too coupled. Use dependency injection.                                    |
+| Test setup huge        | Extract helpers. Still complex? Simplify design.                               |
 | No test infrastructure | Write tests as comments. Document RED/GREEN mentally. Use build+lint as gates. |
 
 ## Debugging Integration

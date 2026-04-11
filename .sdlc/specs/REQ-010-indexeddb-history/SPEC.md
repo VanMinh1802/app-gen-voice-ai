@@ -84,9 +84,9 @@ localStorage has size limits - need IndexedDB for larger history with audio blob
 
 ### Files Created/Modified
 
-| File                         | Description                          | Status    |
-| ---------------------------- | ------------------------------------ | --------- |
-| `src/lib/storage/history.ts` | IndexedDB operations with userId      | Modified  |
+| File                         | Description                      | Status   |
+| ---------------------------- | -------------------------------- | -------- |
+| `src/lib/storage/history.ts` | IndexedDB operations with userId | Modified |
 
 ### Database Schema
 
@@ -106,11 +106,11 @@ interface StoredHistoryRecord {
 
 ### Database Version History
 
-| Version | Date       | Change                                           |
-| ------- | ---------- | ------------------------------------------------ |
-| 1      | 2026-03-10 | Initial schema with `createdAt` index            |
-| 2-5    | (earlier)  | Various migrations                               |
-| 6      | 2026-03-20 | Added `userId` field and index                   |
+| Version | Date       | Change                                |
+| ------- | ---------- | ------------------------------------- |
+| 1       | 2026-03-10 | Initial schema with `createdAt` index |
+| 2-5     | (earlier)  | Various migrations                    |
+| 6       | 2026-03-20 | Added `userId` field and index        |
 
 ### IndexedDB Migration v5→v6
 
@@ -179,22 +179,22 @@ export async function getStorageQuota(): Promise<{
 ```typescript
 // Per-record size estimation
 const recordBytes =
-  record.audio.size +           // Audio blob size
-  record.text.length * 2 +      // UTF-16 text (2 bytes per char)
-  200;                          // Metadata overhead (voice, model, etc.)
+  record.audio.size + // Audio blob size
+  record.text.length * 2 + // UTF-16 text (2 bytes per char)
+  200; // Metadata overhead (voice, model, etc.)
 ```
 
 ---
 
 ## Edge Cases
 
-| #   | Case                                      | Handling                                      |
-| --- | ----------------------------------------- | -------------------------------------------- |
-| 1   | Legacy records without userId              | Count as "anonymous" when userId is null     |
-| 2   | IndexedDB not available                    | Graceful fallback, in-memory only            |
-| 3   | Migration fails                            | Log error, continue without migration         |
-| 4   | Browser quota exceeded                     | Warn user, oldest records evicted on save    |
-| 5   | User switches accounts                     | History reloads with new userId filter       |
+| #   | Case                          | Handling                                  |
+| --- | ----------------------------- | ----------------------------------------- |
+| 1   | Legacy records without userId | Count as "anonymous" when userId is null  |
+| 2   | IndexedDB not available       | Graceful fallback, in-memory only         |
+| 3   | Migration fails               | Log error, continue without migration     |
+| 4   | Browser quota exceeded        | Warn user, oldest records evicted on save |
+| 5   | User switches accounts        | History reloads with new userId filter    |
 
 ---
 

@@ -44,8 +44,7 @@ export const voiceMetadata: VoiceMetadata[] = [
     region: "Miền Bắc",
     gender: "Nữ",
     style: "Truyền cảm",
-    description:
-      "Giọng nữ dịu dàng, rõ ràng, phù hợp podcast và audio books.",
+    description: "Giọng nữ dịu dàng, rõ ràng, phù hợp podcast và audio books.",
     avatarColor: "#ec4899",
   },
   {

@@ -32,6 +32,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Every plan MUST start with this header:**
 
 \\\markdown
+
 # [Feature Name] Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task.
@@ -43,34 +44,36 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Tech Stack:** [Key technologies/libraries â€” this project: Next.js 15, React, Tailwind CSS, Zustand, ONNX Runtime Web, IndexedDB, Cloudflare R2]
 
 ---
+
 \\\
 
 ## Task Structure
 
 \\\markdown
+
 ### Task N: [Component Name]
 
 **Files:**
 
 - Create: \exact/path/to/file.tsx\
 - Modify: \exact/path/to/existing.tsx:123-145\
-- Test: \	ests/exact/path/to/test.tsx\ (note: project has NO test infra yet â€” add test infrastructure first if needed)
+- Test: \ ests/exact/path/to/test.tsx\ (note: project has NO test infra yet â€” add test infrastructure first if needed)
 
 **Step 1: Write the failing test**
 
 > **Note:** If test infrastructure doesn't exist yet (Vitest/Playwright not configured),
 > skip RED phase and go directly to implementing the feature. Document in the plan.
 
-\\\	ypescript
+\\\ ypescript
 // tests/path/component.test.tsx
 import { render, screen } from "@testing-library/react";
 import { ComponentName } from "@/features/xxx/components/ComponentName";
 
 describe("ComponentName", () => {
-  it("renders correctly", () => {
-    render(<ComponentName />);
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
+it("renders correctly", () => {
+render(<ComponentName />);
+expect(screen.getByRole("button")).toBeInTheDocument();
+});
 });
 \\\
 
@@ -82,10 +85,10 @@ Expected: FAIL with "module not found" (no test infra) or "ComponentName not def
 
 **Step 3: Write minimal implementation**
 
-\\\	ypescript
+\\\ ypescript
 // src/features/xxx/components/ComponentName.tsx
 export function ComponentName() {
-  return <button>Click me</button>;
+return <button>Click me</button>;
 }
 \\\
 
@@ -110,7 +113,7 @@ git commit --trailer "Made-with: Cursor" -m "feat(xxx): add ComponentName"
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD (or document if test infra missing), frequent commits
-- **Save path is \.sdlc/specs/REQ-XXX-feature-name/\** not \docs/plans/\
+- \*\*Save path is \.sdlc/specs/REQ-XXX-feature-name/\*\* not \docs/plans/\
 
 ## Execution Handoff
 

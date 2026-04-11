@@ -215,8 +215,7 @@ async function loadFromArrayBuffer(
   const espeakVoice = config.espeak?.voice ?? "vi";
   /** Piper JSON thường có `phoneme_type`; nếu thiếu nhưng có `espeak.voice` thì phải dùng espeak (không được coi là "text"). */
   const phonemeType =
-    config.phoneme_type ??
-    (config.espeak?.voice ? "espeak" : "text");
+    config.phoneme_type ?? (config.espeak?.voice ? "espeak" : "text");
 
   function toId(value: number | number[] | undefined): number {
     if (value === undefined) return 0;
@@ -384,7 +383,10 @@ async function loadFromArrayBuffer(
 
     if (phonemeType === "text") {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+      phonemeIds = phonemesToIds(
+        [Array.from(normalized)],
+        config.phoneme_id_map,
+      );
     } else if (phonemeType === "espeak") {
       const { normalizeVietnamese } =
         await import("@/lib/text-processing/vietnameseNormalizer");
@@ -394,11 +396,17 @@ async function loadFromArrayBuffer(
         phonemeIds = wasmIds;
       } else {
         const normalized = preprocessed.normalize("NFD").toLowerCase();
-        phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+        phonemeIds = phonemesToIds(
+          [Array.from(normalized)],
+          config.phoneme_id_map,
+        );
       }
     } else {
       const normalized = textChunk.normalize("NFD");
-      phonemeIds = phonemesToIds([Array.from(normalized)], config.phoneme_id_map);
+      phonemeIds = phonemesToIds(
+        [Array.from(normalized)],
+        config.phoneme_id_map,
+      );
     }
 
     const Tensor = ort.Tensor;

@@ -31,6 +31,14 @@ import {
   Download,
   CheckCheck,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  staggerContainer,
+  fadeInUp,
+  cardHover,
+  buttonTap,
+  springTransition,
+} from "@/lib/animations";
 import { cn } from "@/lib/utils";
 import { config, CUSTOM_MODEL_PREFIX, popularVoiceIds } from "@/config";
 import { voiceMetadata, getVoiceMetadata } from "@/config/voiceData";
@@ -61,12 +69,15 @@ export function TextInput({
   const progress = Math.min((characterCount / maxLength) * 100, 100);
 
   return (
-    <div className="glass-card rounded-2xl p-6 border border-border hover:border-border/80 transition-all group">
-      <div className="flex items-center justify-between mb-4">
-        <label className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
+    <motion.div
+      variants={fadeInUp}
+      className="glass-card backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[2rem] p-5 sm:p-7 group transition-all duration-500 hover:shadow-xl hover:border-primary/20 bg-background/40"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+        <label className="text-sm font-semibold flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
             <svg
-              className="w-4 h-4 text-primary"
+              className="w-5 h-5 text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -79,22 +90,29 @@ export function TextInput({
               />
             </svg>
           </div>
-          <span className="text-foreground">Văn bản cần chuyển đổi</span>
+          <div className="flex flex-col">
+            <span className="text-foreground tracking-tight">
+              Nội dung chuyển đổi
+            </span>
+            <span className="text-[11px] text-muted-foreground font-normal mt-0.5">
+              Nhập đoạn văn bản để biến thành giọng nói
+            </span>
+          </div>
         </label>
-        <div className="flex items-center gap-3">
-          <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-[10px] bg-black/5 dark:bg-white/5 text-muted-foreground rounded-lg border border-border">
+        <div className="flex items-center gap-3 shrink-0">
+          <kbd className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] bg-black/5 dark:bg-white/5 text-muted-foreground rounded-xl border border-border/50 font-medium">
             <span className="text-xs">Ctrl</span>
-            <span className="opacity-70">+</span>
+            <span className="opacity-50">+</span>
             <span>Enter</span>
           </kbd>
           <span
             className={cn(
-              "text-xs font-medium px-2 py-1 rounded-lg",
+              "text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors",
               isOverLimit
-                ? "bg-red-500/20 text-red-400"
+                ? "bg-red-500/10 text-red-500 border-red-500/20"
                 : characterCount > maxLength * 0.8
-                  ? "bg-amber-500/20 text-amber-500"
-                  : "text-muted-foreground",
+                  ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                  : "bg-primary/5 text-muted-foreground border-transparent",
             )}
           >
             {characterCount.toLocaleString()} / {maxLength.toLocaleString()}
@@ -103,14 +121,14 @@ export function TextInput({
       </div>
 
       {/* Progress bar underneath */}
-      <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full mb-4 overflow-hidden">
+      <div className="w-full h-1.5 bg-black/5 dark:bg-white/5 rounded-full mb-5 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${
+          className={`h-full rounded-full transition-all duration-500 ease-out ${
             isOverLimit
               ? "bg-red-500"
               : progress > 80
                 ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                : "bg-primary"
+                : "bg-gradient-to-r from-primary/60 to-primary"
           }`}
           style={{ width: `${progress}%` }}
         />
@@ -119,20 +137,20 @@ export function TextInput({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Nhập văn bản tiếng Việt của bạn tại đây..."
+        placeholder="Nhập nội dung cần chuyển đổi... (hỗ trợ tới 5000 ký tự)"
         disabled={disabled}
         className={cn(
-          "w-full min-h-[180px] sm:min-h-[220px] lg:min-h-[280px] xl:min-h-[320px] glass-input border border-border rounded-xl p-4 sm:p-5",
-          "text-foreground placeholder:text-muted-foreground resize-none font-medium leading-relaxed",
-          "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
-          "transition-all duration-200",
+          "w-full min-h-[220px] sm:min-h-[260px] lg:min-h-[300px] xl:min-h-[340px] bg-black/[0.02] dark:bg-white/[0.02] border border-border/50 rounded-2xl p-5 sm:p-6",
+          "text-foreground placeholder:text-muted-foreground/60 resize-none font-medium leading-relaxed tracking-wide",
+          "focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/40 focus:bg-background/50",
+          "transition-all duration-300 custom-scrollbar",
           disabled && "opacity-50 cursor-not-allowed",
           isOverLimit &&
-            "border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50",
+            "border-red-500/50 focus:ring-red-500/20 focus:border-red-500/50 bg-red-500/5",
         )}
         aria-label="Nhập văn bản cần chuyển thành giọng nói"
       />
-    </div>
+    </motion.div>
   );
 }
 
@@ -273,7 +291,10 @@ export function VoiceSelection({
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-2xl p-6 border border-primary/10 shadow-lg">
+      <motion.div
+        variants={fadeInUp}
+        className="glass-card backdrop-blur-xl bg-background/40 rounded-3xl p-5 sm:p-7 border border-white/10 shadow-lg"
+      >
         <div className="mb-5">
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -320,40 +341,43 @@ export function VoiceSelection({
             />
           ))}
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div
+    <motion.div
+      variants={fadeInUp}
       className={cn(
-        "glass-card rounded-2xl p-4 sm:p-6 border border-border hover:border-border/80 transition-all relative",
+        "glass-card backdrop-blur-xl bg-background/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] rounded-3xl p-5 sm:p-7 transition-all duration-500 hover:shadow-xl hover:border-primary/20 relative",
         isOpen && "z-[100]",
       )}
       ref={dropdownRef}
     >
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-primary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
-          <span className="text-foreground">Chọn giọng đọc</span>
-        </h3>
-        <p className="text-[11px] text-muted-foreground mt-1 ml-10">
-          Chọn giọng phù hợp với nội dung của bạn
-        </p>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+          <svg
+            className="w-5 h-5 text-primary"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-sm font-bold text-foreground tracking-tight">
+            Giọng đọc
+          </h3>
+          <p className="text-[11px] text-muted-foreground font-normal mt-0.5">
+            Chọn giọng phù hợp với nội dung
+          </p>
+        </div>
       </div>
 
       {/* Trigger: dropdown hiển thị giọng đang chọn */}
@@ -569,7 +593,7 @@ export function VoiceSelection({
           </div>,
           document.body,
         )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -594,11 +618,14 @@ export function AudioCustomization({
   const speedValue = Number(speed) || 1;
 
   return (
-    <div className="glass-card rounded-2xl p-4 sm:p-6 border border-border hover:border-border/80 transition-all">
-      <h3 className="text-sm font-semibold mb-4 sm:mb-5 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+    <motion.div
+      variants={fadeInUp}
+      className="glass-card backdrop-blur-xl bg-background/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] rounded-3xl p-5 sm:p-7 transition-all duration-500 hover:shadow-xl hover:border-primary/20"
+    >
+      <h3 className="text-sm font-bold mb-6 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
           <svg
-            className="w-4 h-4 text-primary"
+            className="w-5 h-5 text-primary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -611,9 +638,16 @@ export function AudioCustomization({
             />
           </svg>
         </div>
-        <span className="text-foreground">Tùy chỉnh âm thanh</span>
+        <div className="flex flex-col">
+          <span className="text-foreground tracking-tight">
+            Tinh chỉnh âm thanh
+          </span>
+          <span className="text-[11px] text-muted-foreground font-normal mt-0.5">
+            Tốc độ & Cao độ
+          </span>
+        </div>
       </h3>
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-6 sm:space-y-7">
         {/* Speed */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
@@ -631,7 +665,10 @@ export function AudioCustomization({
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <label htmlFor="speed-slider" className="text-xs font-medium text-muted-foreground">
+              <label
+                htmlFor="speed-slider"
+                className="text-xs font-medium text-muted-foreground"
+              >
                 Tốc độ
               </label>
             </div>
@@ -676,7 +713,10 @@ export function AudioCustomization({
                   d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
                 />
               </svg>
-              <label htmlFor="pitch-slider" className="text-xs font-medium text-muted-foreground">
+              <label
+                htmlFor="pitch-slider"
+                className="text-xs font-medium text-muted-foreground"
+              >
                 Cao độ
               </label>
             </div>
@@ -708,7 +748,7 @@ export function AudioCustomization({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -746,22 +786,28 @@ export function GenerateButton({
   }
 
   return (
-    <div className="flex justify-center pt-4">
-      <button
+    <div className="flex justify-center pt-5 pb-2">
+      <motion.button
+        whileHover={disabled ? {} : { scale: 1.02 }}
+        whileTap={disabled ? {} : { scale: 0.98 }}
         onClick={onClick}
         disabled={disabled}
         className={cn(
-          "px-12 py-4.5 font-bold rounded-2xl shadow-xl transition-all duration-200 flex items-center gap-3",
-          "hover:scale-[1.02] active:scale-[0.98]",
+          "relative group px-10 sm:px-14 py-4 sm:py-5 font-bold rounded-3xl overflow-hidden transition-all duration-300 flex items-center justify-center gap-4",
           disabled
-            ? "bg-black/10 dark:bg-white/10 text-muted-foreground cursor-not-allowed shadow-none border border-border"
-            : "glow-button text-primary-foreground hover:shadow-primary/40",
+            ? "bg-black/5 dark:bg-white/5 text-muted-foreground cursor-not-allowed border border-border"
+            : "bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 border border-primary/20",
         )}
       >
+        {!disabled && (
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:animate-shimmer" />
+        )}
         <div
           className={cn(
-            "w-6 h-6 rounded-xl flex items-center justify-center",
-            disabled ? "bg-black/5 dark:bg-white/5" : "bg-white/20",
+            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:rotate-12",
+            disabled
+              ? "bg-black/10 dark:bg-white/10"
+              : "bg-white/20 shadow-inner",
           )}
         >
           {disabled ? (
@@ -780,7 +826,7 @@ export function GenerateButton({
             </svg>
           ) : (
             <svg
-              className="w-4 h-4 text-primary-foreground"
+              className="w-5 h-5 text-primary-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -794,17 +840,19 @@ export function GenerateButton({
             </svg>
           )}
         </div>
-        <span className="text-lg">
+        <span className="text-lg sm:text-xl tracking-tight relative z-10">
           {disabled
             ? (disabledReason ?? "Nhập văn bản để tiếp tục")
             : "Tạo giọng nói ngay"}
         </span>
         {!disabled && (
-          <div className="hidden sm:ml-2 px-3 py-1 bg-white/20 rounded-lg text-xs font-medium text-primary-foreground">
-            Ctrl + Enter
+          <div className="hidden sm:flex items-center gap-1.5 ml-2 px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-xl text-[11px] font-semibold text-primary-foreground/90 border border-white/10 relative z-10">
+            <span className="opacity-70">Ctrl</span>
+            <span>+</span>
+            <span>Enter</span>
           </div>
         )}
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -1017,8 +1065,7 @@ export function GenerationSuccess({
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Loader2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 animate-spin" />
                   Đang lưu vào{" "}
-                  <span className="font-medium text-foreground">Lịch sử</span>
-                  …
+                  <span className="font-medium text-foreground">Lịch sử</span>…
                 </p>
               )}
             </div>
@@ -1038,15 +1085,15 @@ export function GenerationSuccess({
       </div>
 
       {/* Result: text + quick actions + primary actions — collapsible */}
-      <div className="bg-card rounded-2xl border border-border/80 shadow-md shadow-black/[0.04] dark:shadow-black/20 flex flex-col overflow-hidden">
+      <div className="bg-card rounded-[2rem] border border-border/50 shadow-xl flex flex-col overflow-hidden glass-card backdrop-blur-xl bg-background/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
         {/* Collapsible header with quick actions */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border/70 bg-muted/20">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <div className="flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 border-b border-border/30 bg-muted/5">
+          <div className="flex items-center gap-3 min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-[0.15em] text-foreground/80">
               Văn bản nội dung
             </h3>
             {!isCollapsed && (
-              <span className="text-xs font-medium text-muted-foreground tabular-nums">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/5 text-muted-foreground tabular-nums">
                 {text.length} / 5000 ký tự
               </span>
             )}
@@ -1054,37 +1101,43 @@ export function GenerationSuccess({
           <div className="flex items-center gap-2">
             {/* Quick actions: Copy & Download */}
             {!isCollapsed && (
-              <div className="flex items-center gap-1.5">
-                <button
+              <div className="flex items-center gap-1.5 mr-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={handleCopyText}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
                   aria-label="Sao chép văn bản"
                   title="Sao chép văn bản"
                 >
                   {copied ? (
-                    <CheckCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <CheckCheck className="w-4 h-4 text-emerald-500" />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
-                </button>
+                </motion.button>
                 {currentAudio && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     type="button"
                     onClick={handleDownloadAudio}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
                     aria-label="Tải xuống audio"
                     title="Tải xuống audio"
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </motion.button>
                 )}
               </div>
             )}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="button"
               onClick={() => setIsCollapsed((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold text-foreground/70 bg-black/5 dark:bg-white/5 hover:bg-primary/10 hover:text-primary transition-colors shrink-0"
               aria-label={isCollapsed ? "Mở rộng kết quả" : "Thu gọn kết quả"}
             >
               <span className="hidden sm:inline">
@@ -1095,189 +1148,247 @@ export function GenerationSuccess({
               ) : (
                 <ChevronUp className="w-4 h-4" />
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Full content — only when expanded */}
-        {!isCollapsed ? (
-          <div className="p-4 sm:p-6 flex flex-col gap-4">
-            {/* Text preview */}
-            <div className="relative">
-              <textarea
-                value={text}
-                readOnly
-                className="w-full min-h-[120px] max-h-[300px] p-4 rounded-lg bg-muted/30 border border-border text-foreground resize-none focus:ring-2 focus:ring-primary/20 outline-none text-sm leading-relaxed"
-                placeholder="Nhập văn bản của bạn tại đây..."
-              />
-            </div>
-
-            {/* Thẻ phát nhanh: layout ngang cố định — icon | thông tin | nút (giống media player) */}
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4 transition-all",
-                "bg-primary/[0.06] dark:bg-primary/10",
-                status === "playing" && !pausedStreaming
-                  ? "border-primary/40 shadow-sm shadow-primary/10 ring-1 ring-primary/15"
-                  : "border-primary/20",
-              )}
+        <AnimatePresence initial={false}>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="flex flex-col overflow-hidden"
             >
-              {status === "playing" && !pausedStreaming && (
-                <div className="pointer-events-none absolute inset-0 opacity-[0.08] dark:opacity-[0.12]">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/60 to-transparent animate-shimmer-stepped" />
+              <div className="p-5 sm:p-7 flex flex-col gap-6">
+                {/* Text preview */}
+                <div className="relative group">
+                  <textarea
+                    value={text}
+                    readOnly
+                    className="w-full min-h-[140px] max-h-[300px] p-5 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-border/40 text-foreground resize-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 focus:bg-background/50 outline-none text-sm sm:text-base leading-relaxed tracking-wide custom-scrollbar transition-all duration-300"
+                    placeholder="Nhập văn bản của bạn tại đây..."
+                  />
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 rounded-l-2xl group-hover:bg-primary/40 transition-colors" />
                 </div>
-              )}
 
-              <div className="relative flex items-center gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div
-                    className={cn(
-                      "size-11 sm:size-12 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm",
-                      status === "playing" && !pausedStreaming
-                        ? "bg-primary text-primary-foreground animate-icon-bounce-stepped"
-                        : "bg-primary/15 text-primary",
-                    )}
-                  >
-                    <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
+                {/* Thẻ phát nhanh: layout ngang cố định — icon | thông tin | nút (giống media player) */}
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  className={cn(
+                    "relative overflow-hidden rounded-[1.5rem] border px-5 py-4 sm:px-6 sm:py-5 transition-all duration-300",
+                    "bg-gradient-to-r from-primary/5 to-transparent",
+                    status === "playing" && !pausedStreaming
+                      ? "border-primary/40 shadow-lg shadow-primary/20"
+                      : "border-primary/20 shadow-sm",
+                  )}
+                >
                   {status === "playing" && !pausedStreaming && (
-                    <div
-                      className="flex items-center gap-0.5 h-8 pl-0.5"
-                      aria-hidden
-                    >
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="w-1 bg-primary rounded-full animate-waveform-pulse-stepped"
-                          style={{
-                            height: `${6 + i * 3}px`,
-                            animationDelay: `${i * 0.15}s`,
-                          }}
-                        />
-                      ))}
+                    <div className="pointer-events-none absolute inset-0 opacity-[0.15]">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/50 to-transparent animate-shimmer" />
                     </div>
                   )}
-                </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <p className="text-sm font-bold text-foreground tracking-tight">
-                      Giọng {voiceName}
-                    </p>
-                    {status === "playing" && !pausedStreaming && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                        <span className="size-1.5 rounded-full bg-primary animate-pulse" />
-                        Đang phát
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground">
-                    {streamingDuration > 0 ? (
-                      <span className="tabular-nums text-foreground/80 font-semibold">
-                        {formatTime(streamingCurrentTime)}
-                        <span className="text-muted-foreground/80 font-normal">
-                          {" "}
-                          / {formatTime(streamingDuration)}
+                  <div className="relative flex items-center gap-4 sm:gap-5">
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div
+                        className={cn(
+                          "size-12 sm:size-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-md relative overflow-hidden",
+                          status === "playing" && !pausedStreaming
+                            ? "bg-primary text-primary-foreground shadow-primary/30"
+                            : "bg-primary/10 text-primary border border-primary/20",
+                        )}
+                      >
+                        {status === "playing" && !pausedStreaming && (
+                          <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                        )}
+                        <Headphones
+                          className={cn(
+                            "relative z-10 w-5 h-5 sm:w-6 sm:h-6",
+                            status === "playing" &&
+                              !pausedStreaming &&
+                              "animate-bounce",
+                          )}
+                        />
+                      </div>
+
+                      {status === "playing" && !pausedStreaming && (
+                        <div
+                          className="flex items-center gap-0.5 h-10 pl-1"
+                          aria-hidden
+                        >
+                          {[1, 2, 3, 4].map((i) => (
+                            <div
+                              key={i}
+                              className="w-1.5 bg-primary rounded-full animate-waveform-pulse-stepped"
+                              style={{
+                                height: `${8 + i * 4}px`,
+                                animationDelay: `${i * 0.15}s`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                        <p className="text-base sm:text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                          Giọng {voiceName}
+                        </p>
+                        {status === "playing" && !pausedStreaming && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary shadow-sm shadow-primary/10">
+                            <span className="size-2 rounded-full bg-primary animate-pulse" />
+                            Đang phát
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm text-muted-foreground/80">
+                        {streamingDuration > 0 ? (
+                          <span className="tabular-nums text-foreground font-semibold bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                            {formatTime(streamingCurrentTime)}
+                            <span className="text-muted-foreground font-normal">
+                              {" "}
+                              / {formatTime(streamingDuration)}
+                            </span>
+                          </span>
+                        ) : durationProp > 0 ? (
+                          <span className="tabular-nums text-foreground font-medium bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                            Thời lượng ~{formatTime(durationProp)}
+                          </span>
+                        ) : null}
+                        {(streamingDuration > 0 || durationProp > 0) && (
+                          <span className="hidden sm:inline text-muted-foreground/30">
+                            •
+                          </span>
+                        )}
+                        <span className="leading-snug">
+                          Phát nhanh tại đây — quản lý chi tiết ở thanh dưới
                         </span>
-                      </span>
-                    ) : durationProp > 0 ? (
-                      <span className="tabular-nums text-foreground/80 font-medium">
-                        Thời lượng ~{formatTime(durationProp)}
-                      </span>
-                    ) : null}
-                    {(streamingDuration > 0 || durationProp > 0) && (
-                      <span className="hidden sm:inline text-muted-foreground/50">
-                        ·
-                      </span>
-                    )}
-                    <span className="leading-snug">
-                      Phát nhanh tại đây — âm lượng, tiến độ, tải file ở thanh
-                      dưới.
-                    </span>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={togglePlay}
+                      className={cn(
+                        "inline-flex items-center justify-center gap-2.5 rounded-2xl border-2 px-4 py-3 sm:px-6 sm:py-3.5 text-sm font-bold transition-all duration-300 shrink-0 shadow-sm",
+                        status === "playing" && !pausedStreaming
+                          ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/20"
+                          : "border-primary bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/30",
+                        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
+                      )}
+                      aria-label={
+                        status === "playing" && !pausedStreaming
+                          ? "Tạm dừng"
+                          : "Phát"
+                      }
+                    >
+                      {status === "playing" && !pausedStreaming ? (
+                        <>
+                          <Pause className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                          <span className="hidden min-[380px]:inline">
+                            Tạm dừng
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 ml-0.5" />
+                          <span className="hidden min-[380px]:inline">
+                            Phát nghe thử
+                          </span>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
+
+                {/* Primary actions */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5 pt-6 border-t border-border/40 mt-2">
+                  <div className="flex flex-col gap-1 order-2 lg:order-1 max-w-md">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-semibold border-b border-primary/30 pb-0.5">
+                        Tạo lượt mới
+                      </span>{" "}
+                      — nhập văn bản khác.
+                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-semibold border-b border-foreground/30 pb-0.5">
+                        Tạo lại
+                      </span>{" "}
+                      — giữ nguyên nội dung & cài đặt.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 order-1 lg:order-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={onRegenerate}
+                      className="flex-1 sm:flex-none px-5 sm:px-7 py-3 sm:py-3.5 rounded-2xl border border-border/80 text-foreground font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-sm"
+                      aria-label="Tạo lại với văn bản này"
+                    >
+                      <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+                      Tạo lại
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={onClear}
+                      className="flex-1 sm:flex-none px-5 sm:px-8 py-3 sm:py-3.5 rounded-2xl bg-foreground text-background font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2.5 text-sm sm:text-base shadow-xl shadow-black/10 dark:shadow-white/10 group"
+                      aria-label="Thoát về màn nhập văn bản, tạo lượt mới"
+                    >
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary group-hover:animate-pulse" />
+                      Tạo lượt mới
+                    </motion.button>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  className={cn(
-                    "inline-flex items-center justify-center gap-2 rounded-xl border-2 px-3.5 py-2.5 sm:px-4 text-sm font-bold transition-colors shrink-0",
-                    "border-primary bg-background/95 text-primary hover:bg-primary/10",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  )}
-                  aria-label={
-                    status === "playing" && !pausedStreaming
-                      ? "Tạm dừng"
-                      : "Phát"
-                  }
-                >
-                  {status === "playing" && !pausedStreaming ? (
-                    <>
-                      <Pause className="w-4 h-4 shrink-0" />
-                      <span className="hidden min-[380px]:inline">Tạm dừng</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 shrink-0 ml-0.5" />
-                      <span className="hidden min-[380px]:inline">Phát</span>
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Primary actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-border/70">
-              <p className="text-[11px] sm:text-xs text-muted-foreground order-2 sm:order-1 leading-relaxed max-w-md">
-                <span className="text-foreground/80 font-medium">
-                  Tạo lượt mới
-                </span>{" "}
-                — nhập văn khác.{" "}
-                <span className="text-foreground/80 font-medium">Tạo lại</span>{" "}
-                — cùng nội dung, giọng hiện tại.
-              </p>
-              <div className="flex flex-wrap gap-2 sm:gap-3 order-1 sm:order-2">
-                <button
-                  type="button"
-                  onClick={onRegenerate}
-                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl border border-border/80 text-muted-foreground font-semibold hover:bg-muted/60 hover:text-foreground transition-colors text-sm flex items-center justify-center gap-2"
-                  aria-label="Tạo lại với văn bản này"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Tạo lại
-                </button>
-                <button
-                  type="button"
-                  onClick={onClear}
-                  className="flex-1 sm:flex-none px-4 sm:px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-primary/20"
-                  aria-label="Thoát về màn nhập văn bản, tạo lượt mới"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Tạo lượt mới
-                </button>
+        {/* Collapsed: show just a one-liner preview */}
+        <AnimatePresence>
+          {isCollapsed && (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              type="button"
+              onClick={() => setIsCollapsed(false)}
+              className="w-full flex items-center gap-4 px-5 sm:px-7 py-4 sm:py-5 hover:bg-primary/5 transition-colors text-left group"
+              aria-label="Mở rộng kết quả"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground/90 font-medium truncate group-hover:text-primary transition-colors">
+                  {text.slice(0, 100)}
+                  {text.length > 100 ? "..." : ""}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                    Giọng {voiceName}
+                  </span>
+                  {(streamingDuration > 0 || durationProp > 0) && (
+                    <span className="text-[10px] sm:text-xs text-muted-foreground/70 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatTime(streamingDuration || durationProp)}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-        ) : (
-          /* Collapsed: show just a one-liner preview */
-          <button
-            type="button"
-            onClick={() => setIsCollapsed(false)}
-            className="w-full flex items-center gap-3 px-6 py-4 hover:bg-muted/20 transition-colors text-left"
-            aria-label="Mở rộng kết quả"
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground truncate">
-                {text.slice(0, 80)}
-                {text.length > 80 ? "…" : ""}
-              </p>
-              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                Giọng {voiceName}
-              </p>
-            </div>
-            <ChevronsUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
-          </button>
-        )}
+              <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                <ChevronsUpDown className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+              </div>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -1296,12 +1407,12 @@ const TIPS = [
 
 export function TipsAndLinks({ onViewAllVoices }: TipsAndLinksProps) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2 px-1">
+    <motion.div variants={fadeInUp} className="space-y-4">
+      <h3 className="text-sm font-bold flex items-center gap-2 px-1">
         <Sparkles className="w-4 h-4 text-primary" />
-        <span className="text-foreground">Mẹo & Liên kết</span>
+        <span className="text-foreground tracking-tight">Mẹo & Liên kết</span>
       </h3>
-      <div className="glass-card border border-border rounded-xl p-4 space-y-3">
+      <div className="glass-card backdrop-blur-xl bg-background/40 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] rounded-3xl p-5 sm:p-6 space-y-4">
         <ul className="space-y-2 text-xs text-muted-foreground">
           {TIPS.map((tip, i) => (
             <li key={i} className="flex gap-2">
@@ -1320,7 +1431,7 @@ export function TipsAndLinks({ onViewAllVoices }: TipsAndLinksProps) {
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1340,25 +1451,27 @@ interface SampleTextChipsProps {
 
 function SampleTextChips({ onSelect, disabled }: SampleTextChipsProps) {
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground px-1">
+    <motion.div variants={fadeInUp} className="space-y-4">
+      <h3 className="text-sm font-bold text-foreground px-1 tracking-tight">
         Văn bản mẫu
       </h3>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2.5">
         {SAMPLE_TEXTS.map((sample, i) => (
-          <button
+          <motion.button
+            whileHover={disabled ? {} : { scale: 1.02 }}
+            whileTap={disabled ? {} : { scale: 0.98 }}
             key={i}
             type="button"
             onClick={() => onSelect(sample)}
             disabled={disabled}
-            className="px-3 py-2 text-xs text-muted-foreground glass-card hover:bg-black/5 dark:hover:bg-white/10 border border-border rounded-lg hover:border-border/80 hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed line-clamp-1 max-w-full"
+            className="px-4 py-2.5 text-xs text-muted-foreground glass-card backdrop-blur-md bg-background/40 border border-white/10 hover:bg-primary/5 rounded-2xl hover:border-primary/20 hover:text-foreground transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed line-clamp-1 max-w-full shadow-sm hover:shadow-md"
             title={sample}
           >
             {sample.length > 36 ? `${sample.slice(0, 36)}…` : sample}
-          </button>
+          </motion.button>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1400,23 +1513,24 @@ function RecentHistory({ onRefill, disabled }: RecentHistoryProps) {
   if (recent.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground px-1">
+    <motion.div variants={fadeInUp} className="space-y-4">
+      <h3 className="text-sm font-bold text-foreground px-1 tracking-tight">
         Lịch sử gần đây
       </h3>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {recent.map((item) => {
           const isActive = nowPlaying?.id === item.id;
           const isStreaming = item.id.startsWith("streaming-");
           return (
-            <div
+            <motion.div
+              whileHover={disabled ? {} : { scale: 1.01 }}
               key={item.id}
-              className="flex items-center justify-between gap-2 sm:gap-3 p-3 glass-card border rounded-xl min-w-0 transition-all"
-              style={{
-                borderColor: isActive
-                  ? "hsl(var(--primary) / 0.35)"
-                  : "hsl(var(--primary) / 0.1)",
-              }}
+              className={cn(
+                "flex items-center justify-between gap-3 sm:gap-4 p-4 glass-card backdrop-blur-md bg-background/40 border rounded-3xl min-w-0 transition-all duration-300 shadow-sm",
+                isActive
+                  ? "border-primary/40 shadow-primary/10"
+                  : "border-white/10 hover:border-primary/20 hover:shadow-md",
+              )}
             >
               {/* Left: meta + text */}
               <div className="flex-1 min-w-0">
@@ -1500,11 +1614,11 @@ function RecentHistory({ onRefill, disabled }: RecentHistoryProps) {
                   <ArrowLeft className="w-3.5 h-3.5" />
                 </button>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1688,9 +1802,14 @@ export function MainContent({
 
   // Mobile: Văn bản → Chọn giọng + Âm thanh → Nút tạo → Mẹo, mẫu, lịch sử. XL: 2 cột (trái: văn bản + nút + mẹo/mẫu/lịch sử | phải: giọng + âm thanh).
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 xl:grid-rows-2 gap-4 md:gap-6 lg:gap-8 items-start">
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 xl:grid-cols-12 xl:grid-rows-2 gap-5 md:gap-8 items-start max-w-[1400px] mx-auto"
+    >
       {/* 1. Ô nhập văn bản — mobile: đầu; xl: cột trái hàng 1 */}
-      <div className="xl:col-span-8 xl:row-start-1 space-y-4 md:space-y-6">
+      <div className="xl:col-span-8 xl:row-start-1 space-y-5 md:space-y-8">
         {isSuccess ? (
           <GenerationSuccess
             text={text}
@@ -1775,7 +1894,7 @@ export function MainContent({
       </div>
 
       {/* 2. Tùy chỉnh âm thanh + Chọn giọng — mobile: ngay dưới ô văn bản; xl: cột phải */}
-      <div className="xl:col-span-4 xl:row-start-1 xl:row-span-2 xl:sticky xl:top-6 space-y-4 md:space-y-6">
+      <div className="xl:col-span-4 xl:row-start-1 xl:row-span-2 xl:sticky xl:top-6 space-y-5 md:space-y-8">
         <div className={cn(!isReady && "opacity-50 pointer-events-none")}>
           <AudioCustomization
             speed={settings.speed}
@@ -1798,12 +1917,12 @@ export function MainContent({
 
       {/* 3. Mẹo, mẫu, lịch sử — mobile: sau giọng/âm thanh; xl: cột trái hàng 2 */}
       {!isSuccess && (
-        <div className="xl:col-span-8 xl:row-start-2 space-y-4 md:space-y-6">
+        <div className="xl:col-span-8 xl:row-start-2 space-y-5 md:space-y-8">
           <TipsAndLinks onViewAllVoices={onViewAllVoices} />
           <SampleTextChips onSelect={handleTextChange} disabled={!isReady} />
           <RecentHistory onRefill={handleTextChange} disabled={!isReady} />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -168,12 +168,13 @@ export async function getStorageUsage(
       if (cursor && record) {
         // Handle records without userId (legacy data from before migration)
         const recordUserId = record.userId || "anonymous";
-        
+
         // If userId is null (not logged in), count all anonymous/legacy records
         // If userId is provided, only count matching records OR records without userId (legacy)
-        const shouldCount = userId === null 
-          ? (recordUserId === "anonymous" || !record.userId)  // Count anonymous/legacy when not logged in
-          : (recordUserId === userId || !record.userId);  // Count matching userId OR legacy (no userId) when logged in
+        const shouldCount =
+          userId === null
+            ? recordUserId === "anonymous" || !record.userId // Count anonymous/legacy when not logged in
+            : recordUserId === userId || !record.userId; // Count matching userId OR legacy (no userId) when logged in
 
         if (shouldCount) {
           itemCount++;

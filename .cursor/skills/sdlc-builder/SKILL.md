@@ -42,11 +42,12 @@ Use this skill when:
 Before creating any spec, always:
 
 \\\
+
 1. Read .cursor/rules/sdlc-workflow.mdc â€” understand SDLC phases
 2. Read .sdlc/context/architecture.md â€” understand TTS system architecture
 3. Read .sdlc/context/conventions.md â€” understand Next.js + vertical slice patterns
 4. Read .sdlc/context/security.md â€” understand client-side security requirements
-\\\
+   \\\
 
 > **Note:** The AI Agent Boundaries section is in \.cursor/rules/sdlc-workflow.mdc\
 > (look for the "AI Agent Boundaries" heading), not in a separate \.sdlc/AGENTS.md\ file.
@@ -57,11 +58,11 @@ Create the following folder structure for each new feature:
 
 \\\
 .sdlc/specs/REQ-XXX-{feature-name}/
-â”œâ”€â”€ SPEC.md                    # Main specification document
+â”œâ”€â”€ SPEC.md # Main specification document
 â”œâ”€â”€ decisions/
-â”‚   â””â”€â”€ ADR-001-{topic}.md    # Architecture Decision Records
+â”‚ â””â”€â”€ ADR-001-{topic}.md # Architecture Decision Records
 â””â”€â”€ notes/
-    â””â”€â”€ meeting-001-{topic}.md # Meeting notes & brainstorming
+â””â”€â”€ meeting-001-{topic}.md # Meeting notes & brainstorming
 \\\
 
 ### Step 3: Fill Template
@@ -96,13 +97,13 @@ Use the client-side TTS flow pattern:
 
 \\\mermaid
 flowchart TD
-    subgraph Browser["ðŸ‘¤ Browser"]
-        User["User"]
-        UI["UI Component"]
-        Hook["Custom Hook"]
-        Worker["Web Worker"]
-        ONNX["ONNX Runtime"]
-    end
+subgraph Browser["ðŸ‘¤ Browser"]
+User["User"]
+UI["UI Component"]
+Hook["Custom Hook"]
+Worker["Web Worker"]
+ONNX["ONNX Runtime"]
+end
 
     subgraph Storage["ðŸŸ¢ Storage"]
         IDB["IndexedDB"]
@@ -124,16 +125,17 @@ flowchart TD
     Worker -->|8. Stream chunks| Hook
     Hook -->|9. Update state| UI
     UI -->|10. Play audio| User
+
 \\\
 
 ### Styling Legend
 
-| Box Color | Meaning |
+| Box Color | Meaning                                        |
 | --------- | ---------------------------------------------- |
-| Blue | Actor/Client/External |
-| Purple | Internal Layer (Component/Hook/Service/Worker) |
-| Green | Storage (IndexedDB/localStorage/R2) |
-| Red | Error/Exception |
+| Blue      | Actor/Client/External                          |
+| Purple    | Internal Layer (Component/Hook/Service/Worker) |
+| Green     | Storage (IndexedDB/localStorage/R2)            |
+| Red       | Error/Exception                                |
 
 ### When Adding Mermaid
 
@@ -161,37 +163,43 @@ flowchart TD
 **Start with this template:**
 
 \\\
+
 ## ðŸŽ¯ Brainstorming Session: {Feature Name}
 
 ### Context
+
 [Brief description of what we're building and why]
 
 ### AI's Current Understanding
+
 1. [What I understand about the feature]
 2. [What I understand about the technical requirements]
 
 ### Questions for Human
 
 #### Question 1: [Specific question]
+
 - Context: [Why this is important]
 - Options considered: [If any]
 - Need: [What specifically I need to know]
 
 #### Question 2: [Specific question]
+
 ...
 
 ### Technical Considerations
 
-| Aspect | My Suggestion | Need Validation |
-|--------|--------------|-----------------|
-| [Aspect 1] | [Suggestion] | [Yes/No] |
-| [Aspect 2] | [Suggestion] | [Yes/No] |
+| Aspect     | My Suggestion | Need Validation |
+| ---------- | ------------- | --------------- |
+| [Aspect 1] | [Suggestion]  | [Yes/No]        |
+| [Aspect 2] | [Suggestion]  | [Yes/No]        |
 
 ### Next Steps (after human responds)
+
 - [ ] Update SPEC.md with decisions
 - [ ] Validate technical approach
 - [ ] Proceed to implementation
-\\\
+      \\\
 
 ### During Brainstorming
 
@@ -244,14 +252,14 @@ Before marking spec as "Ready for Implementation", verify:
 
 ## ðŸ”— Quick Reference
 
-| Need | Go To |
-| ---------------- | --------------------------------- |
-| Feature template | \.sdlc/templates/feature-spec.md\ |
-| PR template | \.sdlc/templates/pull-request.md\ |
-| Architecture | \.sdlc/context/architecture.md\ |
-| Conventions | \.sdlc/context/conventions.md\ |
-| Security | \.sdlc/context/security.md\ |
-| AI Agent Boundaries | \.cursor/rules/sdlc-workflow.mdc\ |
+| Need                | Go To                              |
+| ------------------- | ---------------------------------- |
+| Feature template    | \.sdlc/templates/feature-spec.md\  |
+| PR template         | \.sdlc/templates/pull-request.md\  |
+| Architecture        | \.sdlc/context/architecture.md\    |
+| Conventions         | \.sdlc/context/conventions.md\     |
+| Security            | \.sdlc/context/security.md\        |
+| AI Agent Boundaries | \.cursor/rules/sdlc-workflow.mdc\  |
 
 ---
 
@@ -262,41 +270,45 @@ When human asks to create a new feature, follow this workflow:
 ### Phase 1: Discovery (Agent does alone)
 
 \\\
+
 1. Understand the feature request from human
 2. Explore codebase for similar features
 3. Read relevant context docs
 4. Create initial SPEC.md draft
 5. Identify gaps and questions
-\\\
+   \\\
 
 ### Phase 2: Mob Elaboration (with Human)
 
 \\\
+
 1. Present initial understanding to human
 2. Ask clarifying questions
 3. Discuss technical approach
 4. Validate assumptions
 5. Document decisions
-\\\
+   \\\
 
 ### Phase 3: Refinement (Agent does alone)
 
 \\\
+
 1. Update SPEC.md with all decisions
 2. Create necessary ADRs
 3. Prepare implementation plan
 4. Present final spec to human for approval
-\\\
+   \\\
 
 ### Phase 4: Implementation (after approval)
 
 \\\
+
 1. Human approves SPEC.md
 2. Agent proceeds with implementation
 3. Follow conventions in .sdlc/context/
 4. Write tests alongside code
 5. Create PR with all required info
-\\\
+   \\\
 
 ---
 

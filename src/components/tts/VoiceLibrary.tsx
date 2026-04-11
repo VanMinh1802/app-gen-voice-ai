@@ -118,12 +118,13 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
     <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar pb-32">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-foreground mb-2 tracking-tight">
-          Thư viện giọng
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-3 tracking-tighter">
+          Khám phá chất giọng hoàn hảo
         </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Khám phá {voiceMetadata.length} giọng đọc AI chuyên nghiệp với nhiều
-          vùng miền và phong cách khác nhau cho dự án của bạn.
+        <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
+          Thử nghiệm hơn {voiceMetadata.length} giọng đọc AI chuyên nghiệp với
+          các sắc thái, vùng miền và biểu cảm phong phú. Chọn tiếng nói cho
+          thương hiệu của bạn.
         </p>
       </div>
 
@@ -300,17 +301,29 @@ export function VoiceLibrary({ onSelectVoice, onPreview }: VoiceLibraryProps) {
 
       {/* Empty State */}
       {filteredVoices.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4">
-            <SearchX className="w-10 h-10 text-muted-foreground" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20 max-w-md mx-auto"
+        >
+          <div className="w-20 h-20 bg-muted/50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <SearchX className="w-10 h-10 text-muted-foreground/60" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Không tìm thấy giọng nói
+          <h3 className="text-xl font-bold text-foreground mb-2">
+            Chưa tìm thấy chất giọng bạn cần?
           </h3>
-          <p className="text-muted-foreground text-sm">
-            Thử thay đổi bộ lọc để xem thêm giọng nói.
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            Hãy thử điều chỉnh lại bộ lọc hoặc từ khóa tìm kiếm. Hệ thống luôn
+            được cập nhật những chất giọng mới!
           </p>
-        </div>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleClearFilters}
+            className="px-6 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+          >
+            Xóa tất cả bộ lọc
+          </motion.button>
+        </motion.div>
       )}
     </div>
   );

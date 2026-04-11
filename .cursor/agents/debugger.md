@@ -51,7 +51,7 @@ Debugging process:
 - Edge Runtime errors (unsupported Node.js APIs)
 - R2 signed URL generation failures
 - Genation SDK authentication errors
-- Environment variable access issues (NEXT_PUBLIC_ vars)
+- Environment variable access issues (NEXT*PUBLIC* vars)
 
 **Frontend + Server (Client-Side App):**
 

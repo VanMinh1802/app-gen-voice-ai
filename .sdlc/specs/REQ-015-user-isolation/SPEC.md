@@ -2,15 +2,15 @@
 
 ## Metadata
 
-| Field              | Value                     |
-| ------------------ | ------------------------ |
-| **Feature ID**     | REQ-015                  |
-| **Feature Name**   | User-Specific History     |
-| **Status**         | ✅ Completed             |
-| **Priority**       | P1 (High)                |
-| **Owner**          | Development Team         |
-| **Created**        | 2026-03-20               |
-| **Target Release** | v1.2.0                   |
+| Field              | Value                 |
+| ------------------ | --------------------- |
+| **Feature ID**     | REQ-015               |
+| **Feature Name**   | User-Specific History |
+| **Status**         | ✅ Completed          |
+| **Priority**       | P1 (High)             |
+| **Owner**          | Development Team      |
+| **Created**        | 2026-03-20            |
+| **Target Release** | v1.2.0                |
 
 ---
 
@@ -62,7 +62,7 @@ flowchart TD
 ```typescript
 interface StoredHistoryRecord extends Omit<TtsHistoryItem, "audioUrl"> {
   userId?: string; // Optional for legacy compatibility
-  audio: Blob;     // Not blob URL - Blob is persisted
+  audio: Blob; // Not blob URL - Blob is persisted
 }
 ```
 
@@ -89,10 +89,10 @@ loadHistory: async () => {
   const userId = get().currentUserId;
   const dbItems = await getHistoryFromDB(
     config.tts.historyLimit,
-    userId || undefined // Pass undefined to getHistory to filter by userId
+    userId || undefined, // Pass undefined to getHistory to filter by userId
   );
   set({ history: dbItems, isHistoryLoaded: true });
-}
+};
 ```
 
 ### IndexedDB Functions
@@ -105,39 +105,39 @@ export async function saveHistoryItem(
   item: TtsHistoryItem,
   audioBlob: Blob,
   userId: string,
-): Promise<void>
+): Promise<void>;
 
 // Load with userId filter
 export async function getHistory(
   limit?: number,
   userId?: string, // Filter by userId if provided
-): Promise<TtsHistoryItem[]>
+): Promise<TtsHistoryItem[]>;
 
 // Clear only current user's history
-export async function clearUserHistory(userId: string): Promise<void>
+export async function clearUserHistory(userId: string): Promise<void>;
 ```
 
 ---
 
 ## State Management
 
-| State            | Source                    | Purpose                      |
-| ---------------- | ------------------------- | ---------------------------- |
-| `currentUserId`  | Zustand store             | Track logged-in user         |
-| `history`        | IndexedDB + Zustand store | User-filtered history items  |
-| `storageInfo`    | Zustand store             | User's storage metrics      |
+| State           | Source                    | Purpose                     |
+| --------------- | ------------------------- | --------------------------- |
+| `currentUserId` | Zustand store             | Track logged-in user        |
+| `history`       | IndexedDB + Zustand store | User-filtered history items |
+| `storageInfo`   | Zustand store             | User's storage metrics      |
 
 ---
 
 ## Edge Cases
 
-| #   | Case                                      | Handling                                      |
-| --- | ----------------------------------------- | -------------------------------------------- |
-| 1   | User logs out                             | History reloads (empty, since userId is null) |
-| 2   | User logs in with different account        | History reloads with new userId              |
-| 3   | Legacy records without userId              | Attributed to current user on first access    |
-| 4   | Anonymous user (not logged in)            | History saved with "anonymous" userId        |
-| 5   | Browser shared by multiple users           | Each user's history is isolated              |
+| #   | Case                                | Handling                                      |
+| --- | ----------------------------------- | --------------------------------------------- |
+| 1   | User logs out                       | History reloads (empty, since userId is null) |
+| 2   | User logs in with different account | History reloads with new userId               |
+| 3   | Legacy records without userId       | Attributed to current user on first access    |
+| 4   | Anonymous user (not logged in)      | History saved with "anonymous" userId         |
+| 5   | Browser shared by multiple users    | Each user's history is isolated               |
 
 ---
 

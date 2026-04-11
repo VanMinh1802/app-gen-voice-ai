@@ -438,7 +438,7 @@ export function AudioPlayer({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={cn(
         "bg-card/95 backdrop-blur-xl border-t border-primary/10 px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3 z-50 fixed",
-        "bottom-16 md:bottom-0 left-0 right-0",
+        "bottom-16 md:bottom-0 left-0 right-0 lg:transition-[left] lg:duration-300 lg:ease-out",
         sidebarCollapsed ? "lg:left-[4.5rem]" : "lg:left-64",
       )}
     >

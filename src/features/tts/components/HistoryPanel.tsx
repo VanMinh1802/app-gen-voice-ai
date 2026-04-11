@@ -36,11 +36,18 @@ function formatBytes(bytes: number): string {
 }
 
 /** Storage Usage Bar Component */
-function StorageUsageBar({ storageInfo, historyCount }: { storageInfo: StorageInfo; historyCount: number }) {
+function StorageUsageBar({
+  storageInfo,
+  historyCount,
+}: {
+  storageInfo: StorageInfo;
+  historyCount: number;
+}) {
   // Calculate percentage based on history limit, not browser quota
-  const percent = config.tts.historyLimit > 0
-    ? Math.min((historyCount / config.tts.historyLimit) * 100, 100)
-    : 0;
+  const percent =
+    config.tts.historyLimit > 0
+      ? Math.min((historyCount / config.tts.historyLimit) * 100, 100)
+      : 0;
   const isHighUsage = percent > 80;
   const isCriticalUsage = percent > 95;
 
@@ -293,7 +300,10 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
           {/* Icon Container with badge */}
           <div className="relative">
             <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center border border-primary/10">
-              <History className="w-12 h-12 text-muted-foreground" aria-hidden="true" />
+              <History
+                className="w-12 h-12 text-muted-foreground"
+                aria-hidden="true"
+              />
             </div>
           </div>
 
@@ -325,7 +335,10 @@ export function HistoryPanel({ onRefill, onCreateNew }: HistoryPanelProps) {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4">
       {/* Storage Usage Bar */}
-      <StorageUsageBar storageInfo={storageInfo} historyCount={history.length} />
+      <StorageUsageBar
+        storageInfo={storageInfo}
+        historyCount={history.length}
+      />
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h2 className="text-lg font-semibold text-foreground">

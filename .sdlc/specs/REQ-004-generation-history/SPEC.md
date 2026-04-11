@@ -133,14 +133,14 @@ Users need to access previously generated audio for replay or reuse. With multi-
 
 ### Files Created/Modified
 
-| File                                           | Description                       | Status    |
-| ---------------------------------------------- | --------------------------------- | --------- |
-| `src/features/tts/components/HistoryPanel.tsx` | History list + StorageUsageBar    | Modified  |
-| `src/lib/storage/history.ts`                   | IndexedDB ops with userId         | Modified  |
-| `src/features/tts/store.ts`                    | Store with userId, storageInfo    | Modified  |
-| `src/components/tts/MainContent.tsx`           | GenerationSuccess with animations | Modified  |
-| `src/app/globals.css`                         | Animation keyframes               | Modified  |
-| `src/components/ui/ConfirmDialog.tsx`           | Reusable confirm dialog           | Created   |
+| File                                           | Description                       | Status   |
+| ---------------------------------------------- | --------------------------------- | -------- |
+| `src/features/tts/components/HistoryPanel.tsx` | History list + StorageUsageBar    | Modified |
+| `src/lib/storage/history.ts`                   | IndexedDB ops with userId         | Modified |
+| `src/features/tts/store.ts`                    | Store with userId, storageInfo    | Modified |
+| `src/components/tts/MainContent.tsx`           | GenerationSuccess with animations | Modified |
+| `src/app/globals.css`                          | Animation keyframes               | Modified |
+| `src/components/ui/ConfirmDialog.tsx`          | Reusable confirm dialog           | Created  |
 
 ### Database Schema (IndexedDB)
 
@@ -160,22 +160,22 @@ interface StoredHistoryRecord {
 
 ### State Management
 
-| State            | Solution                    | Justification                     |
-| ---------------- | --------------------------- | --------------------------------- |
-| History items    | Zustand store + IndexedDB   | Persistence + reactivity          |
-| User ID          | Zustand store               | Track current authenticated user   |
-| Storage info     | Zustand store               | Display storage usage             |
-| Save completion  | `lastSavedHistoryId` in store| Track async save completion       |
+| State           | Solution                      | Justification                    |
+| --------------- | ----------------------------- | -------------------------------- |
+| History items   | Zustand store + IndexedDB     | Persistence + reactivity         |
+| User ID         | Zustand store                 | Track current authenticated user |
+| Storage info    | Zustand store                 | Display storage usage            |
+| Save completion | `lastSavedHistoryId` in store | Track async save completion      |
 
 ### StorageInfo Interface
 
 ```typescript
 interface StorageInfo {
-  historyBytes: number;    // Total bytes used by history
-  historyCount: number;    // Number of records
-  totalUsedBytes: number;  // Browser's total IndexedDB usage
+  historyBytes: number; // Total bytes used by history
+  historyCount: number; // Number of records
+  totalUsedBytes: number; // Browser's total IndexedDB usage
   totalAvailableBytes: number; // Browser's available quota
-  usagePercent: number;    // Percentage based on history limit
+  usagePercent: number; // Percentage based on history limit
 }
 ```
 
@@ -183,13 +183,13 @@ interface StorageInfo {
 
 ## Edge Cases
 
-| #   | Case                                      | Handling                                      |
-| --- | ----------------------------------------- | -------------------------------------------- |
-| 1   | User logs out then in with different account | History reloads filtered by new userId       |
-| 2   | Legacy records without userId              | Attributed to current user on first access    |
-| 3   | IndexedDB not available                    | Graceful degradation, in-memory only         |
-| 4   | Storage at limit                          | Warning message, oldest records evicted first |
-| 5   | Save fails                                | Mark as saved after timeout, log error        |
+| #   | Case                                         | Handling                                      |
+| --- | -------------------------------------------- | --------------------------------------------- |
+| 1   | User logs out then in with different account | History reloads filtered by new userId        |
+| 2   | Legacy records without userId                | Attributed to current user on first access    |
+| 3   | IndexedDB not available                      | Graceful degradation, in-memory only          |
+| 4   | Storage at limit                             | Warning message, oldest records evicted first |
+| 5   | Save fails                                   | Mark as saved after timeout, log error        |
 
 ---
 

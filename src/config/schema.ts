@@ -56,9 +56,10 @@ export type Config = z.infer<typeof ConfigSchema>;
  * @param config - The raw config object to validate
  * @returns Array of validation issues, empty if valid
  */
-export function validateConfig(
-  config: unknown,
-): { issues: z.ZodIssue[]; config: Config | null } {
+export function validateConfig(config: unknown): {
+  issues: z.ZodIssue[];
+  config: Config | null;
+} {
   const result = ConfigSchema.safeParse(config);
   if (result.success) {
     return { issues: [], config: result.data };

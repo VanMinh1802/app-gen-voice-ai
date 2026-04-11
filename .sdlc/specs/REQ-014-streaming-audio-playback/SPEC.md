@@ -6,7 +6,7 @@
 | ------------------ | ------------------------ |
 | **Feature ID**     | REQ-014                  |
 | **Feature Name**   | Streaming Audio Playback |
-| **Status**         | ✅ Completed      |
+| **Status**         | ✅ Completed             |
 | **Priority**       | P1 (High)                |
 | **Owner**          | Development Team         |
 | **Created**        | 2026-03-19               |
@@ -610,32 +610,73 @@ When audio is playing, the following animations are active:
 
 ```css
 @keyframes waveform-pulse-stepped {
-  0% { transform: scaleY(0.3); opacity: 0.5; }
-  25% { transform: scaleY(0.7); opacity: 0.8; }
-  50% { transform: scaleY(1); opacity: 1; }
-  75% { transform: scaleY(0.7); opacity: 0.8; }
-  100% { transform: scaleY(0.3); opacity: 0.5; }
+  0% {
+    transform: scaleY(0.3);
+    opacity: 0.5;
+  }
+  25% {
+    transform: scaleY(0.7);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  75% {
+    transform: scaleY(0.7);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scaleY(0.3);
+    opacity: 0.5;
+  }
 }
 
 @keyframes icon-bounce-stepped {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.15) rotate(-2deg); }
-  50% { transform: scale(1.1) rotate(2deg); }
-  75% { transform: scale(1.15) rotate(-1deg); }
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.15) rotate(-2deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  75% {
+    transform: scale(1.15) rotate(-1deg);
+  }
 }
 
 @keyframes border-pulse-stepped {
-  0% { border-color: hsl(var(--primary) / 0.2); }
-  50% { border-color: hsl(var(--primary) / 0.6); box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
-  100% { border-color: hsl(var(--primary) / 0.2); }
+  0% {
+    border-color: hsl(var(--primary) / 0.2);
+  }
+  50% {
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+  }
+  100% {
+    border-color: hsl(var(--primary) / 0.2);
+  }
 }
 
 @keyframes shimmer-stepped {
-  0% { transform: translateX(-100%); }
-  25% { transform: translateX(0%); }
-  50% { transform: translateX(50%); }
-  75% { transform: translateX(100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  25% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(50%);
+  }
+  75% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 ```
 

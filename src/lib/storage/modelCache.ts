@@ -82,9 +82,7 @@ export async function saveModelToCache(
  * Returns null if not cached.
  * version may be undefined for records cached before versioning was added.
  */
-export async function loadModelFromCache(
-  voiceId: string,
-): Promise<{
+export async function loadModelFromCache(voiceId: string): Promise<{
   model: ArrayBuffer;
   config: PiperVoiceConfig;
   version?: string;

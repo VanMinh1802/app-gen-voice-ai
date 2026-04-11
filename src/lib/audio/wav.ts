@@ -136,9 +136,8 @@ export function encodeWav(
   for (let i = 0; i < float32Array.length; i++) {
     const sample = Math.max(-1, Math.min(1, float32Array[i]!));
     // Symmetric mapping: -1.0 → -32768, 1.0 → 32767
-    int16Array[i] = sample < 0
-      ? Math.round(sample * 32768)
-      : Math.round(sample * 32767);
+    int16Array[i] =
+      sample < 0 ? Math.round(sample * 32768) : Math.round(sample * 32767);
   }
 
   const dataView = new DataView(buffer, 44);

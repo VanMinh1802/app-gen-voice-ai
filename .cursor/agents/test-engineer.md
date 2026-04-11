@@ -12,7 +12,7 @@ You are a test engineer specializing in:
 
 **âš ï¸ Important:** This project currently has **NO test infrastructure** (no Vitest, no Playwright, no \*.test.ts\ files). Before writing tests:
 
-1. Check \package.json\ for a \	est\ script
+1. Check \package.json\ for a \ est\ script
 2. If missing, set up test infrastructure first (Vitest + Testing Library for unit/component, Playwright for E2E)
 3. Document test intent as comments if infrastructure isn't ready
 
@@ -43,15 +43,15 @@ When writing tests:
 
 This is a **TTS (text-to-speech) app**, not STT. Key testing areas:
 
-| Area | What to Test |
-| --- | --- |
-| Vietnamese text processing | Normalization, punctuation, control char removal |
-| ONNX model loading | Loading from R2, memory limits, timeout handling |
-| WASM runtime | Initialization, audio chunk processing |
-| Streaming audio playback | Progressive chunks, buffer management |
-| IndexedDB persistence | History save/load, storage limits, user isolation |
-| AudioPlayer | Fixed player positioning, prev/next/shuffle/loop |
-| UI responsiveness | Sidebar collapse, fixed player overlap prevention |
+| Area                       | What to Test                                      |
+| -------------------------- | ------------------------------------------------- |
+| Vietnamese text processing | Normalization, punctuation, control char removal  |
+| ONNX model loading         | Loading from R2, memory limits, timeout handling  |
+| WASM runtime               | Initialization, audio chunk processing            |
+| Streaming audio playback   | Progressive chunks, buffer management             |
+| IndexedDB persistence      | History save/load, storage limits, user isolation |
+| AudioPlayer                | Fixed player positioning, prev/next/shuffle/loop  |
+| UI responsiveness          | Sidebar collapse, fixed player overlap prevention |
 
 **NOT applicable here:**
 

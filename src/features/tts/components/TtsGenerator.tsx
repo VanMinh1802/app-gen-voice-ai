@@ -185,7 +185,7 @@ export function TtsGenerator({
             id="languageFilter"
             value={languageFilter}
             onChange={(e) => setLanguageFilter(e.target.value)}
-            className="text-xs px-2 py-1 border rounded-md bg-background"
+            className="text-xs px-2.5 py-1.5 border rounded-lg bg-background/50 backdrop-blur-sm cursor-pointer hover:bg-background/80 transition-colors"
           >
             <option value="all">{t("allLanguages")}</option>
             <option value="vi">{t("vietnamese")}</option>
@@ -200,7 +200,7 @@ export function TtsGenerator({
           value={settings?.voice ?? config.tts.defaultVoice}
           onChange={handleVoiceChange}
           disabled={isGenerating}
-          className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="w-full px-3 py-2.5 border rounded-xl bg-background/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 transition-all cursor-pointer hover:bg-background/80"
         >
           {filteredVoices.map((voice) => (
             <option key={voice.id} value={voice.id}>
@@ -232,10 +232,13 @@ export function TtsGenerator({
             id="text"
             value={text ?? ""}
             onChange={handleTextChange}
-            placeholder={t("enterText")}
+            placeholder={
+              t("enterText") ||
+              "Nhập văn bản của bạn vào đây... (Ví dụ: Chào mừng bạn đến với GenVoice AI!)"
+            }
             disabled={isGenerating}
             className={cn(
-              "w-full min-h-[160px] px-3 py-3 border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50 transition-all",
+              "w-full min-h-[160px] px-4 py-4 border border-input rounded-2xl bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:opacity-50 transition-all text-base leading-relaxed placeholder:text-muted-foreground/60 shadow-sm",
               textError && "border-red-500",
               isGenerating && "opacity-50",
             )}
@@ -341,26 +344,48 @@ export function TtsGenerator({
       )}
 
       <div className="flex gap-3">
-        <button
+        <motion.button
+          whileTap={canGenerate ? { scale: 0.98 } : undefined}
           onClick={handleGenerate}
           disabled={!canGenerate}
-          className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className={cn(
+            "relative flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold overflow-hidden transition-colors",
+            !canGenerate
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-primary/90 shadow-lg shadow-primary/25",
+          )}
         >
-          {isGenerating ? t("generating") : t("generate")}
-        </button>
+          {/* Shimmer Effect */}
+          {canGenerate && (
+            <motion.div
+              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+              animate={{ x: ["-100%", "200%"] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                repeatDelay: 3,
+              }}
+            />
+          )}
+          <span className="relative z-10">
+            {isGenerating ? "Đang khởi tạo..." : "✨ Tạo giọng nói"}
+          </span>
+        </motion.button>
         <ShareButton
           text={text}
           voice={settings?.voice ?? config.tts.defaultVoice}
           speed={typeof settings?.speed === "number" ? settings.speed : 1}
         />
         {currentAudio && (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={handleDownload}
-            className="py-3 px-4 border border-input rounded-md font-medium hover:bg-accent transition-colors"
+            className="py-3 px-4 border border-input rounded-xl font-medium hover:bg-accent transition-colors"
             title={t("downloadAudio")}
           >
             <Download className="w-5 h-5" />
-          </button>
+          </motion.button>
         )}
       </div>
 

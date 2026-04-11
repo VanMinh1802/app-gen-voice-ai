@@ -37,8 +37,19 @@ type SettingsTab = "personal" | "subscription" | "customization" | "security";
 
 function detectGender(voiceId: string): "male" | "female" {
   const maleKeywords = [
-    "nam", "hung", "quang", "thanh", "khoi", "dung",
-    "duy", "minh", "anh", "hoang", "phong", "son", "hieu",
+    "nam",
+    "hung",
+    "quang",
+    "thanh",
+    "khoi",
+    "dung",
+    "duy",
+    "minh",
+    "anh",
+    "hoang",
+    "phong",
+    "son",
+    "hieu",
   ];
   return maleKeywords.some((kw) => voiceId.toLowerCase().includes(kw))
     ? "male"
@@ -209,7 +220,6 @@ export function VoiceSettings() {
 
       {/* Tab content */}
       <div className="space-y-6">
-
         {/* Thông tin cá nhân */}
         <div
           role="tabpanel"
@@ -289,134 +299,134 @@ export function VoiceSettings() {
 
         {/* Gói đăng ký */}
         {config.showSubscriptionUi && (
-        <div
-          role="tabpanel"
-          id="panel-subscription"
-          aria-labelledby="tab-subscription"
-          tabIndex={0}
-          className={cn(activeTab !== "subscription" && "hidden")}
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-card border border-primary/10 rounded-xl p-6">
-              {!isAuthenticated ? (
-                <p className="text-muted-foreground text-sm py-4">
-                  Đăng nhập để xem gói đăng ký hiện tại.
-                </p>
-              ) : isLicenseLoading ? (
-                <div className="flex items-center gap-2 py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">
-                    Đang tải thông tin gói...
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                        Gói đăng ký hiện tại
-                        {hasActiveLicense && (
-                          <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black border border-primary/20">
-                            Active
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        Bạn đang sử dụng gói{" "}
-                        <span className="text-foreground font-bold">
-                          {planName}
-                        </span>
-                        {isProPlanCode(activePlanCode) && " (Cá nhân)"}
-                      </p>
-                    </div>
-                    {isProPlanCode(activePlanCode) ? (
-                      <Link
-                        href="/pricing"
-                        className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all inline-block"
-                      >
-                        Quản lý gói
-                      </Link>
-                    ) : hasActiveLicense ? (
-                      <button
-                        type="button"
-                        onClick={() => upgradeToPlan("PRO")}
-                        className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all"
-                      >
-                        Nâng cấp Pro
-                      </button>
-                    ) : (
-                      <Link
-                        href="/pricing"
-                        className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all inline-block"
-                      >
-                        Nâng cấp Pro
-                      </Link>
-                    )}
+          <div
+            role="tabpanel"
+            id="panel-subscription"
+            aria-labelledby="tab-subscription"
+            tabIndex={0}
+            className={cn(activeTab !== "subscription" && "hidden")}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-card border border-primary/10 rounded-xl p-6">
+                {!isAuthenticated ? (
+                  <p className="text-muted-foreground text-sm py-4">
+                    Đăng nhập để xem gói đăng ký hiện tại.
+                  </p>
+                ) : isLicenseLoading ? (
+                  <div className="flex items-center gap-2 py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">
+                      Đang tải thông tin gói...
+                    </span>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Chu kỳ thanh toán
-                      </span>
-                      <span className="text-foreground font-medium">
-                        {expiresAt
-                          ? `Hết hạn: ${new Date(expiresAt).toLocaleDateString("vi-VN")}`
-                          : isProPlanCode(activePlanCode)
-                            ? "Pro"
-                            : "Miễn phí"}
-                      </span>
-                    </div>
-                    <div className="h-px bg-primary/10" />
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Quyền sử dụng giọng
-                        </span>
-                        <span className="text-foreground font-medium">
-                          {isProPlanCode(activePlanCode)
-                            ? "Tất cả giọng Pro"
-                            : "2 giọng (Miễn phí)"}
-                        </span>
-                      </div>
-                      {isProPlanCode(activePlanCode) && (
-                        <p className="text-[11px] text-muted-foreground italic text-right">
-                          * Gia hạn qua Genation để tiếp tục dùng Pro
+                ) : (
+                  <>
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                          Gói đăng ký hiện tại
+                          {hasActiveLicense && (
+                            <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-black border border-primary/20">
+                              Active
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-muted-foreground text-sm mt-1">
+                          Bạn đang sử dụng gói{" "}
+                          <span className="text-foreground font-bold">
+                            {planName}
+                          </span>
+                          {isProPlanCode(activePlanCode) && " (Cá nhân)"}
                         </p>
+                      </div>
+                      {isProPlanCode(activePlanCode) ? (
+                        <Link
+                          href="/pricing"
+                          className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all inline-block"
+                        >
+                          Quản lý gói
+                        </Link>
+                      ) : hasActiveLicense ? (
+                        <button
+                          type="button"
+                          onClick={() => upgradeToPlan("PRO")}
+                          className="px-4 py-2 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all"
+                        >
+                          Nâng cấp Pro
+                        </button>
+                      ) : (
+                        <Link
+                          href="/pricing"
+                          className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all inline-block"
+                        >
+                          Nâng cấp Pro
+                        </Link>
                       )}
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="bg-card/95 border border-primary/15 rounded-xl p-6 flex flex-col justify-between shadow-sm">
-              <div>
-                <h3 className="text-lg font-bold text-foreground mb-2">
-                  Nâng cấp Pro
-                </h3>
-                <p className="text-foreground/85 text-sm leading-relaxed">
-                  Mở khóa tất cả giọng nói, chất lượng cao và tùy chỉnh tốc
-                  độ/âm lượng.
-                </p>
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-foreground/90">
-                    <Check className="w-4 h-4 text-primary shrink-0" />
-                    Tất cả giọng có sẵn
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-foreground/90">
-                    <Check className="w-4 h-4 text-primary shrink-0" />
-                    Xuất WAV, MP3
-                  </li>
-                </ul>
+                    <div className="space-y-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Chu kỳ thanh toán
+                        </span>
+                        <span className="text-foreground font-medium">
+                          {expiresAt
+                            ? `Hết hạn: ${new Date(expiresAt).toLocaleDateString("vi-VN")}`
+                            : isProPlanCode(activePlanCode)
+                              ? "Pro"
+                              : "Miễn phí"}
+                        </span>
+                      </div>
+                      <div className="h-px bg-primary/10" />
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Quyền sử dụng giọng
+                          </span>
+                          <span className="text-foreground font-medium">
+                            {isProPlanCode(activePlanCode)
+                              ? "Tất cả giọng Pro"
+                              : "2 giọng (Miễn phí)"}
+                          </span>
+                        </div>
+                        {isProPlanCode(activePlanCode) && (
+                          <p className="text-[11px] text-muted-foreground italic text-right">
+                            * Gia hạn qua Genation để tiếp tục dùng Pro
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <Link
-                href="/pricing"
-                className="mt-6 w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide text-center block"
-              >
-                Xem các gói
-              </Link>
+              <div className="bg-card/95 border border-primary/15 rounded-xl p-6 flex flex-col justify-between shadow-sm">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">
+                    Nâng cấp Pro
+                  </h3>
+                  <p className="text-foreground/85 text-sm leading-relaxed">
+                    Mở khóa tất cả giọng nói, chất lượng cao và tùy chỉnh tốc
+                    độ/âm lượng.
+                  </p>
+                  <ul className="mt-4 space-y-2">
+                    <li className="flex items-center gap-2 text-sm text-foreground/90">
+                      <Check className="w-4 h-4 text-primary shrink-0" />
+                      Tất cả giọng có sẵn
+                    </li>
+                    <li className="flex items-center gap-2 text-sm text-foreground/90">
+                      <Check className="w-4 h-4 text-primary shrink-0" />
+                      Xuất WAV, MP3
+                    </li>
+                  </ul>
+                </div>
+                <Link
+                  href="/pricing"
+                  className="mt-6 w-full py-3 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 transition-all uppercase tracking-wide text-center block"
+                >
+                  Xem các gói
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
         )}
 
         {/* Tùy chỉnh */}
@@ -610,9 +620,7 @@ export function VoiceSettings() {
                   max="12"
                   step="1"
                   value={pitchValue}
-                  onChange={(e) =>
-                    handlePitchChange(parseInt(e.target.value))
-                  }
+                  onChange={(e) => handlePitchChange(parseInt(e.target.value))}
                   className="w-full accent-primary h-1.5 bg-muted rounded-lg"
                   aria-label="Cao độ mặc định"
                 />
@@ -711,7 +719,8 @@ export function VoiceSettings() {
                 onClick={() => {
                   addToast({
                     type: "info",
-                    message: "Mở tài khoản Genation để quản lý xác thực 2 yếu tố.",
+                    message:
+                      "Mở tài khoản Genation để quản lý xác thực 2 yếu tố.",
                     duration: 5000,
                   });
                   if (typeof window !== "undefined") {
@@ -765,7 +774,6 @@ export function VoiceSettings() {
             </p>
           </div>
         </div>
-
       </div>
 
       {/* Delete account confirmation dialog */}
